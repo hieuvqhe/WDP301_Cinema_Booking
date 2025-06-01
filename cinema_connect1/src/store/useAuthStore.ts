@@ -1,0 +1,112 @@
+import { create } from 'zustand';
+import { devtools, persist } from 'zustand/middleware';
+import { 
+  loginUser, 
+  registerUser, 
+  verifyRegistration, 
+  storeAuthToken 
+} from '../apis/user.api';
+import type { 
+  User,
+  UserLoginType,
+  RegisterUserType,
+  OtpRegisterType
+} from '../types/User.type';
+
+interface AuthState {
+  user: User | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  error: string | null;
+  tempEmail: string | null;
+  register: (userData: RegisterUserType) => Promise<boolean>;
+  verifyOtp: (otpData: OtpRegisterType) => Promise<boolean>;
+  login: (credentials: UserLoginType) => Promise<boolean>;
+  logout: () => void;
+  setTempEmail: (email: string) => void;
+  clearError: () => void;
+}
+
+export const useAuthStore = create<AuthState>()(
+  devtools(
+    persist(
+      (set) => ({
+        user: null,
+        isAuthenticated: false,
+        isLoading: false,
+        error: null,
+        tempEmail: null,        register: async (userData: RegisterUserType) => {
+          console.log('Register function called with:', userData);
+          set({ isLoading: true, error: null });
+          try {
+            console.log('About to call registerUser API...');
+            const response = await registerUser(userData);
+            console.log('Registration API response:', response);
+            set({ tempEmail: userData.email });
+            set({ isLoading: false });
+            return true;
+          } catch (error) {
+            console.error('Registration error:', error);
+            let errorMessage = 'Registration failed';
+            if (error instanceof Error) {
+              errorMessage = error.message;
+            }
+            set({ error: errorMessage, isLoading: false });
+            return false;
+          }
+        },
+        
+        verifyOtp: async (otpData: OtpRegisterType) => {
+          set({ isLoading: true, error: null });
+          try {
+            await verifyRegistration(otpData);
+            set({ isLoading: false });
+            return true;
+          } catch (error) {
+            let errorMessage = 'OTP verification failed';
+            if (error instanceof Error) {
+              errorMessage = error.message;
+            }
+            set({ error: errorMessage, isLoading: false });
+            return false;
+          }
+        },
+        
+        login: async (credentials: UserLoginType) => {
+          set({ isLoading: true, error: null });
+          try {
+            const response = await loginUser(credentials);
+            const { access_token, user } = response.result;
+            
+            storeAuthToken(access_token);
+            set({ 
+              user: user, 
+              isAuthenticated: true,
+              isLoading: false 
+            });
+            return true;
+          } catch (error) {
+            let errorMessage = 'Login failed';
+            if (error instanceof Error) {
+              errorMessage = error.message;
+            }
+            set({ error: errorMessage, isLoading: false });
+            return false;
+          }
+        },
+        
+        logout: () => {
+          localStorage.removeItem('accessToken');
+          set({ user: null, isAuthenticated: false });
+        },
+        
+        setTempEmail: (email: string) => set({ tempEmail: email }),
+        
+        clearError: () => set({ error: null })
+      }),
+      {
+        name: 'auth-storage'
+      }
+    )
+  )
+);

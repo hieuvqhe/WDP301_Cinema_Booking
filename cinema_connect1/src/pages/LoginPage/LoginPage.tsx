@@ -1,0 +1,170 @@
+import React, { useState } from 'react';
+import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
+import { Button } from '../../components/ui/button';
+import { useAuthStore } from '../../store/useAuthStore';
+// Import icons for cinema theme
+import { Ticket, User, Mail, Lock } from 'lucide-react';
+
+const LoginPage = () => {
+  const navigate = useNavigate();
+  const { login, error, isLoading } = useAuthStore();
+  
+  // Login form state
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+  });
+  
+  // Form validation state
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData({
+      ...formData,
+      [name]: value
+    });
+  };
+
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+    
+    // Validate email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!formData.email.trim()) {
+      newErrors.email = 'Email is required';
+    } else if (!emailRegex.test(formData.email)) {
+      newErrors.email = 'Invalid email format';
+    }
+    
+    // Validate password
+    if (!formData.password) {
+      newErrors.password = 'Password is required';
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!validateForm()) {
+      toast.error('Please fix form errors before submitting');
+      return;
+    }
+    
+    const promise = new Promise<string>((resolve, reject) => {
+      login(formData)
+        .then((success) => {
+          if (success) {
+            resolve('Login successful! Redirecting...');
+            // Navigate to home page after successful login
+            setTimeout(() => {
+              navigate('/movies'); // Assuming '/movies' is the home page
+            }, 1500); // Slight delay to show the success message
+          } else {
+            reject(new Error(error || 'Login failed'));
+          }
+        })
+        .catch((err) => {
+          reject(new Error(err instanceof Error ? err.message : 'Login failed'));
+        });
+    });
+    
+    toast.promise(promise, {
+      loading: 'Logging in...',
+      success: (message) => message,
+      error: (err) => err.message
+    });
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-900 py-8 px-4 sm:px-6 lg:px-8 flex justify-center items-center">
+      <div className="max-w-md w-full bg-gray-800 p-8 rounded-lg shadow-lg text-white">
+        <div className="text-center mb-6">
+          <div className="flex justify-center mb-3">
+            <Ticket size={40} className="text-orange-400" />
+          </div>
+          <h1 className="text-3xl font-bold text-orange-400">Cinema Connect</h1>
+          <p className="mt-2 text-gray-300">Sign in to book your favorite movies!</p>
+        </div>
+        
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Email */}
+          <div>
+            <label htmlFor="email" className="block text-sm font-medium text-gray-200">
+              Email
+            </label>
+            <div className="relative mt-1">
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+                <Mail size={18} />
+              </span>
+              <input
+                type="email"
+                id="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                className={`pl-10 block w-full px-3 py-2 border ${errors.email ? 'border-red-500' : 'border-gray-600'} bg-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 text-white`}
+                placeholder="Enter your email"
+              />
+            </div>
+            {errors.email && <p className="mt-1 text-sm text-red-400">{errors.email}</p>}
+          </div>
+          
+          {/* Password */}
+          <div>
+            <label htmlFor="password" className="block text-sm font-medium text-gray-200">
+              Password
+            </label>
+            <div className="relative mt-1">
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+                <Lock size={18} />
+              </span>
+              <input
+                type="password"
+                id="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                className={`pl-10 block w-full px-3 py-2 border ${errors.password ? 'border-red-500' : 'border-gray-600'} bg-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 text-white`}
+                placeholder="Enter your password"
+              />
+            </div>
+            {errors.password && <p className="mt-1 text-sm text-red-400">{errors.password}</p>}
+          </div>
+          
+          <div className="flex justify-end">
+            <a href="#" className="text-sm text-orange-400 hover:text-orange-300">
+              Forgot password?
+            </a>
+          </div>
+          
+          <div>
+            <Button
+              type="submit"
+              className="w-full flex justify-center py-2 px-4 bg-orange-500 hover:bg-orange-600 text-white"
+              disabled={isLoading}
+            >
+              {isLoading ? 'Signing in...' : 'Sign in'}
+            </Button>
+          </div>
+            <div className="text-center mt-4">
+            <p className="text-sm text-gray-300">
+              Don't have an account?{' '}
+              <button
+                onClick={() => navigate('/register')}
+                className="font-medium text-orange-400 hover:text-orange-300 bg-transparent border-none cursor-pointer p-0"
+              >
+                Sign up
+              </button>
+            </p>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+export default LoginPage;
