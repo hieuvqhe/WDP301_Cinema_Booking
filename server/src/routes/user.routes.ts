@@ -116,39 +116,7 @@ usersRouter.get('/:username', wrapAsync(getProfileByUserNameController))
  */
 usersRouter.get('/profile/:user_id', wrapAsync(getProfileByIdController))
 
-/**
- * Description:get following
- * Path: /following
- * method: get
- * body: {user_id: string}
- */
-usersRouter.get('/me/following', AccessTokenValidator, verifiedUserValidator, wrapAsync(getFollowingController))
 
-/**
- * Description:get followers
- * Path: /followers
- * method: get
- * body: {user_id: string}
- */
-usersRouter.get('/me/followers', AccessTokenValidator, verifiedUserValidator, wrapAsync(getFollowersController))
-
-/**
- * Description: follow someone
- * Path: /follow
- * method: post
- * body: {user_id: string}
- * Header: {followed_user_id: string}
- */
-usersRouter.post('/follow', AccessTokenValidator, verifiedUserValidator, followValidator, wrapAsync(followController))
-
-/**
- * Description:un follow someone
- * Path: /un-follow
- * method: post
- * body: {user_id: string}
- * Header: {followed_user_id: string}
- */
-usersRouter.delete('/un-follow', AccessTokenValidator, verifiedUserValidator, followValidator, wrapAsync(UnController))
 
 /**
  * Description: change password
