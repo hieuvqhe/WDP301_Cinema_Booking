@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Button } from '../../components/ui/button';
 import { useAuthStore } from '../../store/useAuthStore';
+import { resendOtpCode } from '../../apis/user.api';
 import { Mail, RefreshCw, Ticket } from 'lucide-react';
 
 const VerifyPage = () => {
@@ -49,24 +50,26 @@ const VerifyPage = () => {
       // Clear OTP field for retry
       setOtpCode('');
     }
-  };
-
-  // Function to resend OTP code
+  };  // Function to resend OTP code
   const handleResendOtp = async () => {
     if (!email && !tempEmail) {
       toast.error('Email address is missing');
       return;
     }
     
-    toast.loading('Sending new verification code...');
-    // This would typically call an API to resend the OTP
-    // For now, we'll just redirect to register page
+    const emailToUse = email || tempEmail || '';
     
-    setTimeout(() => {
+    try {
+      toast.loading('Sending new verification code...');
+      await resendOtpCode(emailToUse);
       toast.dismiss();
-      toast.error('Please register again to receive a new code');
-      navigate('/register');
-    }, 2000);
+      toast.success('New verification code sent to your email');
+      setOtpCode(''); // Clear the current OTP input
+    } catch (error) {
+      toast.dismiss();
+      const errorMessage = error instanceof Error ? error.message : 'Failed to send verification code';
+      toast.error(errorMessage);
+    }
   };
 
   return (

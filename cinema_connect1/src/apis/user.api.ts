@@ -1,4 +1,3 @@
-
 import axios from 'axios';
 import type { 
   LoginResponse, 
@@ -20,9 +19,26 @@ export const registerUser = async (userData: RegisterUserType) => {
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
-      throw new Error(error.response?.data?.message || 'Registration failed');
+      // Check if it's a network error or server error
+      if (error.code === 'NETWORK_ERROR' || !error.response) {
+        throw new Error('Network error. Please check your internet connection.');
+      }
+      
+      // Handle different status codes
+      const status = error.response?.status;
+      const message = error.response?.data?.message;
+      
+      if (status === 400) {
+        throw new Error(message || 'Invalid registration data. Please check your information.');
+      } else if (status === 409) {
+        throw new Error(message || 'Email already exists. Please use a different email.');
+      } else if (status === 500) {
+        throw new Error('Server error. Please try again later.');
+      } else {
+        throw new Error(message || 'Failed to send verification email. Please try again.');
+      }
     }
-    throw new Error('Registration failed');
+    throw new Error('Failed to send verification email. Please try again.');
   }
 };
 
@@ -55,6 +71,31 @@ export const loginUser = async (credentials: UserLoginType) => {
       throw new Error(error.response?.data?.message || 'Login failed');
     }
     throw new Error('Login failed');
+  }
+};
+
+// API for resending OTP verification code
+export const resendOtpCode = async (email: string) => {
+  try {
+    const response = await axios.post(
+      `${BASE_URL}/users/resend-otp`,
+      { email }
+    );
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const status = error.response?.status;
+      const message = error.response?.data?.message;
+      
+      if (status === 404) {
+        throw new Error('Email not found. Please register first.');
+      } else if (status === 429) {
+        throw new Error('Too many requests. Please wait before requesting a new code.');
+      } else {
+        throw new Error(message || 'Failed to send verification code');
+      }
+    }
+    throw new Error('Failed to send verification code');
   }
 };
 

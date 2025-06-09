@@ -1,19 +1,14 @@
-import React, { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/button';
 import { useAuthStore } from '../../store/useAuthStore';
 // Import icons for cinema theme
-import { Ticket, User, Mail, Lock, Phone, MapPin, ArrowRight, ArrowLeft, RefreshCw } from 'lucide-react';
+import { Ticket, User, Mail, Lock, Phone, MapPin, ArrowRight, ArrowLeft } from 'lucide-react';
 
 const RegisterPage = () => {
   const navigate = useNavigate();
-  
-  // Function to navigate to login page
-  const navigateToLogin = () => {
-    navigate('/login');
-  };
-  const { register, error, isLoading, tempEmail, verifyOtp } = useAuthStore();
+    const { register, error, isLoading } = useAuthStore();
   
   // Step state for multi-step form (0: basic info, 1: address info)
   const [currentStep, setCurrentStep] = useState(0);
@@ -34,15 +29,29 @@ const RegisterPage = () => {
       zipCode: ''
     }
   });
-  // OTP verification state - handled in separate verification page now
-  const [otpCode, setOtpCode] = useState('');
-  
-  // State to control whether to show OTP form or registration form
-  const [showOtpForm, setShowOtpForm] = useState(false);
-  
-  // Form validation state
+    // Form validation state
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // Clear form and errors when component mounts
+  useEffect(() => {
+    setFormData({
+      name: '',
+      email: '',
+      password: '',
+      confirm_password: '',
+      date_of_birth: '',
+      phone: '',
+      address: {
+        street: '',
+        city: '',
+        state: '',
+        country: '',
+        zipCode: ''
+      }
+    });
+    setErrors({});
+    setCurrentStep(0);
+  }, []);
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     
@@ -61,6 +70,14 @@ const RegisterPage = () => {
       setFormData({
         ...formData,
         [name]: value
+      });
+    }
+    
+    // Clear error for this field when user starts typing
+    if (errors[name]) {
+      setErrors({
+        ...errors,
+        [name]: ''
       });
     }
   };
@@ -120,92 +137,30 @@ const RegisterPage = () => {
     return Object.keys(newErrors).length === 0;
   };  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Form submitted!');
-    console.log('Form data:', formData);
     
     if (!validateForm()) {
-      console.log('Form validation failed');
       toast.error('Please fix form errors before submitting');
       return;
     }
     
-    console.log('Form validation passed, calling register...');
-    // Call register and store the result
-    const success = await register(formData);
-    
-    if (success) {
-      console.log('Registration successful');
-      toast.success('Registration successful! Please verify your email.');
-      // Show the OTP form instead of navigating away
-      setShowOtpForm(true);
-      setTimeout(() => {
-        navigate(`/verify?email=${encodeURIComponent(formData.email)}`);
-      }, 1000);
-    } else if (error) {
-      console.log('Registration failed with error:', error);
-      toast.error(error);
+    try {
+      const success = await register(formData);
+      
+      if (success) {
+        toast.success('Registration successful! Check your email for verification code.');
+        // Navigate to verify page with email parameter
+        setTimeout(() => {
+          navigate(`/verify?email=${encodeURIComponent(formData.email)}`);
+        }, 1500);
+      } else {
+        const errorMessage = error || 'Registration failed';
+        toast.error(errorMessage);
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Registration failed';
+      toast.error(errorMessage);
     }
-  };const handleOtpSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!otpCode || otpCode.length !== 6) {
-      toast.error('Please enter a valid 6-digit OTP code');
-      return;
-    }
-    
-    toast.loading('Verifying your email...');
-    
-    const success = await verifyOtp({
-      email: tempEmail || formData.email,
-      otpVerify: otpCode
-    });
-    
-    toast.dismiss();
-    
-    if (success) {
-      toast.success('Email verified successfully! Your account has been created.');
-      // Delay navigation to allow the user to see the success message
-      setTimeout(() => {
-        navigateToLogin();
-      }, 2000);
-    } else if (error) {
-      toast.error(error);
-      // Clear OTP field for retry
-      setOtpCode('');
-    }
-  };
-    // Function to resend OTP code
-  const handleResendOtp = async () => {
-    if (!tempEmail && !formData.email) {
-      toast.error('Email address is missing');
-      return;
-    }
-    
-    // Set loading state for resend button
-    const email = tempEmail || formData.email;
-    const promise = new Promise((resolve, reject) => {
-      // Re-register to trigger a new OTP code
-      register({
-        ...formData,
-        email // ensure we use the correct email
-      })
-        .then(() => {
-          // Clear the OTP field for new input
-          setOtpCode('');
-          resolve('New verification code sent to your email');
-        })
-        .catch((err) => {
-          reject(new Error(err instanceof Error ? err.message : 'Failed to send verification code'));
-        });
-    });
-    
-    toast.promise(promise, {
-      loading: 'Sending new verification code...',
-      success: (message) => message as string,
-      error: (err) => err.message
-    });
-  };
-  // Function to handle next step
+  };  // Function to handle next step
   const handleNextStep = () => {
     // Validate first step fields before proceeding
     if (currentStep === 0) {
@@ -234,8 +189,12 @@ const RegisterPage = () => {
       
       if (Object.keys(basicInfoErrors).length > 0) {
         setErrors(basicInfoErrors);
+        toast.error('Please fix the errors before proceeding');
         return;
       }
+      
+      // Clear any existing errors if validation passes
+      setErrors({});
     }
     
     setCurrentStep(1);
@@ -244,6 +203,8 @@ const RegisterPage = () => {
   // Function to go back to previous step
   const handlePreviousStep = () => {
     setCurrentStep(0);
+    // Clear errors when going back
+    setErrors({});
   };
   
   return (
@@ -255,9 +216,8 @@ const RegisterPage = () => {
           </div>
           <h1 className="text-3xl font-bold text-orange-400">Cinema Connect</h1>
           <p className="mt-2 text-gray-300">Sign up to book your favorite movies!</p>
-        </div>
-        
-        {!showOtpForm ? (          <form onSubmit={handleSubmit} className="space-y-5">
+        </div>        
+        <form onSubmit={handleSubmit} className="space-y-5">
             {/* Step indicator */}
             <div className="flex justify-between mb-2">
               <div className="flex items-center">
@@ -526,67 +486,22 @@ const RegisterPage = () => {
                   </Button>
                 </div>
               </div>
-            )}
-              <div className="text-center mt-4">
+            )}              <div className="text-center mt-4">
               <p className="text-sm text-gray-300">
                 Already have an account?{' '}
                 <button 
-                  onClick={() => navigate('/login')}
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate('/login');
+                  }}
                   className="font-medium text-orange-400 hover:text-orange-300 bg-transparent border-none cursor-pointer p-0"
                 >
                   Sign in
-                </button>
-              </p>
+                </button>            </p>
             </div>
           </form>
-        ) : (          <form onSubmit={handleOtpSubmit} className="space-y-6">
-            <div className="text-center mb-4">
-              <div className="flex justify-center mb-3">
-                <Mail size={30} className="text-orange-400" />
-              </div>
-              <h2 className="text-xl font-medium text-orange-400">Verify Your Email</h2>
-              <p className="mt-2 text-sm text-gray-300">
-                We've sent a 6-digit code to {tempEmail || formData.email}.<br />The code is valid for 2 minutes.
-              </p>
-            </div>
-            
-            <div>
-              <label htmlFor="otp" className="block text-sm font-medium text-gray-200">
-                Enter Verification Code
-              </label>
-              <input
-                type="text"
-                id="otp"
-                name="otp"
-                maxLength={6}
-                value={otpCode}
-                onChange={(e) => setOtpCode(e.target.value)}
-                className="mt-1 block w-full px-3 py-2 border border-gray-600 bg-gray-700 rounded-md shadow-sm text-center text-2xl tracking-widest focus:outline-none focus:ring-orange-500 focus:border-orange-500 text-white letter-spacing-4"
-              />
-            </div>
-              <div>
-              <Button
-                type="submit"
-                className="w-full flex justify-center py-2 px-4 bg-orange-500 hover:bg-orange-600 text-white"
-                disabled={isLoading}
-              >
-                {isLoading ? 'Verifying...' : 'Verify Email'}
-              </Button>
-            </div>
-
-            <div className="text-center mt-4 flex items-center justify-center">
-              <button 
-                type="button"
-                onClick={handleResendOtp}
-                className="text-orange-400 hover:text-orange-300 text-sm flex items-center"
-                disabled={isLoading}
-              >
-                <RefreshCw size={14} className="mr-1" />
-                Resend verification code
-              </button>
-            </div>
-          </form>
-        )}
+        
       </div>
     </div>  );
 };
