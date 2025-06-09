@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/button';
@@ -29,10 +29,29 @@ const RegisterPage = () => {
       zipCode: ''
     }
   });
-  
-  // Form validation state
+    // Form validation state
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // Clear form and errors when component mounts
+  useEffect(() => {
+    setFormData({
+      name: '',
+      email: '',
+      password: '',
+      confirm_password: '',
+      date_of_birth: '',
+      phone: '',
+      address: {
+        street: '',
+        city: '',
+        state: '',
+        country: '',
+        zipCode: ''
+      }
+    });
+    setErrors({});
+    setCurrentStep(0);
+  }, []);
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     
@@ -51,6 +70,14 @@ const RegisterPage = () => {
       setFormData({
         ...formData,
         [name]: value
+      });
+    }
+    
+    // Clear error for this field when user starts typing
+    if (errors[name]) {
+      setErrors({
+        ...errors,
+        [name]: ''
       });
     }
   };
@@ -110,34 +137,28 @@ const RegisterPage = () => {
     return Object.keys(newErrors).length === 0;
   };  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Form submitted!');
-    console.log('Form data:', formData);
     
     if (!validateForm()) {
-      console.log('Form validation failed');
       toast.error('Please fix form errors before submitting');
       return;
     }
     
-    console.log('Form validation passed, calling register...');
-    
-    toast.loading('Creating your account...');
-    
-    // Call register and store the result
-    const success = await register(formData);
-    
-    toast.dismiss();
-    
-    if (success) {
-      console.log('Registration successful');
-      toast.success('Registration successful! Check your email for verification code.');
-      // Navigate to verify page with email parameter
-      setTimeout(() => {
-        navigate(`/verify?email=${encodeURIComponent(formData.email)}`);
-      }, 1500);
-    } else if (error) {
-      console.log('Registration failed with error:', error);
-      toast.error(error);
+    try {
+      const success = await register(formData);
+      
+      if (success) {
+        toast.success('Registration successful! Check your email for verification code.');
+        // Navigate to verify page with email parameter
+        setTimeout(() => {
+          navigate(`/verify?email=${encodeURIComponent(formData.email)}`);
+        }, 1500);
+      } else {
+        const errorMessage = error || 'Registration failed';
+        toast.error(errorMessage);
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Registration failed';
+      toast.error(errorMessage);
     }
   };  // Function to handle next step
   const handleNextStep = () => {
@@ -168,8 +189,12 @@ const RegisterPage = () => {
       
       if (Object.keys(basicInfoErrors).length > 0) {
         setErrors(basicInfoErrors);
+        toast.error('Please fix the errors before proceeding');
         return;
       }
+      
+      // Clear any existing errors if validation passes
+      setErrors({});
     }
     
     setCurrentStep(1);
@@ -178,6 +203,8 @@ const RegisterPage = () => {
   // Function to go back to previous step
   const handlePreviousStep = () => {
     setCurrentStep(0);
+    // Clear errors when going back
+    setErrors({});
   };
   
   return (
@@ -459,12 +486,15 @@ const RegisterPage = () => {
                   </Button>
                 </div>
               </div>
-            )}
-              <div className="text-center mt-4">
+            )}              <div className="text-center mt-4">
               <p className="text-sm text-gray-300">
                 Already have an account?{' '}
                 <button 
-                  onClick={() => navigate('/login')}
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate('/login');
+                  }}
                   className="font-medium text-orange-400 hover:text-orange-300 bg-transparent border-none cursor-pointer p-0"
                 >
                   Sign in

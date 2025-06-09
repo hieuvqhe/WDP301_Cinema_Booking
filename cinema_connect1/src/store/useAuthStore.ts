@@ -110,3 +110,17 @@ export const useAuthStore = create<AuthState>()(
     )
   )
 );
+
+// Helper function to get redirect path based on user role
+export const getRedirectPathByRole = (role: "staff" | "admin" | "customer"): string => {
+  switch (role) {
+    case "customer":
+      return "/home";
+    case "staff":
+      return "/partner";
+    case "admin":
+      return "/admin";
+    default:
+      return "/home";
+  }
+};

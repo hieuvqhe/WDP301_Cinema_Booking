@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/button';
-import { useAuthStore } from '../../store/useAuthStore';
+import { useAuthStore, getRedirectPathByRole } from '../../store/useAuthStore';
 // Import icons for cinema theme
-import { Ticket, User, Mail, Lock } from 'lucide-react';
+import { Ticket, Mail, Lock } from 'lucide-react';
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -15,16 +15,31 @@ const LoginPage = () => {
     email: '',
     password: '',
   });
-  
-  // Form validation state
+    // Form validation state
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // Clear form and errors when component mounts
+  useEffect(() => {
+    setFormData({
+      email: '',
+      password: '',
+    });
+    setErrors({});
+  }, []);
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData({
       ...formData,
       [name]: value
     });
+    
+    // Clear error for this field when user starts typing
+    if (errors[name]) {
+      setErrors({
+        ...errors,
+        [name]: ''
+      });
+    }
   };
 
   const validateForm = () => {
@@ -45,38 +60,49 @@ const LoginPage = () => {
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  };
-  const handleSubmit = async (e: React.FormEvent) => {
+  };  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!validateForm()) {
       toast.error('Please fix form errors before submitting');
       return;
     }
-    
-    const promise = new Promise<string>((resolve, reject) => {
-      login(formData)
-        .then((success) => {
-          if (success) {
-            resolve('Login successful! Redirecting...');
-            // Navigate to home page after successful login
-            setTimeout(() => {
-              navigate('/movies'); // Assuming '/movies' is the home page
-            }, 1500); // Slight delay to show the success message
-          } else {
-            reject(new Error(error || 'Login failed'));
-          }
-        })
-        .catch((err) => {
-          reject(new Error(err instanceof Error ? err.message : 'Login failed'));
-        });
-    });
-    
-    toast.promise(promise, {
-      loading: 'Logging in...',
-      success: (message) => message,
-      error: (err) => err.message
-    });
+
+    try {
+      const success = await login(formData);
+      
+      if (success) {
+        toast.success('Login successful! Redirecting...');
+        // Get user from store after successful login
+        const currentUser = useAuthStore.getState().user;
+        if (currentUser) {
+          const redirectPath = getRedirectPathByRole(currentUser.role);
+          setTimeout(() => {
+            navigate(redirectPath);
+          }, 1500);
+        } else {
+          // Fallback to default home if user data is not available
+          setTimeout(() => {
+            navigate('/home');
+          }, 1500);
+        }
+      } else {
+        // Handle specific error messages from API
+        const errorMessage = error || 'Login failed';
+        if (errorMessage.toLowerCase().includes('email') || errorMessage.toLowerCase().includes('user not found')) {
+          setErrors({ email: 'Email not found or invalid' });
+          toast.error('Email not found or invalid');
+        } else if (errorMessage.toLowerCase().includes('password') || errorMessage.toLowerCase().includes('incorrect')) {
+          setErrors({ password: 'Incorrect password' });
+          toast.error('Incorrect password');
+        } else {
+          toast.error(errorMessage);
+        }
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
+      toast.error(errorMessage);
+    }
   };
 
   return (
@@ -149,12 +175,15 @@ const LoginPage = () => {
             >
               {isLoading ? 'Signing in...' : 'Sign in'}
             </Button>
-          </div>
-            <div className="text-center mt-4">
+          </div>            <div className="text-center mt-4">
             <p className="text-sm text-gray-300">
               Don't have an account?{' '}
               <button
-                onClick={() => navigate('/register')}
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  navigate('/register');
+                }}
                 className="font-medium text-orange-400 hover:text-orange-300 bg-transparent border-none cursor-pointer p-0"
               >
                 Sign up
