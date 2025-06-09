@@ -1,0 +1,151 @@
+import { Router } from 'express'
+import {
+  changePasswordController,
+  emailVerifyController,
+  followController,
+  forgotPasswordController,
+  getFollowersController,
+  getFollowingController,
+  getMeController,
+  getProfileByIdController,
+  getProfileByUserNameController,
+  loginController,
+  logoutController,
+  oauthController,
+  refreshTokenController,
+  registerController,
+  resendVerifyEmailController,
+  resetPasswordController,
+  UnController,
+  updateMeController,
+  getAllUsersController,
+  VerifyForgotPasswordController,
+  searchUsersByNameController,
+  verifyEmailCodeController,
+  verifyRegistrationCodeController,
+  checkRegistrationStatusController
+} from '../controllers/users.controllers'
+import {
+  AccessTokenValidator,
+  changePasswordValidator,
+  emailVerifyTokenValidator,
+  followValidator,
+  forgotPasswordValidator,
+  loginValidator,
+  RefreshTokenValidator,
+  registerValidator,
+  resetPasswordValidator,
+  updateMeValidator,
+  verifiedUserValidator,
+  verifyForgotPasswordTokenValidator
+} from '../middlewares/users.middlewares'
+import { wrapAsync } from '../utils/handler'
+
+const usersRouter = Router()
+
+usersRouter.post('/login', loginValidator, wrapAsync(loginController))
+usersRouter.get('/oauth/google', wrapAsync(oauthController))
+usersRouter.post('/verify_status_user', wrapAsync(verifyEmailCodeController))
+usersRouter.post('/register', registerValidator,wrapAsync(registerController))
+usersRouter.post('/logout', AccessTokenValidator, RefreshTokenValidator, wrapAsync(logoutController))
+usersRouter.get('/get_all_user',AccessTokenValidator, wrapAsync(getAllUsersController))
+/**
+ * Description: refresh token
+ * Path: /refresh-token
+ * method: POST
+ * Header: {refresh_token: string}
+ */
+usersRouter.post('/refresh-token', RefreshTokenValidator, wrapAsync(refreshTokenController))
+
+usersRouter.post('/verify-email', emailVerifyTokenValidator, wrapAsync(emailVerifyController))
+usersRouter.post('/resend-verify-email', AccessTokenValidator, wrapAsync(resendVerifyEmailController))
+usersRouter.post('/forgot-password', forgotPasswordValidator, wrapAsync(forgotPasswordController))
+usersRouter.post(
+  '/verify-forgot-password',
+  verifyForgotPasswordTokenValidator,
+  wrapAsync(VerifyForgotPasswordController)
+)
+
+/**
+ * Description: Get all users
+ * Path: /all
+ * method: GET
+ * Header: {Authorization: Bearer <access_token>}
+ */
+usersRouter.get('/all', wrapAsync(getAllUsersController))
+
+/**
+ * Description: Search users by name
+ * Path: /search
+ * Method: GET
+ * Query: { name: string, page?: number, limit?: number }
+ * Header: { Authorization: Bearer <access_token> }
+ */
+usersRouter.get('/search', wrapAsync(searchUsersByNameController))
+
+usersRouter.post('/reset-password', resetPasswordValidator, wrapAsync(resetPasswordController))
+
+/**
+ * Description: Get my profile
+ * Path: /me
+ * method: GET
+ * Header: {Authorization: Bearer <access_token>}
+ */
+usersRouter.get('/me', AccessTokenValidator, verifiedUserValidator, wrapAsync(getMeController))
+
+/**
+ * Description: Update my profile
+ * Path: /me
+ * method: PATCH
+ * Header: {Authorization: Bearer <access_token>}
+ * body: User Schema
+ */
+usersRouter.patch('/me', AccessTokenValidator, verifiedUserValidator, updateMeValidator, wrapAsync(updateMeController))
+
+/**
+ * Description: get user profile by username
+ * Path: /:username
+ * method: GET
+ */
+usersRouter.get('/:username', wrapAsync(getProfileByUserNameController))
+
+/**
+ * Description: get user profile by _id
+ * Path: /:username
+ * method: GET
+ */
+usersRouter.get('/profile/:user_id', wrapAsync(getProfileByIdController))
+
+
+
+/**
+ * Description: change password
+ * Path: /change-password
+ * method: post
+ * body: {user_id: string ,password: string, confirm_password: string}
+ */
+usersRouter.post(
+  '/change-password',
+  AccessTokenValidator,
+  verifiedUserValidator,
+  changePasswordValidator,
+  wrapAsync(changePasswordController)
+)
+usersRouter.post('/verify-email-code', wrapAsync(verifyEmailCodeController))
+
+/**
+ * Description: Verify registration code sent to email
+ * Path: /verify-registration
+ * method: POST
+ * body: { email: string, code: string }
+ */
+usersRouter.post('/verify-registration', wrapAsync(verifyRegistrationCodeController))
+
+/**
+ * Description: Check registration status and remaining time
+ * Path: /check-registration-status
+ * method: GET
+ * query: { email: string }
+ */
+usersRouter.get('/check-registration-status', wrapAsync(checkRegistrationStatusController))
+export default usersRouter
