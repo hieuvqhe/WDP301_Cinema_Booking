@@ -42,12 +42,12 @@ export const useAuthStore = create<AuthState>()(
             console.log('About to call registerUser API...');
             const response = await registerUser(userData);
             console.log('Registration API response:', response);
-            set({ tempEmail: userData.email });
-            set({ isLoading: false });
+            // Store the email for later use in OTP verification
+            set({ tempEmail: userData.email, isLoading: false });
             return true;
           } catch (error) {
             console.error('Registration error:', error);
-            let errorMessage = 'Registration failed';
+            let errorMessage = 'Failed to send verification email';
             if (error instanceof Error) {
               errorMessage = error.message;
             }
