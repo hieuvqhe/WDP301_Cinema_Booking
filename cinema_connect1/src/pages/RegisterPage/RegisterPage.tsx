@@ -3,6 +3,7 @@ import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/button';
 import { useAuthStore } from '../../store/useAuthStore';
+import MainLayout from '../../components/layout/MainLayout';
 // Import icons for cinema theme
 import { Ticket, User, Mail, Lock, Phone, MapPin, ArrowRight, ArrowLeft } from 'lucide-react';
 
@@ -205,11 +206,11 @@ const RegisterPage = () => {
     setCurrentStep(0);
     // Clear errors when going back
     setErrors({});
-  };
-  
-  return (
-    <div className="min-h-screen bg-gray-900 py-8 px-4 sm:px-6 lg:px-8 flex justify-center items-center">
-      <div className="max-w-md w-full bg-gray-800 p-8 rounded-lg shadow-lg text-white">
+  };  return (
+    <MainLayout showHeader={true} showFooter={true}>
+      <div className="py-16 px-4 sm:px-6 lg:px-8 flex justify-center items-center bg-gray-900"
+           style={{ minHeight: 'calc(100vh - 160px)' }}>
+        <div className="max-w-md w-full bg-gray-800 p-8 rounded-lg shadow-lg text-white">
         <div className="text-center mb-6">
           <div className="flex justify-center mb-3">
             <Ticket size={40} className="text-orange-400" />
@@ -500,10 +501,11 @@ const RegisterPage = () => {
                   Sign in
                 </button>            </p>
             </div>
-          </form>
-        
+          </form>        
       </div>
-    </div>  );
+    </div>
+    </MainLayout>
+  );
 };
 
 export default RegisterPage;

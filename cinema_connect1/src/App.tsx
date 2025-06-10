@@ -22,8 +22,8 @@ function App() {
         <Route path="/admin" element={<AdminPage />} />
      
         {/* Default routes */}
-        <Route path="/" element={<Navigate to="/login" replace />} />
-        <Route path="*" element={<Navigate to="/login" replace />} />
+        <Route path="/" element={<Navigate to="/home" replace />} />
+        <Route path="*" element={<Navigate to="/home" replace />} />
       </Routes>
     </Router>
   )

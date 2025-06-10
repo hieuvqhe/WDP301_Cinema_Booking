@@ -3,6 +3,7 @@ import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/button';
 import { useAuthStore, getRedirectPathByRole } from '../../store/useAuthStore';
+import MainLayout from '../../components/layout/MainLayout';
 // Import icons for cinema theme
 import { Ticket, Mail, Lock } from 'lucide-react';
 
@@ -103,11 +104,11 @@ const LoginPage = () => {
       const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
       toast.error(errorMessage);
     }
-  };
-
-  return (
-    <div className="min-h-screen bg-gray-900 py-8 px-4 sm:px-6 lg:px-8 flex justify-center items-center">
-      <div className="max-w-md w-full bg-gray-800 p-8 rounded-lg shadow-lg text-white">
+  };  return (
+    <MainLayout showHeader={true} showFooter={true}>
+      <div className="py-16 px-4 sm:px-6 lg:px-8 flex justify-center items-center bg-gray-900"
+           style={{ minHeight: 'calc(100vh - 160px)' }}>
+        <div className="max-w-md w-full bg-gray-800 p-8 rounded-lg shadow-lg text-white">
         <div className="text-center mb-6">
           <div className="flex justify-center mb-3">
             <Ticket size={40} className="text-orange-400" />
@@ -189,10 +190,10 @@ const LoginPage = () => {
                 Sign up
               </button>
             </p>
-          </div>
-        </form>
+          </div>        </form>
       </div>
     </div>
+    </MainLayout>
   );
 };
 
