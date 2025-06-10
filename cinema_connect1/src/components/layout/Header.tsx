@@ -1,243 +1,207 @@
-import { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuthStore } from '../../store/useAuthStore';
-import { Button } from '../ui/button';
-import {
-  NavigationMenu,
-  NavigationMenuContent,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-  NavigationMenuTrigger,
-} from '../ui/navigation-menu';
-import { 
-  Ticket, 
-  Film, 
-  Calendar, 
-  MapPin, 
-  Star, 
-  User, 
-  LogOut,
-  Search,
-  Menu,
-  X
-} from 'lucide-react';
+import { AnimatePresence, motion } from "framer-motion";
+import { useState } from "react";
+import { FiLinkedin, FiMenu, FiTwitter, FiX } from "react-icons/fi";
+import { HiOutlineTicket } from "react-icons/hi2";
+import { IoSearchOutline } from "react-icons/io5";
+import { headerItems } from "../../const/index";
+import { FiUser } from "react-icons/fi";
+import LoginModal from "./LoginModal";
+import { IoIosArrowUp } from "react-icons/io";
+import {useNavigate } from "react-router-dom";
 
 const Header = () => {
+  // Toogle the Menu open/close
+  const [isOpen, setIsOpen] = useState(false);
+  const toggleMenu = () => setIsOpen(!isOpen);
   const navigate = useNavigate();
-  const location = useLocation();
-  const { user, logout } = useAuthStore();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  const handleLogout = async () => {
-    await logout();
-    navigate('/login');
-  };
+  // State to track if the contact form is open
+  const [signInFormOpen, setsignInFormOpen] = useState(false);
 
-  const navigationItems = [
-    {
-      title: "Phim",
-      href: "/movies",
-      icon: Film,
-      children: [
-        { title: "Phim đang chiếu", href: "/movies/now-showing", description: "Xem các bộ phim đang chiếu tại rạp" },
-        { title: "Phim sắp chiếu", href: "/movies/coming-soon", description: "Khám phá những bộ phim sắp ra mắt" },
-        { title: "Phim IMAX", href: "/movies/imax", description: "Trải nghiệm điện ảnh với công nghệ IMAX" },
-        { title: "Phim 3D", href: "/movies/3d", description: "Các bộ phim với công nghệ 3D sống động" }
-      ]
-    },
-    {
-      title: "Rạp",
-      href: "/theaters",
-      icon: MapPin,
-      children: [
-        { title: "Rạp CGV", href: "/theaters/cgv", description: "Hệ thống rạp CGV toàn quốc" },
-        { title: "Rạp Galaxy", href: "/theaters/galaxy", description: "Chuỗi rạp Galaxy Cinema" },
-        { title: "Rạp Lotte", href: "/theaters/lotte", description: "Lotte Cinema với nhiều ưu đãi" },
-        { title: "Rạp BHD", href: "/theaters/bhd", description: "BHD Star Cineplex" }
-      ]
-    },
-    {
-      title: "Lịch chiếu",
-      href: "/showtimes",
-      icon: Calendar,
-      children: [
-        { title: "Hôm nay", href: "/showtimes/today", description: "Lịch chiếu phim trong ngày" },
-        { title: "Tuần này", href: "/showtimes/week", description: "Lịch chiếu cả tuần" },
-        { title: "Đặt vé nhanh", href: "/booking/quick", description: "Đặt vé chỉ với vài click" }
-      ]
-    },
-    {
-      title: "Ưu đãi",
-      href: "/promotions",
-      icon: Star,
-      children: [
-        { title: "Khuyến mãi", href: "/promotions/deals", description: "Các chương trình khuyến mãi hot" },
-        { title: "Combo ưu đãi", href: "/promotions/combos", description: "Combo bắp nước giá tốt" },
-        { title: "Thành viên VIP", href: "/promotions/vip", description: "Ưu đãi dành cho thành viên" }
-      ]
-    }
-  ];
-
-  const isActivePath = (path: string) => {
-    return location.pathname === path || location.pathname.startsWith(path + '/');
-  };
-
+  const openSignInForm = () => setsignInFormOpen(true);
+  const closeSignInForm = () => setsignInFormOpen(false);
   return (
-    <header className="bg-gray-900 border-b border-gray-800 sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <div className="flex items-center space-x-3">
-            <button
-              onClick={() => navigate('/')}
-              className="flex items-center space-x-2 text-orange-400 hover:text-orange-300 transition-colors"
-            >
-              <Ticket size={32} />
-              <span className="text-xl font-bold">Cinema Connect</span>
-            </button>
+    <header
+      className="fixed w-full h-fit z-50 transition-all 
+    duration-300 border-b-gray-600 border-b-[1px] bg-gradient-to-r from-violet-900 to-gray-800"
+    >
+      <div
+        className="container mx-auto px-4 sm:px-6 
+      lg:px-8 flex items-center justify-between h-16 md:h-20"
+      >
+        {/* logo name */}
+        <motion.div
+          initial={{ opacity: 0, x: -100 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{
+            type: "spring",
+            stiffness: 100,
+            damping: 25,
+            delay: 0.3,
+            duration: 1.2,
+          }}
+          className="flex items-center cursor-pointer"
+          onClick={() => navigate('/home')}
+        >
+          <div
+            className="h-10 w-10 rounded-xl bg-gradient-to-r from-gray-500 to-gray-100
+            flex items-center justify-center text-purple-600 font-bold text-xl mr-3"
+          >
+            <HiOutlineTicket className="h-6 w-6" />
           </div>
 
-          {/* Desktop Navigation */}
-          <div className="hidden md:block">
-            <NavigationMenu>
-              <NavigationMenuList>
-                {navigationItems.map((item) => (
-                  <NavigationMenuItem key={item.title}>
-                    <NavigationMenuTrigger 
-                      className={`bg-transparent text-gray-300 hover:text-white hover:bg-gray-800 data-[state=open]:bg-gray-800 data-[state=open]:text-white ${
-                        isActivePath(item.href) ? 'text-orange-400 bg-gray-800' : ''
-                      }`}
-                    >
-                      <item.icon size={16} className="mr-2" />
-                      {item.title}
-                    </NavigationMenuTrigger>
-                    <NavigationMenuContent>
-                      <div className="grid w-[400px] gap-3 p-4 bg-gray-800 border-gray-700">
-                        {item.children.map((child) => (
-                          <NavigationMenuLink
-                            key={child.title}
-                            onClick={() => navigate(child.href)}
-                            className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-gray-700 hover:text-orange-400 focus:bg-gray-700 focus:text-orange-400 cursor-pointer"
-                          >
-                            <div className="text-sm font-medium leading-none text-white">
-                              {child.title}
-                            </div>
-                            <p className="line-clamp-2 text-sm leading-snug text-gray-400">
-                              {child.description}
-                            </p>
-                          </NavigationMenuLink>
-                        ))}
-                      </div>
-                    </NavigationMenuContent>
-                  </NavigationMenuItem>
-                ))}
-              </NavigationMenuList>
-            </NavigationMenu>
-          </div>
+          <span
+            className="text-xl font-bold bg-gradient-to-r from-gray-300 to-gray-100
+            bg-clip-text text-transparent"
+          >
+            Cinema Connect
+          </span>
+        </motion.div>
 
-          {/* Search Bar */}
-          <div className="hidden md:flex items-center flex-1 max-w-md mx-8">
-            <div className="relative w-full">
-              <Search size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Tìm phim, rạp..."
-                className="w-full pl-10 pr-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-              />
-            </div>
-          </div>
-
-          {/* User Actions */}
-          <div className="flex items-center space-x-4">
-            {user ? (
-              <div className="flex items-center space-x-3">
-                <div className="text-right hidden sm:block">
-                  <p className="text-sm font-medium text-white">{user.name}</p>
-                  <span className={`text-xs px-2 py-1 rounded-full ${
-                    user.role === 'admin' ? 'bg-red-600 text-white' :
-                    user.role === 'staff' ? 'bg-blue-600 text-white' :
-                    'bg-green-600 text-white'
-                  }`}>
-                    {user.role.toUpperCase()}
-                  </span>
+        {/* Destop navigation */}
+        <nav className="lg:flex hidden space-x-8">
+          {headerItems.map((item, index) => {
+            return (
+              <motion.a
+                key={index}
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{
+                  type: "spring",
+                  stiffness: 100,
+                  damping: 20,
+                  delay: 0.7 + index * 0.2,
+                }}
+                href=""
+                className="relative text-gray-200 dark:text-gray-200
+                  hover:via-violet-600 dark:hover:text-violet-400 font-medium
+                  transition-colors duration-300 group"
+              >
+                <div className="flex items-center gap-2 group">
+                  {item.title}
+                  {item.content && item.content.length > 0 && (
+                    <span>
+                      <IoIosArrowUp className="rotate-180 group-hover:rotate-0 transition-all duration-300" />
+                    </span>
+                  )}
                 </div>
-                <Button
-                  onClick={handleLogout}
-                  variant="outline"
-                  size="sm"
-                  className="text-gray-300 border-gray-600 hover:bg-gray-700 hover:text-white"
-                >
-                  <LogOut size={16} />
-                </Button>
-              </div>
-            ) : (
-              <div className="flex items-center space-x-2">
-                <Button
-                  onClick={() => navigate('/login')}
-                  variant="outline"
-                  size="sm"
-                  className="text-gray-300 border-gray-600 hover:bg-gray-700 hover:text-white"
-                >
-                  <User size={16} className="mr-1" />
-                  Đăng nhập
-                </Button>
-                <Button
-                  onClick={() => navigate('/register')}
-                  size="sm"
-                  className="bg-orange-500 hover:bg-orange-600 text-white"
-                >
-                  Đăng ký
-                </Button>
-              </div>
-            )}
 
-            {/* Mobile menu button */}
-            <button
-              className="md:hidden p-2 text-gray-300 hover:text-white"
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            >
-              {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-            </button>
-          </div>
+                <span
+                  className="absolute bottom-0 left-0 w-0 h-0.5
+                  bg-violet-600 group-hover:w-full transition-all
+                  duration-300"
+                ></span>
+              </motion.a>
+            );
+          })}
+        </nav>
+
+        {/* Navbar shortlink */}
+        <div className="md:flex hidden items-center space-x-1">
+          <motion.a
+            onClick={openSignInForm}
+            href="#"
+            initial={{ opacity: 0, scale: 0.5 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 1.3, duration: 0.8 }}
+            className="text-gray-700 dark:text-gray-300 hover:text-violet-600
+          dark:hover:text-violet-400 transition-colors duration-300"
+          >
+            <div className="h-fit w-fit p-2 rounded-full bg-gray-100">
+              <FiUser className="h-5 w-5" />
+            </div>
+          </motion.a>
+
+          {/* Search Button */}
+          <motion.button
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{
+              delay: 1.3,
+              duration: 0.8,
+              type: "spring",
+              stiffness: 100,
+              damping: 15,
+            }}
+            // onClick={openContactForm}
+            className="ml-4 px-4 py-2 rounded-xl bg-gradient-to-r from-gray-400 to-gray-100
+          text-violet-700 font-bold hover:from-violet-700 hover:to-purple-700
+          hover:text-white transition-all duration-500 cursor-pointer"
+          >
+            <IoSearchOutline />
+          </motion.button>
         </div>
 
-        {/* Mobile Navigation */}
-        {isMobileMenuOpen && (
-          <div className="md:hidden bg-gray-800 border-t border-gray-700 py-4">
-            {/* Mobile Search */}
-            <div className="px-4 pb-4">
-              <div className="relative">
-                <Search size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Tìm phim, rạp..."
-                  className="w-full pl-10 pr-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500"
-                />
-              </div>
-            </div>
-
-            {/* Mobile Menu Items */}
-            <div className="space-y-2 px-4">
-              {navigationItems.map((item) => (
-                <div key={item.title}>
-                  <button
-                    onClick={() => navigate(item.href)}
-                    className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-left transition-colors ${
-                      isActivePath(item.href) 
-                        ? 'bg-orange-600 text-white' 
-                        : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                    }`}
-                  >
-                    <item.icon size={18} />
-                    <span>{item.title}</span>
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+        {/* Mobile Menu Button */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.8 }}
+          className="md:hidden flex items-center"
+        >
+          <motion.button
+            whileTap={{ scale: 0.7 }}
+            onClick={toggleMenu}
+            className="text-gray-300 cursor-pointer"
+          >
+            {isOpen ? (
+              <FiX className="h-6 w-6" />
+            ) : (
+              <FiMenu className="h-6 w-6" />
+            )}
+          </motion.button>
+        </motion.div>
       </div>
+
+      {/* Mobile Menu */}
+      <motion.div
+        initial={{ opacity: 0, height: 0 }}
+        animate={{
+          opacity: isOpen ? 1 : 0,
+          height: isOpen ? "auto" : 0,
+        }}
+        transition={{ duration: 0.5 }}
+        className="md:hidden overflow-hidden bg-white dark:bg-gray-900 shadow-lg
+      px-4 py-5 space-y-5"
+      >
+        <nav className="flex flex-col space-y-3">
+          {["Home", "Home", "Home"].map((item, index) => (
+            <a href="#" key={index} className="text-gray-300 font-medium py-2">
+              {item}
+            </a>
+          ))}
+        </nav>
+
+        <div
+          className="pt-4 border-t border-gray-200 
+        dark:border-gray-700"
+        >
+          <div className="flex space-x-5">
+            <a href="#">
+              <FiUser className="h-5 w-5 text-gray-300" />
+            </a>
+            <a href="#">
+              <FiTwitter className="h-5 w-5 text-gray-300" />
+            </a>
+            <a href="#">
+              <FiLinkedin className="h-5 w-5 text-gray-300" />
+            </a>
+          </div>
+
+          <button
+            // onClick={openContactForm}
+            className="mt-4 block w-full px-4 py-2 rounded-lg
+          bg-gradient-to-r from-violet-600 to-violet-400 font-bold"
+          >
+            <IoSearchOutline />
+          </button>
+        </div>
+      </motion.div>
+
+      {/* Login Modal */}
+      <AnimatePresence>
+        {signInFormOpen && <LoginModal closeModal={closeSignInForm} />}
+      </AnimatePresence>
     </header>
   );
 };

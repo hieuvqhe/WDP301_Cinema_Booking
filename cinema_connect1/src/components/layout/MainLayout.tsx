@@ -14,7 +14,7 @@ const MainLayout = ({
   showFooter = true 
 }: MainLayoutProps) => {
   return (
-    <div className="min-h-screen bg-gray-900 flex flex-col">
+    <div className="min-h-screen bg-white flex flex-col">
       {showHeader && <Header />}
       
       <main className="flex-1">
