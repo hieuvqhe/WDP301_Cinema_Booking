@@ -1,24 +1,24 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Button } from '../../components/ui/button';
-import { useAuthStore } from '../../store/useAuthStore';
-import MainLayout from '../../components/layout/MainLayout';
-import { 
-  Play, 
-  Star, 
-  Clock, 
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Button } from "../../components/ui/button";
+import { useAuthStore } from "../../store/useAuthStore";
+import MainLayout from "../../components/layout/MainLayout";
+import {
+  Play,
+  Star,
+  Clock,
   Calendar,
   MapPin,
   Ticket,
   TrendingUp,
   Filter,
-  Search
-} from 'lucide-react';
+  Search,
+} from "lucide-react";
 
 const HomePage = () => {
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedCategory, setSelectedCategory] = useState("all");
 
   const movies = [
     {
@@ -29,7 +29,7 @@ const HomePage = () => {
       duration: "192 phút",
       genre: "Sci-Fi, Adventure",
       showtime: "14:30, 17:45, 20:00",
-      price: "120,000đ"
+      price: "120,000đ",
     },
     {
       id: 2,
@@ -39,15 +39,15 @@ const HomePage = () => {
       duration: "161 phút",
       genre: "Action, Drama",
       showtime: "15:00, 18:15, 21:30",
-      price: "130,000đ"
-    }
+      price: "130,000đ",
+    },
   ];
 
   const categories = [
-    { id: 'all', name: 'Tất cả' },
-    { id: 'action', name: 'Hành động' },
-    { id: 'drama', name: 'Chính kịch' },
-    { id: 'comedy', name: 'Hài kịch' }
+    { id: "all", name: "Tất cả" },
+    { id: "action", name: "Hành động" },
+    { id: "drama", name: "Chính kịch" },
+    { id: "comedy", name: "Hài kịch" },
   ];
 
   const handleBookTicket = (movieId: number) => {
@@ -56,11 +56,15 @@ const HomePage = () => {
 
   return (
     <MainLayout>
-      <section className="relative bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 py-20">
+      <section
+        className="h-screen bg-gradient-to-b from-violet-900 to-black flex xl:flex-row
+    flex-col-reverse items-center justify-between lg:px-24 px-10 relative
+    overflow-hidden gap-4"
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <h1 className="text-4xl md:text-6xl font-bold text-white mb-6">
-              Chào mừng đến với{' '}
+              Chào mừng đến với{" "}
               <span className="text-orange-400">Cinema Connect</span>
             </h1>
             <p className="text-xl text-gray-300 mb-8 max-w-3xl mx-auto">
@@ -75,15 +79,15 @@ const HomePage = () => {
               </div>
             )}
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button 
-                onClick={() => navigate('/movies')}
+              <Button
+                onClick={() => navigate("/movies")}
                 className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-3 text-lg"
               >
                 <Ticket className="mr-2" size={20} />
                 Đặt vé ngay
               </Button>
-              <Button 
-                onClick={() => navigate('/showtimes')}
+              <Button
+                onClick={() => navigate("/showtimes")}
                 variant="outline"
                 className="border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-white px-8 py-3 text-lg"
               >
@@ -105,8 +109,8 @@ const HomePage = () => {
                   onClick={() => setSelectedCategory(category.id)}
                   className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                     selectedCategory === category.id
-                      ? 'bg-orange-500 text-white'
-                      : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                      ? "bg-orange-500 text-white"
+                      : "bg-gray-700 text-gray-300 hover:bg-gray-600"
                   }`}
                 >
                   {category.name}
@@ -116,14 +120,20 @@ const HomePage = () => {
 
             <div className="flex items-center gap-4">
               <div className="relative">
-                <Search size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <Search
+                  size={18}
+                  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                />
                 <input
                   type="text"
                   placeholder="Tìm phim..."
                   className="pl-10 pr-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500"
                 />
               </div>
-              <Button variant="outline" className="border-gray-600 text-gray-300 hover:bg-gray-700">
+              <Button
+                variant="outline"
+                className="border-gray-600 text-gray-300 hover:bg-gray-700"
+              >
                 <Filter size={16} className="mr-2" />
                 Lọc
               </Button>
@@ -139,8 +149,8 @@ const HomePage = () => {
               <TrendingUp className="mr-3 text-orange-400" size={28} />
               Phim đang hot
             </h2>
-            <Button 
-              onClick={() => navigate('/movies')}
+            <Button
+              onClick={() => navigate("/movies")}
               variant="outline"
               className="border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-white"
             >
@@ -150,7 +160,10 @@ const HomePage = () => {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {movies.map((movie) => (
-              <div key={movie.id} className="bg-gray-800 rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-shadow group">
+              <div
+                key={movie.id}
+                className="bg-gray-800 rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-shadow group"
+              >
                 <div className="relative">
                   <img
                     src={movie.poster}
@@ -171,23 +184,27 @@ const HomePage = () => {
                     <span className="text-sm">{movie.rating}</span>
                   </div>
                 </div>
-                
+
                 <div className="p-4">
-                  <h3 className="text-white font-semibold text-lg mb-2">{movie.title}</h3>
+                  <h3 className="text-white font-semibold text-lg mb-2">
+                    {movie.title}
+                  </h3>
                   <p className="text-gray-400 text-sm mb-2">{movie.genre}</p>
-                  
+
                   <div className="flex items-center text-gray-400 text-sm mb-3">
                     <Clock size={14} className="mr-1" />
                     <span>{movie.duration}</span>
                     <span className="mx-2">•</span>
-                    <span className="text-orange-400 font-medium">{movie.price}</span>
+                    <span className="text-orange-400 font-medium">
+                      {movie.price}
+                    </span>
                   </div>
-                  
+
                   <div className="flex items-center text-gray-400 text-sm mb-4">
                     <MapPin size={14} className="mr-1" />
                     <span>Lịch chiếu: {movie.showtime}</span>
                   </div>
-                  
+
                   <Button
                     onClick={() => handleBookTicket(movie.id)}
                     className="w-full bg-orange-500 hover:bg-orange-600 text-white"
@@ -208,17 +225,19 @@ const HomePage = () => {
             Đối tác rạp chiếu phim
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8 items-center">
-            {['CGV', 'Galaxy', 'Lotte', 'BHD Star', 'Beta', 'Cinestar'].map((brand) => (
-              <div key={brand} className="text-center">
-                <div className="bg-gray-700 rounded-lg p-6 hover:bg-gray-600 transition-colors cursor-pointer">
-                  <h3 className="text-white font-semibold">{brand}</h3>
+            {["CGV", "Galaxy", "Lotte", "BHD Star", "Beta", "Cinestar"].map(
+              (brand) => (
+                <div key={brand} className="text-center">
+                  <div className="bg-gray-700 rounded-lg p-6 hover:bg-gray-600 transition-colors cursor-pointer">
+                    <h3 className="text-white font-semibold">{brand}</h3>
+                  </div>
                 </div>
-              </div>
-            ))}
+              )
+            )}
           </div>
         </div>
       </section>
     </MainLayout>
   );
-};   
+};
 export default HomePage;
