@@ -53,11 +53,10 @@ const HomePage = () => {
   const handleBookTicket = (movieId: number) => {
     navigate(`/booking/${movieId}`);
   };
-
   return (
     <MainLayout>
       <section
-        className="h-screen bg-gradient-to-b from-violet-900 to-black flex xl:flex-row
+        className="min-h-screen bg-gradient-to-b from-violet-900 to-black flex xl:flex-row
     flex-col-reverse items-center justify-between lg:px-24 px-10 relative
     overflow-hidden gap-4"
       >
