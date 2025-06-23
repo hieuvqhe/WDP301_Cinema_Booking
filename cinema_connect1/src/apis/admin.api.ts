@@ -140,11 +140,11 @@ export const deleteUser = async (userId: string): Promise<AdminResponse> => {
   }
 };
 
-// Block/Unblock user
-export const toggleUserStatus = async (userId: string, action: 'block' | 'unblock'): Promise<AdminResponse> => {
+// Ban/Unban user
+export const toggleUserStatus = async (userId: string, action: 'ban' | 'unban'): Promise<AdminResponse> => {
   try {
     const adminApi = createAdminRequest();
-    const response = await adminApi.put<AdminResponse>(`/admin/users/${userId}/status`, { action });
+    const response = await adminApi.put<AdminResponse>(`/admin/users/${userId}/${action}`);
     return response.data;
   } catch (error) {
     throw handleAdminError(error);

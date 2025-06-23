@@ -9,7 +9,10 @@ import { Ticket, User, Mail, Lock, Phone, MapPin, ArrowRight, ArrowLeft } from '
 
 const RegisterPage = () => {
   const navigate = useNavigate();
-    const { register, error, isLoading } = useAuthStore();
+  const { register, error } = useAuthStore();
+  
+  // Local loading state for better control
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Step state for multi-step form (0: basic info, 1: address info)
   const [currentStep, setCurrentStep] = useState(0);
@@ -145,6 +148,7 @@ const RegisterPage = () => {
     }
     
     try {
+      setIsSubmitting(true);
       const success = await register(formData);
       
       if (success) {
@@ -160,8 +164,10 @@ const RegisterPage = () => {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Registration failed';
       toast.error(errorMessage);
+    } finally {
+      setIsSubmitting(false);
     }
-  };  // Function to handle next step
+  };// Function to handle next step
   const handleNextStep = () => {
     // Validate first step fields before proceeding
     if (currentStep === 0) {
@@ -476,13 +482,12 @@ const RegisterPage = () => {
                     className="w-1/3 flex justify-center items-center py-2 px-4 border border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-white bg-transparent"
                   >
                     <ArrowLeft size={16} className="mr-1" /> Back
-                  </Button>
-                  <Button
+                  </Button>                  <Button
                     type="submit"
                     className="w-2/3 flex justify-center py-2 px-4 bg-orange-500 hover:bg-orange-600 text-white"
-                    disabled={isLoading}
+                    disabled={isSubmitting}
                   >
-                    {isLoading ? 'Registering...' : 'Complete Registration'}
+                    {isSubmitting ? 'Registering...' : 'Complete Registration'}
                   </Button>
                 </div>
               </div>

@@ -72,12 +72,16 @@ export interface GetUsersResponse {
   message: string;
   result: {
     users: AdminUser[];
-    pagination: {
+    pagination?: {
       currentPage: number;
       totalPages: number;
       totalUsers: number;
       limit: number;
     };
+    // Alternative structure for some APIs
+    total?: number;
+    page?: number;
+    limit?: number;
   };
 }
 
