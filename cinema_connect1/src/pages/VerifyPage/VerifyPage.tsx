@@ -4,7 +4,6 @@ import { toast } from 'sonner';
 import { Button } from '../../components/ui/button';
 import { useAuthStore } from '../../store/useAuthStore';
 import { resendOtpCode } from '../../apis/user.api';
-import MainLayout from '../../components/layout/MainLayout';
 import { Mail, RefreshCw, Ticket } from 'lucide-react';
 
 const VerifyPage = () => {
@@ -106,7 +105,6 @@ const VerifyPage = () => {
       setIsResending(false);
     }
   };return (
-    <MainLayout showHeader={true} showFooter={true}>
       <div className="py-16 px-4 sm:px-6 lg:px-8 flex justify-center items-center bg-gray-900"
            style={{ minHeight: 'calc(100vh - 160px)' }}>
         <div className="max-w-md w-full bg-gray-800 p-8 rounded-lg shadow-lg text-white">
@@ -189,7 +187,6 @@ const VerifyPage = () => {
           </div></form>
       </div>
     </div>
-    </MainLayout>
   );
 };
 
