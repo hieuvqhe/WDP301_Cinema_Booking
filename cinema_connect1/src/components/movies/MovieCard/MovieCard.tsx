@@ -3,6 +3,7 @@ import { Button } from "../../ui/button";
 import { Play, Star, Clock, Calendar, Ticket } from "lucide-react";
 import { TrailerModal } from "../TrailerModal/TrailerModal";
 import type { Movie } from "../../../types/Movie.type";
+import { getCountryDisplay } from "../../../const/language";
 
 interface MovieCardProps {
   movie: Movie;
@@ -140,7 +141,7 @@ export const MovieCard = ({ movie, onBookTicket, variant = 'default' }: MovieCar
           <span>{formatDuration(movie.duration)}</span>
           <span className="mx-2">•</span>
           <span className="text-orange-400 font-medium">
-            {movie.language}
+            {getCountryDisplay(movie.language)}
           </span>
         </div>
 
