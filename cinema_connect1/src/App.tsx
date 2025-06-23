@@ -8,6 +8,7 @@ import PartnerPage from './pages/PartnerPage';
 import AdminPage from './pages/AdminPage';
 import VerifyPage from './pages/VerifyPage';
 import { Toaster } from './components/ui/sonner';
+import MovieDetailPage from './pages/MovieDetailPage';
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
         <Route path="/home" element={<HomePage />} />
         <Route path="/partner" element={<PartnerPage />} />
         <Route path="/admin" element={<AdminPage />} />
+        <Route path="/booking/:id" element={<MovieDetailPage />} />
      
         {/* Default routes */}
         <Route path="/" element={<Navigate to="/home" replace />} />
