@@ -94,10 +94,14 @@ export const useAuthStore = create<AuthState>()(
             return false;
           }
         },
-        
-        logout: () => {
+          logout: () => {
           localStorage.removeItem('accessToken');
-          set({ user: null, isAuthenticated: false });
+          set({ 
+            user: null, 
+            isAuthenticated: false, 
+            isLoading: false, 
+            error: null 
+          });
         },
         
         setTempEmail: (email: string) => set({ tempEmail: email }),

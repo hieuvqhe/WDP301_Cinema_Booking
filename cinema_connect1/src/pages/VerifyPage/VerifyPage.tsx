@@ -12,7 +12,12 @@ const VerifyPage = () => {
   const [searchParams] = useSearchParams();
   const email = searchParams.get('email');
   
-  const { verifyOtp, error, isLoading, tempEmail } = useAuthStore();
+  const { verifyOtp, error, tempEmail } = useAuthStore();
+  
+  // Local loading states for better control
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [isResending, setIsResending] = useState(false);
+  
   const [otpCode, setOtpCode] = useState('');
   const [resendCooldown, setResendCooldown] = useState(0);
 
@@ -38,7 +43,6 @@ const VerifyPage = () => {
       navigate('/register');
     }
   }, [email, tempEmail, navigate]);
-
   const handleOtpSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -47,27 +51,32 @@ const VerifyPage = () => {
       return;
     }
     
-    toast.loading('Verifying your email...');
-    
-    const success = await verifyOtp({
-      email: email || tempEmail || '',
-      otpVerify: otpCode
-    });
-    
-    toast.dismiss();
-    
-    if (success) {
-      toast.success('Email verified successfully! Your account has been created.');
-      // Delay navigation to allow the user to see the success message
-      setTimeout(() => {
-        navigate('/login');
-      }, 2000);
-    } else if (error) {
-      toast.error(error);      // Clear OTP field for retry
-      setOtpCode('');
+    try {
+      setIsVerifying(true);
+      toast.loading('Verifying your email...');
+      
+      const success = await verifyOtp({
+        email: email || tempEmail || '',
+        otpVerify: otpCode
+      });
+      
+      toast.dismiss();
+      
+      if (success) {
+        toast.success('Email verified successfully! Your account has been created.');
+        // Delay navigation to allow the user to see the success message
+        setTimeout(() => {
+          navigate('/login');
+        }, 2000);
+      } else if (error) {
+        toast.error(error);
+        // Clear OTP field for retry
+        setOtpCode('');
+      }
+    } finally {
+      setIsVerifying(false);
     }
-  };
-    // Function to resend OTP code
+  };    // Function to resend OTP code
   const handleResendOtp = async () => {
     if (!email && !tempEmail) {
       toast.error('Email address is missing');
@@ -82,6 +91,7 @@ const VerifyPage = () => {
     const emailToUse = email || tempEmail || '';
     
     try {
+      setIsResending(true);
       toast.loading('Sending new verification code...');
       await resendOtpCode(emailToUse);
       toast.dismiss();
@@ -92,8 +102,10 @@ const VerifyPage = () => {
       toast.dismiss();
       const errorMessage = error instanceof Error ? error.message : 'Failed to send verification code';
       toast.error(errorMessage);
+    } finally {
+      setIsResending(false);
     }
-  };  return (
+  };return (
     <MainLayout showHeader={true} showFooter={true}>
       <div className="py-16 px-4 sm:px-6 lg:px-8 flex justify-center items-center bg-gray-900"
            style={{ minHeight: 'calc(100vh - 160px)' }}>
@@ -136,14 +148,13 @@ const VerifyPage = () => {
               autoComplete="one-time-code"
             />
           </div>
-          
-          <div>
+            <div>
             <Button
               type="submit"
               className="w-full flex justify-center py-2 px-4 bg-orange-500 hover:bg-orange-600 text-white"
-              disabled={isLoading}
+              disabled={isVerifying}
             >
-              {isLoading ? 'Verifying...' : 'Verify Email'}
+              {isVerifying ? 'Verifying...' : 'Verify Email'}
             </Button>
           </div>
             <div className="text-center mt-4 flex items-center justify-center">
@@ -151,16 +162,18 @@ const VerifyPage = () => {
               type="button"
               onClick={handleResendOtp}
               className={`text-sm flex items-center ${
-                resendCooldown > 0 || isLoading
+                resendCooldown > 0 || isResending
                   ? 'text-gray-500 cursor-not-allowed'
                   : 'text-orange-400 hover:text-orange-300'
               }`}
-              disabled={isLoading || resendCooldown > 0}
+              disabled={isResending || resendCooldown > 0}
             >
               <RefreshCw size={14} className="mr-1" />
               {resendCooldown > 0 
                 ? `Resend in ${resendCooldown}s` 
-                : 'Resend verification code'
+                : isResending 
+                  ? 'Sending...'
+                  : 'Resend verification code'
               }
             </button>
           </div>

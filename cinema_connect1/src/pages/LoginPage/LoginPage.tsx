@@ -9,7 +9,10 @@ import { Ticket, Mail, Lock } from 'lucide-react';
 
 const LoginPage = () => {
   const navigate = useNavigate();
-  const { login, error, isLoading } = useAuthStore();
+  const { login, error } = useAuthStore();
+  
+  // Local loading state for better control
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Login form state
   const [formData, setFormData] = useState({
@@ -70,6 +73,7 @@ const LoginPage = () => {
     }
 
     try {
+      setIsSubmitting(true);
       const success = await login(formData);
       
       if (success) {
@@ -103,8 +107,10 @@ const LoginPage = () => {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
       toast.error(errorMessage);
+    } finally {
+      setIsSubmitting(false);
     }
-  };  return (
+  };return (
     <MainLayout showHeader={true} showFooter={true}>
       <div className="py-8 px-4 sm:px-6 lg:px-8 flex justify-center bg-gray-900 min-h-[calc(100vh-140px)]">
         <div className="max-w-md w-full bg-gray-800 p-8 rounded-lg shadow-lg text-white my-4 h-fit">
@@ -166,16 +172,15 @@ const LoginPage = () => {
               Forgot password?
             </a>
           </div>
-          
-          <div>
+            <div>
             <Button
               type="submit"
               className="w-full flex justify-center py-2 px-4 bg-orange-500 hover:bg-orange-600 text-white"
-              disabled={isLoading}
+              disabled={isSubmitting}
             >
-              {isLoading ? 'Signing in...' : 'Sign in'}
+              {isSubmitting ? 'Signing in...' : 'Sign in'}
             </Button>
-          </div>            <div className="text-center mt-4">
+          </div><div className="text-center mt-4">
             <p className="text-sm text-gray-300">
               Don't have an account?{' '}
               <button

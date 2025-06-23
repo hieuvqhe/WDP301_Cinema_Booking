@@ -1,146 +1,167 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "../../components/ui/button";
-import { useAuthStore } from "../../store/useAuthStore";
 import MainLayout from "../../components/layout/MainLayout";
 import {
-  Play,
-  Star,
-  Clock,
-  Calendar,
-  MapPin,
-  Ticket,
-  TrendingUp,
-  Filter,
-  Search,
+  TrendingUp
 } from "lucide-react";
+import { 
+  getAllMovies, 
+  getMoviesByStatus,
+  searchMovies 
+} from "../../apis/movie.api";
+import { getHomeSliderBanners } from "../../apis/banner.api";
+import type { Movie } from "../../types/Movie.type";
+import type { Banner } from "../../types/Banner.type";
+import { toast } from "sonner";
+import { SearchAndFilter, MovieGrid } from "../../components/movies";
+import { HeroBannerCarousel } from "../../components/banners";
 
 const HomePage = () => {
   const navigate = useNavigate();
-  const { user } = useAuthStore();
+    // States for movie and banner data
+  const [movies, setMovies] = useState<Movie[]>([]);
+  const [banners, setBanners] = useState<Banner[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isBannersLoading, setIsBannersLoading] = useState(true);
+  const [isSearching, setIsSearching] = useState(false);
+    // Filter and search states
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [searchTerm, setSearchTerm] = useState("");
+    // Refs for debouncing
+  const searchTimeoutRef = useRef<number | null>(null);
+  // Fetch movies and banners data
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        setIsBannersLoading(true);        // Fetch banners and now showing movies in parallel
+        console.log('Starting to fetch data...');        const [bannersData, nowShowingData] = await Promise.all([
+          // Chỉ sử dụng API endpoint thật
+          getHomeSliderBanners().catch(err => {
+            console.error('Banner fetch failed:', err);
+            return []; // Return empty array if API fails
+          }),
+          getMoviesByStatus('now_showing', 12)
+        ]);
+        
+        console.log('Banners data:', bannersData);
+        console.log('Movies data:', nowShowingData);
+        
+        setBanners(bannersData);
+        setMovies(nowShowingData);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        toast.error('Không thể tải dữ liệu');
+      } finally {
+        setIsLoading(false);
+        setIsBannersLoading(false);
+      }
+    };
 
-  const movies = [
-    {
-      id: 1,
-      title: "Avatar: The Way of Water",
-      poster: "https://image.tmdb.org/t/p/w500/t6HIqrRAclMCA60NsSmeqe9RmNV.jpg",
-      rating: 9.2,
-      duration: "192 phút",
-      genre: "Sci-Fi, Adventure",
-      showtime: "14:30, 17:45, 20:00",
-      price: "120,000đ",
-    },
-    {
-      id: 2,
-      title: "Black Panther: Wakanda Forever",
-      poster: "https://image.tmdb.org/t/p/w500/sv1xJUazXeYqALzczSZ3O6nkH75.jpg",
-      rating: 8.5,
-      duration: "161 phút",
-      genre: "Action, Drama",
-      showtime: "15:00, 18:15, 21:30",
-      price: "130,000đ",
-    },
-  ];
+    fetchData();
+  }, []);
 
+  // Handle category filter
+  const handleCategoryChange = async (categoryId: string) => {
+    setSelectedCategory(categoryId);
+    
+    try {
+      setIsLoading(true);
+      let filteredMovies: Movie[] = [];
+      
+      if (categoryId === 'all') {
+        filteredMovies = await getMoviesByStatus('now_showing', 12);
+      } else {
+        // Filter by genre
+        const response = await getAllMovies({
+          genre: categoryId,
+          status: 'now_showing',
+          limit: 12
+        });
+        filteredMovies = response.result.movies;
+      }
+      
+      setMovies(filteredMovies);
+    } catch (error) {
+      console.error('Error filtering movies:', error);
+      toast.error('Không thể lọc phim theo thể loại');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  // Handle search with debounce
+  const handleSearchChange = (searchValue: string) => {
+    setSearchTerm(searchValue);
+    
+    // Clear previous timeout
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+    
+    // Set new timeout for debounced search
+    searchTimeoutRef.current = setTimeout(() => {
+      handleSearch(searchValue);
+    }, 500);
+  };
+
+  // Handle search
+  const handleSearch = async (searchValue: string) => {    
+    if (!searchValue.trim()) {
+      // Reset to default movies if search is cleared
+      handleCategoryChange(selectedCategory);
+      return;
+    }
+    
+    try {
+      setIsSearching(true);
+      const searchResults = await searchMovies(searchValue, 12);
+      setMovies(searchResults);
+    } catch (error) {
+      console.error('Error searching movies:', error);
+      toast.error('Không thể tìm kiếm phim');
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  // Reset filters
+  const handleResetFilters = () => {
+    setSearchTerm('');
+    handleCategoryChange('all');
+  };
   const categories = [
     { id: "all", name: "Tất cả" },
-    { id: "action", name: "Hành động" },
-    { id: "drama", name: "Chính kịch" },
-    { id: "comedy", name: "Hài kịch" },
+    { id: "Action", name: "Hành động" },
+    { id: "Drama", name: "Chính kịch" },
+    { id: "Comedy", name: "Hài kịch" },
+    { id: "Horror", name: "Kinh dị" },
+    { id: "Romance", name: "Lãng mạn" },
+    { id: "Sci-Fi", name: "Khoa học viễn tưởng" },
   ];
 
-  const handleBookTicket = (movieId: number) => {
+  const handleBookTicket = (movieId: string) => {
     navigate(`/booking/${movieId}`);
-  };
-  return (
+  };  return (
     <MainLayout>
-      <section
-        className="min-h-screen bg-gradient-to-b from-violet-900 to-black flex xl:flex-row
-    flex-col-reverse items-center justify-between lg:px-24 px-10 relative
-    overflow-hidden gap-4"
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <h1 className="text-4xl md:text-6xl font-bold text-white mb-6">
-              Chào mừng đến với{" "}
-              <span className="text-orange-400">Cinema Connect</span>
-            </h1>
-            <p className="text-xl text-gray-300 mb-8 max-w-3xl mx-auto">
-              Đặt vé xem phim dễ dàng, trải nghiệm điện ảnh tuyệt vời
-            </p>
-            {user && (
-              <div className="inline-flex items-center bg-green-600 text-white px-4 py-2 rounded-full text-sm mb-6">
-                <span>Xin chào, {user.name}!</span>
-                <span className="ml-2 bg-green-700 px-2 py-1 rounded-full text-xs">
-                  {user.role.toUpperCase()}
-                </span>
-              </div>
-            )}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button
-                onClick={() => navigate("/movies")}
-                className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-3 text-lg"
-              >
-                <Ticket className="mr-2" size={20} />
-                Đặt vé ngay
-              </Button>
-              <Button
-                onClick={() => navigate("/showtimes")}
-                variant="outline"
-                className="border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-white px-8 py-3 text-lg"
-              >
-                <Calendar className="mr-2" size={20} />
-                Xem lịch chiếu
-              </Button>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* Hero Banner Carousel - thay thế phần hero cũ và phim nổi bật */}
+      <HeroBannerCarousel 
+        banners={banners}
+        isLoading={isBannersLoading}
+        autoSlide={true}
+        slideInterval={6000}
+      />
 
-      <section className="py-8 bg-gray-800 border-b border-gray-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col lg:flex-row justify-between items-center gap-6">
-            <div className="flex flex-wrap gap-2">
-              {categories.map((category) => (
-                <button
-                  key={category.id}
-                  onClick={() => setSelectedCategory(category.id)}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                    selectedCategory === category.id
-                      ? "bg-orange-500 text-white"
-                      : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-                  }`}
-                >
-                  {category.name}
-                </button>
-              ))}
-            </div>
-
-            <div className="flex items-center gap-4">
-              <div className="relative">
-                <Search
-                  size={18}
-                  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-                />
-                <input
-                  type="text"
-                  placeholder="Tìm phim..."
-                  className="pl-10 pr-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500"
-                />
-              </div>
-              <Button
-                variant="outline"
-                className="border-gray-600 text-gray-300 hover:bg-gray-700"
-              >
-                <Filter size={16} className="mr-2" />
-                Lọc
-              </Button>
-            </div>
-          </div>
-        </div>
-      </section>
-
+      {/* Search and Filter - di chuyển xuống dưới banner */}
+      <SearchAndFilter
+        categories={categories}
+        selectedCategory={selectedCategory}
+        searchTerm={searchTerm}
+        isLoading={isLoading}
+        isSearching={isSearching}
+        onCategoryChange={handleCategoryChange}
+        onSearchChange={handleSearchChange}
+      />      {/* Movies Section */}
       <section className="py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between mb-8">
@@ -155,66 +176,14 @@ const HomePage = () => {
             >
               Xem tất cả
             </Button>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {movies.map((movie) => (
-              <div
-                key={movie.id}
-                className="bg-gray-800 rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-shadow group"
-              >
-                <div className="relative">
-                  <img
-                    src={movie.poster}
-                    alt={movie.title}
-                    className="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-opacity duration-300 flex items-center justify-center">
-                    <Button
-                      onClick={() => handleBookTicket(movie.id)}
-                      className="bg-orange-500 hover:bg-orange-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                    >
-                      <Play size={16} className="mr-2" />
-                      Đặt vé
-                    </Button>
-                  </div>
-                  <div className="absolute top-2 right-2 bg-black bg-opacity-75 text-white px-2 py-1 rounded flex items-center">
-                    <Star size={14} className="text-yellow-400 mr-1" />
-                    <span className="text-sm">{movie.rating}</span>
-                  </div>
-                </div>
-
-                <div className="p-4">
-                  <h3 className="text-white font-semibold text-lg mb-2">
-                    {movie.title}
-                  </h3>
-                  <p className="text-gray-400 text-sm mb-2">{movie.genre}</p>
-
-                  <div className="flex items-center text-gray-400 text-sm mb-3">
-                    <Clock size={14} className="mr-1" />
-                    <span>{movie.duration}</span>
-                    <span className="mx-2">•</span>
-                    <span className="text-orange-400 font-medium">
-                      {movie.price}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center text-gray-400 text-sm mb-4">
-                    <MapPin size={14} className="mr-1" />
-                    <span>Lịch chiếu: {movie.showtime}</span>
-                  </div>
-
-                  <Button
-                    onClick={() => handleBookTicket(movie.id)}
-                    className="w-full bg-orange-500 hover:bg-orange-600 text-white"
-                  >
-                    <Ticket size={16} className="mr-2" />
-                    Đặt vé ngay
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
+          </div>          {/* Movie Grid */}
+          <MovieGrid
+            movies={movies}
+            isLoading={isLoading}
+            onBookTicket={handleBookTicket}
+            searchTerm={searchTerm}
+            onResetFilters={handleResetFilters}
+          />
         </div>
       </section>
 
