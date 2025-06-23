@@ -161,7 +161,7 @@ const HomePage = () => {
         isSearching={isSearching}
         onCategoryChange={handleCategoryChange}
         onSearchChange={handleSearchChange}
-      />      {/* Movies Section */}
+      />      {/* Movies Section - Đang chiếu */}
       <section className="py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between mb-8">
@@ -185,6 +185,11 @@ const HomePage = () => {
             onResetFilters={handleResetFilters}
           />
         </div>
+      </section>
+
+      {/* Phim sắp chiếu */}
+      <section>
+        
       </section>
 
       <section className="py-12 bg-gray-800">
