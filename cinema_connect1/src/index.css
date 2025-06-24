@@ -37,8 +37,15 @@ body {
     hover:after:origin-bottom-left hover:after:scale-x-100 
     dark:after:bg-white cursor-pointer;
   }
+
+  .no-scrollbar{
+    scrollbar-width: none;
+  }
+
 }
 
 .slick-slide > div {
   margin: 0 10px;
-}
+}  
+
+

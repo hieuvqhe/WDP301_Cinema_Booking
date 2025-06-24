@@ -5,19 +5,25 @@ import { IoIosHeart } from "react-icons/io";
 import { IoPlayCircle } from "react-icons/io5";
 import { getMovieById } from "../../apis/movie.api";
 import BlurCircle from "../../components/layout/BlurCircle";
+import Slider from "react-slick";
+import "slick-carousel/slick/slick.css";
+import "slick-carousel/slick/slick-theme.css";
 
 const MovieDetail = () => {
   const { id } = useParams();
 
-  const {
-    isLoading: isMovieLoading,
-    isError: isErrorMovie,
-    data: movie,
-    error: errorMovie,
-  } = useQuery({
+  const { data: movie } = useQuery({
     queryKey: ["movie"],
     queryFn: () => getMovieById(id),
   });
+
+  const setting = {
+    dots: false,
+    infinite: true,
+    speed: 500,
+    slidesToShow: 6,
+    slidesToScroll: 2,
+  };
 
   return movie ? (
     <div className="px-6 md:px-16 lg:px-40 pt-30 md:pt-52 min-h-[80vh]">
@@ -67,10 +73,36 @@ const MovieDetail = () => {
             </a>
             <button>
               <div className="w-fit h-fit px-2 py-2 rounded-full bg-gray-500">
-                <IoIosHeart className={`h-5 w-5 hover:text-primary transition active:scale-95`} />
+                <IoIosHeart
+                  className={`h-5 w-5 hover:text-primary transition active:scale-95`}
+                />
               </div>
             </button>
           </div>
+        </div>
+      </div>
+
+      <div>
+        <p className="text-lg font-medium mt-20">Your Favourite Cast</p>
+        <div className="mt-8 pb-4 mx-auto">
+          <Slider {...setting}>
+            {/* <div className="flex items-center gap-4 w-max px-4"> */}
+
+            {movie.cast.map((cast) => (
+              <div
+                className="flex flex-col items-center text-center"
+                key={cast.id}
+              >
+                <img
+                  src={cast.profile_image}
+                  alt=""
+                  className="rounded-full h-20 md:h-20 aspect-square object-cover"
+                />
+                <p>{cast.name}</p>
+              </div>
+            ))}
+            {/* </div> */}
+          </Slider>
         </div>
       </div>
     </div>
