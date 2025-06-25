@@ -6,11 +6,35 @@ import { useState } from "react";
 import LoginModal from "../user/LoginModal";
 import { useAuthStore } from "../../store/useAuthStore";
 import { FaRegUser } from "react-icons/fa";
+import { Popover, PopoverButton, PopoverPanel } from "@headlessui/react";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoginForm, setIsLoginForm] = useState(false);
-  const { user } = useAuthStore();
+  const { user, logout } = useAuthStore();
+
+  const userQuickAccess = [
+    {
+      title: "Account settings",
+      link: "",
+      action: () => console.log("Account settings"),
+    },
+    {
+      title: "Favourites",
+      link: "",
+      action: () => console.log("Favourites"),
+    },
+    {
+      title: "Profile",
+      link: "",
+      action: () => console.log("Profile"),
+    },
+    {
+      title: "Sign out",
+      link: "",
+      action:() => logout(),
+    },
+  ];
 
   return (
     <>
@@ -77,10 +101,32 @@ const Navbar = () => {
           <IoIosSearch className="max-md:hidden w-6 h-6 cursor-pointer" />
 
           {user ? (
-            <button className="px-3 py-3 bg-primary rounded-full"
-            >
-              <FaRegUser />
-            </button>
+            <div>
+              <Popover as="div" className="relative inline-block text-left">
+                <PopoverButton className="px-3 py-3 bg-primary rounded-full">
+                  <FaRegUser />
+                </PopoverButton>
+
+                <PopoverPanel className="absolute right-0 z-10 mt-2 w-56 origin-top-right bg-primary/40 border 
+                border-primary/20 rounded-lg shadow-md ring-1 ring-black/5">
+                  <div className="text-sm py-2 px-4 text-center border-b-slate-50 border-b">
+                    <p>Hello {user.name}</p>
+                  </div>
+                  <div className="py-1">
+                    {userQuickAccess.map((item, index) => (
+                      <a
+                        key={index}
+                        href="#"
+                        className="block px-4 py-2 text-sm text-gray-200  hover:underline transition duration-200"
+                        onClick={item.action}
+                      >
+                        {item.title}
+                      </a>
+                    ))}
+                  </div>
+                </PopoverPanel>
+              </Popover>
+            </div>
           ) : (
             <button
               className="px-4 py-1 sm:px-7 sm:py-2 bg-[#F84565] hover:bg-[#D63854]
