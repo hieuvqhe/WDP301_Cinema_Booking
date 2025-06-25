@@ -13,7 +13,7 @@ const Navbar = () => {
     md:px-16 lg:px-36 py-5"
     >
       <Link to={"/"} className="max-md:flex-1">
-        <img src={"assets/logo.png"} alt="" className="w-14 h-14" />
+        <img src={"logo.png"} alt="" className="w-14 h-14" />
       </Link>
 
       <div

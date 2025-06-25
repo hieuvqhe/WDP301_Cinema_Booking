@@ -8,6 +8,7 @@ import BlurCircle from "../../components/layout/BlurCircle";
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
+import DateSelect from "../../components/movies/DateSelect/DateSelect";
 
 const MovieDetail = () => {
   const { id } = useParams();
@@ -90,21 +91,25 @@ const MovieDetail = () => {
 
             {movie.cast.map((cast) => (
               <div
-                className="flex flex-col items-center text-center"
+                className="cursor-pointer"
                 key={cast.id}
               >
-                <img
-                  src={cast.profile_image}
-                  alt=""
-                  className="rounded-full h-20 md:h-20 aspect-square object-cover"
-                />
-                <p>{cast.name}</p>
+                <div className="flex flex-col items-center text-center">
+                  <img
+                    src={cast.profile_image}
+                    alt=""
+                    className="rounded-full h-20 md:h-20 aspect-square object-cover"
+                  />
+                  <p>{cast.name}</p>
+                </div>
               </div>
             ))}
             {/* </div> */}
           </Slider>
         </div>
       </div>
+
+      <DateSelect dateTime={movie.release_date} id={movie._id} />
     </div>
   ) : (
     <div>loading</div>

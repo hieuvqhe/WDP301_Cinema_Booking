@@ -4,11 +4,6 @@ import { BsArrowRight } from "react-icons/bs";
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
-import guardiansGalaxy from "/assets/guardiansGalaxy.jpg";
-import avengerEndgame from "/assets/avenger_endgame.jpg";
-import avatar2 from "/assets/avatar2.jpg";
-import johnWick4 from "/assets/johnWick4.png";
-import spidermanAcross from "/assets/spidermanAcross.jpg";
 
 // import { getHomeSliderBanners } from "../../../apis/banner.api";
 // import { useQuery } from "@tanstack/react-query";
@@ -26,7 +21,7 @@ const HeroSection = () => {
 
   const sliderBanners = [
     {
-      img_url: "assets/guardiansGalaxy.jpg",
+      img_url: "guardiansGalaxy.jpg",
       title: "Guardian of the Galaxy",
       type: "",
       start_date: "",
@@ -34,7 +29,7 @@ const HeroSection = () => {
       description: "",
     },
     {
-      img_url: 'assets/avenger_endgame.jpg',
+      img_url: "avenger_endgame.jpg",
       title: "Avengers: Endgame",
       type: "Actions",
       start_date: "2025-07-01",
@@ -43,7 +38,7 @@ const HeroSection = () => {
         "A mind-bending thriller that blurs the line between dream and reality.",
     },
     {
-      img_url: 'assets/avatar2.jpg',
+      img_url: "avatar2.jpg",
       title: "Avatar: The Way of Water",
       type: "Fantasy",
       start_date: "2025-06-20",
@@ -52,7 +47,7 @@ const HeroSection = () => {
         "Return to Pandora in an epic sequel filled with breathtaking underwater visuals.",
     },
     {
-      img_url: 'assets/johnWick4.png',
+      img_url: "johnWick4.png",
       title: "John Wick 4",
       type: "Action",
       start_date: "2025-06-25",
@@ -61,7 +56,7 @@ const HeroSection = () => {
         "John Wick returns with more action, assassins, and revenge than ever before.",
     },
     {
-      img_url: 'assets/spidermanAcross.jpg',
+      img_url: "spidermanAcross.jpg",
       title: "Spider-Man: Across the Spider-Verse",
       type: "Animation",
       start_date: "2025-07-05",
@@ -88,38 +83,38 @@ const HeroSection = () => {
         {sliderBanners?.map((banner) => (
           <div
             key={banner.title}
-            className={`flex flex-col items-start justify-center 
-    gap-4 px-6 md:px-16 lg:px-36 bg-[url('${banner.img_url}')]
-    bg-cover bg-center h-screen w-full`}
+            className={`gap-4 px-6 md:px-16 lg:px-36 bg-[url('guardiansGalaxy.jpg')]
+                bg-cover bg-center h-screen w-full relative top-1`}
           >
             {/* <img src={""} alt="" className="max-h-11 lg:h-11 mt-20" /> */}
+            <div className="relative top-1/2 flex flex-col gap-4">
+              <h1 className="text-5xl md:text-[70px] md:leading-18 font-semibold max-w-110">
+                {banner.title}
+              </h1>
 
-            <h1 className="text-5xl md:text-[70px] md:leading-18 font-semibold max-w-110">
-              {banner.title}
-            </h1>
+              <div className="flex items-center gap-4 text-gray-300">
+                <span>{banner.type}</span>
 
-            <div className="flex items-center gap-4 text-gray-300">
-              <span>{banner.type}</span>
+                <div className="flex items-center gap-1">
+                  <IoIosCalendar className="w-4.5 h-4.5" /> {banner.start_date}
+                </div>
 
-              <div className="flex items-center gap-1">
-                <IoIosCalendar className="w-4.5 h-4.5" /> {banner.start_date}
+                <div className="flex items-center gap-1">
+                  <GoClock className="w-4.5 h-4.5" /> {banner.end_date}
+                </div>
               </div>
 
-              <div className="flex items-center gap-1">
-                <GoClock className="w-4.5 h-4.5" /> {banner.end_date}
-              </div>
-            </div>
+              <p className="max-w-md text-gray-300">{banner.description}</p>
 
-            <p className="max-w-md text-gray-300">{banner.description}</p>
-
-            <button
-              className="flex items-center gap-1 px-6 py-3 text-sm 
+              <button
+                className="flex items-center gap-1 px-10 py-3 text-sm 
       bg-primary hover:bg-primary-dull transition rounded-full 
-      font-medium cursor-pointer"
-            >
-              Explore Movies
-              <BsArrowRight className="w-5 h-5" />
-            </button>
+      font-medium cursor-pointer max-w-fit"
+              >
+                Explore Movies
+                <BsArrowRight className="w-5 h-5" />
+              </button>
+            </div>
           </div>
         ))}
       </Slider>
