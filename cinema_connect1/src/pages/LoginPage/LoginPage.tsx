@@ -29,6 +29,7 @@ const LoginPage = () => {
     });
     setErrors({});
   }, []);
+  
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData({

@@ -1,17 +1,11 @@
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-  Navigate,
-} from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import RegisterPage from "./pages/RegisterPage";
 import LoginPage from "./pages/LoginPage";
 import HomePage from "./pages/HomePage";
-import PartnerPage from "./pages/PartnerPage";
-import AdminPage from "./pages/AdminPage";
+// import PartnerPage from "./pages/PartnerPage";
+// import AdminPage from "./pages/AdminPage";
 import VerifyPage from "./pages/VerifyPage";
 import { Toaster } from "./components/ui/sonner";
-import MovieDetailPage from "./pages/MovieDetailPage";
 import Navbar from "./components/layout/Navbar";
 import Footer from "./components/layout/Footer";
 import MoviesPage from "./pages/MoviesPage";
