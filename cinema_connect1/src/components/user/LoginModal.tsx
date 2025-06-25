@@ -1,18 +1,19 @@
 import { FiX } from "react-icons/fi";
-import { getRedirectPathByRole, useAuthStore } from "../../store/useAuthStore";
+import { getRedirectPathByRole, useAuthStore} from "../../store/useAuthStore";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 
 interface LoginModalProps {
-  closeForm: (value: boolean) => void;
+  isFormOpen: (value: boolean) => void;
 }
 
-const LoginModal = ({ closeForm }: LoginModalProps) => {
-  const { login, error } = useAuthStore();
+const LoginModal = ({ isFormOpen }: LoginModalProps) => {
+  const { login, error} = useAuthStore();
   const navigate = useNavigate();
   // Local loading state for better control
   const [isSubmitting, setIsSubmitting] = useState(false);
+
 
   // Login form state
   const [formData, setFormData] = useState({
@@ -81,6 +82,7 @@ const LoginModal = ({ closeForm }: LoginModalProps) => {
       if (success) {
         toast.success("Login successful! Redirecting...");
         // Get user from store after successful login
+        isFormOpen(false);
         const currentUser = useAuthStore.getState().user;
         if (currentUser) {
           const redirectPath = getRedirectPathByRole(currentUser.role);
@@ -91,6 +93,7 @@ const LoginModal = ({ closeForm }: LoginModalProps) => {
           // Fallback to default home if user data is not available
           setTimeout(() => {
             navigate("/home");
+
           }, 1500);
         }
       } else {
@@ -126,7 +129,7 @@ const LoginModal = ({ closeForm }: LoginModalProps) => {
       <div
         className="fixed inset-0 bg-black/50 background-blur-sm z-50 
         flex items-center justify-center p-4"
-        onClick={() => closeForm(false)}
+        onClick={() => isFormOpen(false)}
       >
         <div
           onClick={(e) => e.stopPropagation()}
@@ -135,7 +138,7 @@ const LoginModal = ({ closeForm }: LoginModalProps) => {
           <div className="flex justify-between items-center mb-4">
             <h1 className="text-2xl font-bold text-gray-300">Get In Touch</h1>
 
-            <button onClick={() => closeForm(false)}>
+            <button onClick={() => isFormOpen(false)}>
               <FiX className="w-5 h-5 text-gray-300 font-extrabold" />
             </button>
           </div>

@@ -13,6 +13,8 @@ const FeaturedSection = () => {
   const [pages, setPages] = useState(1);
   const [loading, setLoading] = useState(false);
 
+  
+
   useEffect(() => {
     let ignore = false;
     const fetchData = async () => {
@@ -36,7 +38,6 @@ const FeaturedSection = () => {
     };
   }, [pages]);
 
-  console.log(getShowingMovies);
 
   return (
     <div className="px-6 md:px-16 lg:px-24 xl:px-44 overflow-hidden">

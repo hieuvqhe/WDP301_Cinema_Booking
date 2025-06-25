@@ -4,10 +4,13 @@ import { IoIosSearch } from "react-icons/io";
 import { FaTimes } from "react-icons/fa";
 import { useState } from "react";
 import LoginModal from "../user/LoginModal";
+import { useAuthStore } from "../../store/useAuthStore";
+import { FaRegUser } from "react-icons/fa";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoginForm, setIsLoginForm] = useState(false);
+  const { user } = useAuthStore();
 
   return (
     <>
@@ -72,13 +75,21 @@ const Navbar = () => {
 
         <div className="flex items-center gap-8">
           <IoIosSearch className="max-md:hidden w-6 h-6 cursor-pointer" />
-          <button
-            className="px-4 py-1 sm:px-7 sm:py-2 bg-[#F84565] hover:bg-[#D63854]
+
+          {user ? (
+            <button className="px-3 py-3 bg-primary rounded-full"
+            >
+              <FaRegUser />
+            </button>
+          ) : (
+            <button
+              className="px-4 py-1 sm:px-7 sm:py-2 bg-[#F84565] hover:bg-[#D63854]
             transition rounded-full font-medium cursor-pointer"
-            onClick={() => setIsLoginForm(true)}
-          >
-            Login
-          </button>
+              onClick={() => setIsLoginForm(true)}
+            >
+              Login
+            </button>
+          )}
         </div>
 
         <IoMenu
@@ -87,7 +98,7 @@ const Navbar = () => {
         />
       </div>
 
-      {isLoginForm && <LoginModal closeForm={setIsLoginForm}/>}
+      {isLoginForm && <LoginModal isFormOpen={setIsLoginForm} />}
     </>
   );
 };
