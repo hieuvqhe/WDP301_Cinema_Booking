@@ -28,6 +28,15 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/verify" element={<VerifyPage />} />
 
+        {/* Public landing page */}
+        <Route path="/" element={
+          <>
+            <Navbar />
+            <HomePage />
+            <Footer />
+          </>
+        } />
+
         {/* Admin routes - has own layout */}
         <Route path="/admin" element={
           <RoleProtectedRoute allowedRoles={["admin"]}>
@@ -87,8 +96,8 @@ function App() {
               } />
 
               {/* Default routes */}
-              <Route path="/" element={<Navigate to="/home" replace />} />
-              <Route path="*" element={<Navigate to="/home" replace />} />
+              <Route path="/home" element={<Navigate to="/" replace />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
             <Footer />
           </>
