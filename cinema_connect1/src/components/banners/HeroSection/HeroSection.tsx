@@ -78,7 +78,7 @@ const HeroSection = () => {
   };
 
   return (
-    <div className="overflow-hidden">
+    <div className="overflow-hidden"> 
       <Slider {...settings}>
         {sliderBanners?.map((banner) => (
           <div

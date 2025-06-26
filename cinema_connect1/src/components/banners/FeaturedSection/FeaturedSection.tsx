@@ -12,6 +12,7 @@ const FeaturedSection = () => {
   const [getShowingMovies, setGetShowingMovies] = useState<Movie[]>([]);
   const [pages, setPages] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [isMaxMovie, setIsMaxMovie] = useState(false)
 
   
 
@@ -23,6 +24,9 @@ const FeaturedSection = () => {
         const movies = await getPopularMovies(4, (pages - 1) * 4);
         if (!ignore) {
           setGetShowingMovies((prev) => [...prev, ...movies]);
+        }
+        if (movies.length < 4) {
+          setIsMaxMovie(true);
         }
       } catch (error) {
         console.error("Failed to fetch popular movies:", error);
@@ -64,7 +68,7 @@ const FeaturedSection = () => {
 
       <div className="flex justify-center mt-20">
         <button
-          disabled={loading}
+          disabled={loading || isMaxMovie}
           onClick={() => setPages(pages + 1)}
           className="px-10 py-3 text-sm bg-primary hover:bg-primary-dull
     transition rounded-md font-medium cursor-pointer disabled:opacity-50"

@@ -3,6 +3,7 @@ import { getRedirectPathByRole, useAuthStore} from "../../store/useAuthStore";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import RegisterModal from "./RegisterModal";
 
 interface LoginModalProps {
   isFormOpen: (value: boolean) => void;
@@ -206,8 +207,12 @@ const LoginModal = ({ isFormOpen }: LoginModalProps) => {
               </span>{" "}
             </p>
           </form>
+
+
         </div>
       </div>
+
+      {/* <RegisterModal /> */}
     </div>
   );
 };
