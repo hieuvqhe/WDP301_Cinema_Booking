@@ -13,7 +13,7 @@ export interface Movie {
   description: string;
   genre: string[];
   director: string;
-  cast: MovieCast[];
+  cast: CastMember[];
   duration: number; // in minutes
   release_date: string;
   poster_url: string;
@@ -26,6 +26,16 @@ export interface Movie {
   status: 'now_showing' | 'coming_soon' | 'ended';
   created_at: string;
   updated_at: string;
+}
+
+// Movie Cast interface
+export interface CastMember {
+  id: number;
+  name: string;
+  character: string;
+  order: number;
+  profile_image: string;
+  gender: number;
 }
 
 export interface CreateMovieRequest {

@@ -3,7 +3,6 @@ import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/button';
 import { useAuthStore } from '../../store/useAuthStore';
-import MainLayout from '../../components/layout/MainLayout';
 // Import icons for cinema theme
 import { Ticket, User, Mail, Lock, Phone, MapPin, ArrowRight, ArrowLeft } from 'lucide-react';
 
@@ -213,7 +212,6 @@ const RegisterPage = () => {
     // Clear errors when going back
     setErrors({});
   };  return (
-    <MainLayout showHeader={true} showFooter={true}>
       <div className="py-8 px-4 sm:px-6 lg:px-8 flex justify-center bg-gray-900">
         <div className="max-w-md w-full bg-gray-800 p-8 rounded-lg shadow-lg text-white my-4">
         <div className="text-center mb-6">
@@ -508,7 +506,6 @@ const RegisterPage = () => {
           </form>        
       </div>
     </div>
-    </MainLayout>
   );
 };
 

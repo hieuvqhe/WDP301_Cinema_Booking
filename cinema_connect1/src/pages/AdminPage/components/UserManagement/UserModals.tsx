@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { X, User, Mail, Phone, MapPin, Calendar } from 'lucide-react';
+import { motion } from 'framer-motion';
 import type { AdminUser, UpdateUserRequest } from '../../../../types/Admin.type';
 
 interface UserDetailModalProps {
@@ -8,16 +9,67 @@ interface UserDetailModalProps {
 }
 
 export const UserDetailModal = ({ user, onClose }: UserDetailModalProps) => (
-  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div className="bg-gray-800 rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-      <div className="flex justify-between items-center mb-4">
-        <h3 className="text-xl font-bold text-white">User Details</h3>
-        <button onClick={onClose} className="text-gray-400 hover:text-white">
+  <motion.div 
+    className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 backdrop-blur-sm"
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    exit={{ opacity: 0 }}
+    transition={{ duration: 0.3 }}
+    onClick={onClose}
+  >
+    <motion.div 
+      className="bg-gradient-to-br from-slate-800/95 to-slate-900/95 rounded-2xl p-8 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto border border-slate-700/50 shadow-2xl backdrop-blur-xl"
+      initial={{ opacity: 0, scale: 0.8, y: 50 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.8, y: 50 }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
+      onClick={(e) => e.stopPropagation()}
+    >
+      {/* Header */}
+      <motion.div 
+        className="flex justify-between items-center mb-6"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2, duration: 0.3 }}
+      >
+        <h3 className="text-2xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+          User Details
+        </h3>
+        <motion.button 
+          onClick={onClose} 
+          className="text-gray-400 hover:text-white p-2 rounded-lg hover:bg-slate-700/50 transition-all duration-300"
+          whileHover={{ scale: 1.1, rotate: 90 }}
+          whileTap={{ scale: 0.9 }}
+        >
           <X size={24} />
-        </button>
-      </div>
+        </motion.button>
+      </motion.div>
       
-      <div className="space-y-4">
+      <motion.div 
+        className="space-y-6"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3, duration: 0.4 }}
+      >
+        {/* User Avatar */}
+        {user.avatar && (
+          <motion.div 
+            className="flex justify-center mb-6"
+            initial={{ opacity: 0, scale: 0 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.4, type: "spring", stiffness: 200 }}
+          >
+            <img 
+              src={user.avatar} 
+              alt={user.name}
+              className="w-24 h-24 rounded-full object-cover border-4 border-blue-500/50"
+              onError={(e) => {
+                e.currentTarget.style.display = 'none';
+              }}
+            />
+          </motion.div>
+        )}
+        
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-3">
             <div className="flex items-center space-x-3">
@@ -50,7 +102,7 @@ export const UserDetailModal = ({ user, onClose }: UserDetailModalProps) => (
               <Calendar size={20} className="text-purple-400" />
               <div>
                 <p className="text-gray-400 text-sm">Joined</p>
-                <p className="text-white">{new Date(user.createdAt).toLocaleDateString()}</p>
+                <p className="text-white">{new Date(user.created_at).toLocaleDateString()}</p>
               </div>
             </div>
           </div>
@@ -59,9 +111,9 @@ export const UserDetailModal = ({ user, onClose }: UserDetailModalProps) => (
             <div>
               <p className="text-gray-400 text-sm">Role</p>
               <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                user.role === 'admin' ? 'bg-red-100 text-red-800' :
-                user.role === 'partner' ? 'bg-blue-100 text-blue-800' :
-                'bg-green-100 text-green-800'
+                user.role === 'admin' ? 'bg-red-500/20 text-red-400 border border-red-500/30' :
+                user.role === 'staff' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' :
+                'bg-green-500/20 text-green-400 border border-green-500/30'
               }`}>
                 {user.role.toUpperCase()}
               </span>
@@ -70,16 +122,41 @@ export const UserDetailModal = ({ user, onClose }: UserDetailModalProps) => (
             <div>
               <p className="text-gray-400 text-sm">Status</p>
               <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                user.isVerified ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                user.verify === 1 
+                  ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
+                  : user.verify === 2
+                  ? 'bg-red-500/20 text-red-400 border border-red-500/30'
+                  : 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
               }`}>
-                {user.isVerified ? 'Active' : 'Banned'}
+                {user.verify === 1 ? 'Verified' : user.verify === 2 ? 'Banned' : 'Unverified'}
               </span>
             </div>
+            
+            {user.username && (
+              <div>
+                <p className="text-gray-400 text-sm">Username</p>
+                <p className="text-white">{user.username}</p>
+              </div>
+            )}
             
             {user.date_of_birth && (
               <div>
                 <p className="text-gray-400 text-sm">Date of Birth</p>
                 <p className="text-white">{new Date(user.date_of_birth).toLocaleDateString()}</p>
+              </div>
+            )}
+            
+            {user.stats && (
+              <div>
+                <p className="text-gray-400 text-sm">Statistics</p>
+                <div className="text-white space-y-1">
+                  <p className="text-sm">Bookings: {user.stats.bookings_count}</p>
+                  <p className="text-sm">Ratings: {user.stats.ratings_count}</p>
+                  <p className="text-sm">Feedbacks: {user.stats.feedbacks_count}</p>
+                  {user.stats.total_spent !== undefined && (
+                    <p className="text-sm">Total Spent: ${user.stats.total_spent}</p>
+                  )}
+                </div>
               </div>
             )}
           </div>
@@ -100,9 +177,9 @@ export const UserDetailModal = ({ user, onClose }: UserDetailModalProps) => (
             </div>
           </div>
         )}
-      </div>
-    </div>
-  </div>
+      </motion.div>
+    </motion.div>
+  </motion.div>
 );
 
 interface EditUserModalProps {

@@ -1,17 +1,17 @@
-import { create } from 'zustand';
-import { devtools, persist } from 'zustand/middleware';
-import { 
-  loginUser, 
-  registerUser, 
-  verifyRegistration, 
-  storeAuthToken 
-} from '../apis/user.api';
-import type { 
+import { create } from "zustand";
+import { devtools, persist } from "zustand/middleware";
+import {
+  loginUser,
+  registerUser,
+  verifyRegistration,
+  storeAuthToken,
+} from "../apis/user.api";
+import type {
   User,
   UserLoginType,
   RegisterUserType,
-  OtpRegisterType
-} from '../types/User.type';
+  OtpRegisterType,
+} from "../types/User.type";
 
 interface AuthState {
   user: User | null;
@@ -35,19 +35,21 @@ export const useAuthStore = create<AuthState>()(
         isAuthenticated: false,
         isLoading: false,
         error: null,
-        tempEmail: null,        register: async (userData: RegisterUserType) => {
-          console.log('Register function called with:', userData);
+        tempEmail: null,
+        
+        register: async (userData: RegisterUserType) => {
+          console.log("Register function called with:", userData);
           set({ isLoading: true, error: null });
           try {
-            console.log('About to call registerUser API...');
+            console.log("About to call registerUser API...");
             const response = await registerUser(userData);
-            console.log('Registration API response:', response);
+            console.log("Registration API response:", response);
             // Store the email for later use in OTP verification
             set({ tempEmail: userData.email, isLoading: false });
             return true;
           } catch (error) {
-            console.error('Registration error:', error);
-            let errorMessage = 'Failed to send verification email';
+            console.error("Registration error:", error);
+            let errorMessage = "Failed to send verification email";
             if (error instanceof Error) {
               errorMessage = error.message;
             }
@@ -55,7 +57,7 @@ export const useAuthStore = create<AuthState>()(
             return false;
           }
         },
-        
+
         verifyOtp: async (otpData: OtpRegisterType) => {
           set({ isLoading: true, error: null });
           try {
@@ -63,7 +65,7 @@ export const useAuthStore = create<AuthState>()(
             set({ isLoading: false });
             return true;
           } catch (error) {
-            let errorMessage = 'OTP verification failed';
+            let errorMessage = "OTP verification failed";
             if (error instanceof Error) {
               errorMessage = error.message;
             }
@@ -71,22 +73,22 @@ export const useAuthStore = create<AuthState>()(
             return false;
           }
         },
-        
+
         login: async (credentials: UserLoginType) => {
           set({ isLoading: true, error: null });
           try {
             const response = await loginUser(credentials);
             const { access_token, user } = response.result;
-            
+
             storeAuthToken(access_token);
-            set({ 
-              user: user, 
+            set({
+              user: user,
               isAuthenticated: true,
-              isLoading: false 
+              isLoading: false,
             });
             return true;
           } catch (error) {
-            let errorMessage = 'Login failed';
+            let errorMessage = "Login failed";
             if (error instanceof Error) {
               errorMessage = error.message;
             }
@@ -94,29 +96,31 @@ export const useAuthStore = create<AuthState>()(
             return false;
           }
         },
-          logout: () => {
-          localStorage.removeItem('accessToken');
-          set({ 
-            user: null, 
-            isAuthenticated: false, 
-            isLoading: false, 
-            error: null 
+        logout: () => {
+          localStorage.removeItem("accessToken");
+          set({
+            user: null,
+            isAuthenticated: false,
+            isLoading: false,
+            error: null,
           });
         },
-        
+
         setTempEmail: (email: string) => set({ tempEmail: email }),
-        
-        clearError: () => set({ error: null })
+
+        clearError: () => set({ error: null }),
       }),
       {
-        name: 'auth-storage'
+        name: "auth-storage",
       }
     )
   )
 );
 
 // Helper function to get redirect path based on user role
-export const getRedirectPathByRole = (role: "staff" | "admin" | "customer"): string => {
+export const getRedirectPathByRole = (
+  role: "staff" | "admin" | "customer"
+): string => {
   switch (role) {
     case "customer":
       return "/home";

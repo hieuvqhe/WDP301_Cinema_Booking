@@ -192,9 +192,10 @@ export const getMoviesByGenre = async (genre: string, limit = 20): Promise<Movie
 };
 
 // Get popular movies (sorted by rating)
-export const getPopularMovies = async (limit = 10): Promise<Movie[]> => {
+export const getPopularMovies = async (limit = 10, pages: number): Promise<Movie[]> => {
   try {
     const response = await getAllMovies({ 
+      page: pages,
       sortBy: 'average_rating', 
       sortOrder: 'desc', 
       limit,

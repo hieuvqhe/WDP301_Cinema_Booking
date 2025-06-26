@@ -1,63 +1,63 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Button } from '../../components/ui/button';
-import { useAuthStore } from '../../store/useAuthStore';
-import { Ticket, LogOut } from 'lucide-react';
+import { useQuery } from "@tanstack/react-query";
+import { getMoviesByStatus, getPopularMovies } from "../../apis/movie.api";
+import BlurCircle from "../../components/layout/BlurCircle";
+import MovieCard from "../../components/movies/MovieCard/MovieCard";
 
-const MoviesPage = () => {
-  const navigate = useNavigate();
-  const { user, logout } = useAuthStore();
-  
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
-  
+const Movies = () => {
+  const {
+    isLoading: isLoadingShowing,
+    isError: isErrorShowing,
+    data: moviesShowing,
+    error: errorShowing,
+  } = useQuery({
+    queryKey: ["moviesShowing"],
+    queryFn: () => getPopularMovies(10),
+  });
+
+  const {
+    isLoading: isLoadingIncoming,
+    isError: isErrorIncoming,
+    data: moviesIncoming,
+    error: errorIncoming,
+  } = useQuery({
+    queryKey: ["moviesIncoming"],
+    queryFn: () => getMoviesByStatus("coming_soon", 10),
+  });
+
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
-      {/* Header */}
-      <header className="bg-gray-800 p-4 shadow-md">
-        <div className="container mx-auto flex justify-between items-center">
-          <div className="flex items-center">
-            <Ticket size={24} className="text-orange-400 mr-2" />
-            <h1 className="text-xl font-bold text-orange-400">Cinema Connect</h1>
-          </div>
-          
-          <div className="flex items-center gap-4">
-            <span className="text-sm hidden sm:inline">Hello, {user?.name || 'Guest'}</span>
-            <Button 
-              onClick={handleLogout}
-              variant="outline" 
-              className="border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-white"
-            >
-              <LogOut size={16} className="mr-2" /> Logout
-            </Button>
+    <div className="relative my-40 mb-60 px-6 md:px-16 lg:px-40 xl:px-44 overflow-hidden min-h-[80vh]">
+      <BlurCircle top="150px" left="0px" />
+      <BlurCircle bottom="50px" right="50px" />
+
+      <div className="flex flex-col gap-4">
+        <div>
+          <h1 className="text-lg font-medium my-4">Now Showing</h1>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            {moviesShowing?.map((item) => (
+              <MovieCard movie={item} key={item._id} />
+            ))}
           </div>
         </div>
-      </header>
-      
-      {/* Main content */}
-      <main className="container mx-auto p-4 mt-8">
-        <h1 className="text-3xl font-bold mb-6 text-orange-400">Now Showing</h1>
-        
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {/* Placeholder for movie cards */}
-          {[1, 2, 3, 4, 5, 6, 7, 8].map((item) => (
-            <div key={item} className="bg-gray-800 rounded-lg overflow-hidden shadow-lg">
-              <div className="h-48 bg-gray-700 animate-pulse"></div>
-              <div className="p-4">
-                <div className="h-6 w-3/4 bg-gray-700 rounded animate-pulse mb-2"></div>
-                <div className="h-4 w-1/2 bg-gray-700 rounded animate-pulse"></div>
-                <div className="mt-4">
-                  <Button className="w-full bg-orange-500 hover:bg-orange-600">Book Now</Button>
-                </div>
-              </div>
+
+        <div>
+          <h1 className="text-lg font-medium my-4">In Comming</h1>
+          {moviesIncoming?.length !== 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+              {moviesIncoming?.map((item) => (
+                <MovieCard movie={item} key={item._id} />
+              ))}
             </div>
-          ))}
+          ) : (
+            <div className="flex flex-col items-center justify-center h-[50vh]">
+              <h1 className="text-3xl font-semibold text-center">
+                No movies avaiable
+              </h1>
+            </div>
+          )}
         </div>
-      </main>
+      </div>
     </div>
   );
 };
 
-export default MoviesPage;
+export default Movies;
