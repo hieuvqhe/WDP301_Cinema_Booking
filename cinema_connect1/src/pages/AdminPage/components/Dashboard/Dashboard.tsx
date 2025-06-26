@@ -1,6 +1,15 @@
 import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { Button } from '../../../../components/ui/button';
-import { RefreshCw, Loader2 } from 'lucide-react';
+import { 
+  RefreshCw, 
+  Loader2, 
+  Activity, 
+  ChevronRight, 
+  BarChart, 
+  Users, 
+  DollarSign
+} from 'lucide-react';
 import { getDashboardStats } from '../../../../apis/admin.api';
 import type { DashboardStats, DashboardQueryParams } from '../../../../types/Admin.type';
 import { toast } from 'sonner';
@@ -37,84 +46,401 @@ export const Dashboard = () => {
     fetchDashboardData();
   };
 
-  return (
-    <div className="space-y-6">
-      {/* Dashboard Header with Period Selector */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-bold text-white">Dashboard Overview</h2>
-          <p className="text-gray-400">Monitor system performance and statistics</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <select
-            value={selectedPeriod}
-            onChange={(e) => setSelectedPeriod(e.target.value as DashboardQueryParams['period'])}
-            className="bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
-          >
-            <option value="today">Today</option>
-            <option value="week">This Week</option>
-            <option value="month">This Month</option>
-            <option value="year">This Year</option>
-            <option value="all">All Time</option>
-          </select>
-          <Button
-            onClick={handleRefreshData}
-            size="sm"
-            className="bg-gray-700 hover:bg-gray-600 text-white"
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <Loader2 size={16} className="animate-spin" />
-            ) : (
-              <RefreshCw size={16} />
-            )}
-          </Button>
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        duration: 0.3,
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.5,
+        ease: "easeOut"
+      }
+    }
+  };
+
+  // Simple loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-96 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 size={32} className="animate-spin text-blue-500 mx-auto mb-4" />
+          <p className="text-gray-500">Loading dashboard...</p>
         </div>
       </div>
+    );
+  }
 
-      {/* Loading State */}
-      {isLoading && (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 size={32} className="animate-spin text-red-400" />
-          <span className="ml-2 text-gray-400">Loading dashboard data...</span>
-        </div>
-      )}
-
-      {/* Dashboard Content */}
-      {!isLoading && (
-        <>
-          <DashboardStatsComponent dashboardData={dashboardData} />
-          <TopMovies dashboardData={dashboardData} />
-          <TopTheaters dashboardData={dashboardData} />
-          <BookingsChart dashboardData={dashboardData} />
-          <RevenueByStatus dashboardData={dashboardData} />
+  return (
+    <motion.div 
+      className="space-y-8 min-h-screen"
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+    >
+      {/* Dashboard Header with Gradient */}
+      <motion.div 
+        className="relative p-8 rounded-2xl bg-gradient-to-r from-purple-500/20 via-blue-500/20 to-cyan-500/20 backdrop-blur-xl border border-white/20 overflow-hidden"
+        variants={itemVariants}
+      >
+        {/* Background decoration */}
+        <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-blue-500/10" />
+        <motion.div
+          className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-white/10 to-transparent rounded-full blur-2xl"
+          animate={{
+            scale: [1, 1.2, 1],
+            opacity: [0.3, 0.6, 0.3],
+          }}
+          transition={{
+            duration: 4,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        />
+        
+        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <motion.h2 
+              className="text-3xl font-bold bg-gradient-to-r from-purple-200 to-blue-200 bg-clip-text text-transparent"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+            >
+              Dashboard Overview
+            </motion.h2>
+            <motion.p 
+              className="text-gray-300 mt-2 flex items-center gap-2"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+            >
+              <Activity size={16} />
+              Monitor system performance and statistics
+            </motion.p>
+          </div>
           
-          {/* Additional Stats Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div className="bg-gray-800 p-6 rounded-lg border border-gray-700">
-              <h4 className="text-lg font-semibold text-white mb-3">Content Overview</h4>
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Total Theaters</span>
-                  <span className="text-white">{dashboardData?.content_stats?.total_theaters || 0}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Total Screens</span>
-                  <span className="text-white">{dashboardData?.content_stats?.total_screens || 0}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Total Ratings</span>
-                  <span className="text-white">{dashboardData?.content_stats?.total_ratings || 0}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Total Feedbacks</span>
-                  <span className="text-white">{dashboardData?.content_stats?.total_feedbacks || 0}</span>
-                </div>
-              </div>
+          <motion.div 
+            className="flex items-center gap-3"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+          >
+            <select
+              value={selectedPeriod}
+              onChange={(e) => setSelectedPeriod(e.target.value as DashboardQueryParams['period'])}
+              className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl px-4 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all"
+            >
+              <option value="today" className="bg-gray-800 text-white">Today</option>
+              <option value="week" className="bg-gray-800 text-white">This Week</option>
+              <option value="month" className="bg-gray-800 text-white">This Month</option>
+              <option value="year" className="bg-gray-800 text-white">This Year</option>
+              <option value="all" className="bg-gray-800 text-white">All Time</option>
+            </select>
+            
+            <Button
+              onClick={handleRefreshData}
+              size="sm"
+              className="bg-blue-500 hover:bg-blue-600 text-white border-0"
+              disabled={isLoading}
+            >
+              <RefreshCw size={16} className={isLoading ? 'animate-spin' : ''} />
+              <span className="ml-2">Refresh</span>
+            </Button>
+          </motion.div>
+        </div>
+      </motion.div>
+
+      {/* Stats Cards */}
+      <motion.div variants={itemVariants}>
+        <DashboardStatsComponent dashboardData={dashboardData} />
+      </motion.div>
+
+      {/* Charts Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Sales Overview Chart */}
+        <motion.div 
+          className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-lg shadow-sm p-6"
+          variants={itemVariants}
+        >
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h3 className="text-lg font-semibold text-white">Sales Overview</h3>
+              <p className="text-sm text-gray-300">4% more in 2024</p>
+            </div>
+            <BarChart size={20} className="text-gray-400" />
+          </div>
+          
+          {/* Sample Chart - Line Chart */}
+          <div className="relative h-64">
+            <svg viewBox="0 0 400 200" className="w-full h-full">
+              <defs>
+                <linearGradient id="chartGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stopColor="#3B82F6" stopOpacity="0.3"/>
+                  <stop offset="100%" stopColor="#3B82F6" stopOpacity="0"/>
+                </linearGradient>
+              </defs>
+              
+              {/* Grid lines */}
+              <g stroke="#E5E7EB" strokeWidth="1">
+                <line x1="0" y1="40" x2="400" y2="40" />
+                <line x1="0" y1="80" x2="400" y2="80" />
+                <line x1="0" y1="120" x2="400" y2="120" />
+                <line x1="0" y1="160" x2="400" y2="160" />
+              </g>
+              
+              {/* Sample data points */}
+              <motion.path
+                d="M 0,160 L 50,140 L 100,120 L 150,100 L 200,80 L 250,90 L 300,70 L 350,50 L 400,40"
+                fill="url(#chartGradient)"
+                stroke="#3B82F6"
+                strokeWidth="2"
+                initial={{ pathLength: 0 }}
+                animate={{ pathLength: 1 }}
+                transition={{ duration: 2, ease: "easeInOut" }}
+              />
+              
+              {/* Data points */}
+              {[0, 50, 100, 150, 200, 250, 300, 350, 400].map((x, i) => {
+                const y = 160 - i * 15;
+                return (
+                  <motion.circle
+                    key={i}
+                    cx={x}
+                    cy={y}
+                    r="4"
+                    fill="#3B82F6"
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ delay: i * 0.1 + 1, duration: 0.3 }}
+                  />
+                );
+              })}
+            </svg>
+          </div>
+          
+          <div className="mt-4 flex items-center justify-between text-sm text-gray-300">
+            <span>Jan</span>
+            <span>Mar</span>
+            <span>May</span>
+            <span>Jul</span>
+            <span>Sep</span>
+            <span>Nov</span>
+          </div>
+        </motion.div>
+
+        {/* Revenue Chart */}
+        <motion.div 
+          className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-lg shadow-sm p-6"
+          variants={itemVariants}
+        >
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h3 className="text-lg font-semibold text-white">Revenue by Category</h3>
+              <p className="text-sm text-gray-300">Monthly breakdown</p>
+            </div>
+            <DollarSign size={20} className="text-gray-400" />
+          </div>
+          
+          {/* Sample Doughnut Chart */}
+          <div className="relative h-64 flex items-center justify-center">
+            <svg viewBox="0 0 200 200" className="w-48 h-48">
+              <defs>
+                <linearGradient id="segment1" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#3B82F6"/>
+                  <stop offset="100%" stopColor="#1D4ED8"/>
+                </linearGradient>
+                <linearGradient id="segment2" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#10B981"/>
+                  <stop offset="100%" stopColor="#047857"/>
+                </linearGradient>
+                <linearGradient id="segment3" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#F59E0B"/>
+                  <stop offset="100%" stopColor="#D97706"/>
+                </linearGradient>
+              </defs>
+              
+              {/* Doughnut segments */}
+              <motion.circle
+                cx="100"
+                cy="100"
+                r="80"
+                fill="transparent"
+                stroke="url(#segment1)"
+                strokeWidth="40"
+                strokeDasharray="125.6 377"
+                strokeDashoffset="0"
+                initial={{ strokeDasharray: "0 502" }}
+                animate={{ strokeDasharray: "125.6 377" }}
+                transition={{ duration: 1, delay: 0.5 }}
+              />
+              <motion.circle
+                cx="100"
+                cy="100"
+                r="80"
+                fill="transparent"
+                stroke="url(#segment2)"
+                strokeWidth="40"
+                strokeDasharray="94.2 377"
+                strokeDashoffset="-125.6"
+                initial={{ strokeDasharray: "0 502" }}
+                animate={{ strokeDasharray: "94.2 377" }}
+                transition={{ duration: 1, delay: 0.7 }}
+              />
+              <motion.circle
+                cx="100"
+                cy="100"
+                r="80"
+                fill="transparent"
+                stroke="url(#segment3)"
+                strokeWidth="40"
+                strokeDasharray="62.8 377"
+                strokeDashoffset="-219.8"
+                initial={{ strokeDasharray: "0 502" }}
+                animate={{ strokeDasharray: "62.8 377" }}
+                transition={{ duration: 1, delay: 0.9 }}
+              />
+              
+              {/* Center text */}
+              <text x="100" y="95" textAnchor="middle" className="text-lg font-bold fill-white">
+                $324k
+              </text>
+              <text x="100" y="115" textAnchor="middle" className="text-sm fill-gray-300">
+                Total
+              </text>
+            </svg>
+          </div>
+          
+          {/* Legend */}
+          <div className="mt-4 space-y-2">
+            <div className="flex items-center text-sm">
+              <div className="w-3 h-3 bg-blue-500 rounded-full mr-2"></div>
+              <span className="text-gray-300">Movie Tickets (40%)</span>
+            </div>
+            <div className="flex items-center text-sm">
+              <div className="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
+              <span className="text-gray-300">Concessions (30%)</span>
+            </div>
+            <div className="flex items-center text-sm">
+              <div className="w-3 h-3 bg-yellow-500 rounded-full mr-2"></div>
+              <span className="text-gray-300">Memberships (20%)</span>
             </div>
           </div>
-        </>
-      )}
-    </div>
+        </motion.div>
+      </div>
+
+      {/* Content Sections */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Quick Info Cards */}
+        <motion.div 
+          className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-lg shadow-sm p-6"
+          variants={itemVariants}
+        >
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-white">Quick Stats</h3>
+            <Users size={20} className="text-gray-400" />
+          </div>
+          
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <span className="text-gray-300">Active Users</span>
+              <span className="font-semibold text-white">1,420</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-gray-300">New Bookings</span>
+              <span className="font-semibold text-white">89</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-gray-300">Pending Reviews</span>
+              <span className="font-semibold text-white">23</span>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Top Movies */}
+        <motion.div 
+          className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-lg shadow-sm p-6"
+          variants={itemVariants}
+        >
+          <TopMovies dashboardData={dashboardData} />
+        </motion.div>
+
+        {/* Recent Activity */}
+        <motion.div 
+          className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-lg shadow-sm p-6"
+          variants={itemVariants}
+        >
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-white">Recent Activity</h3>
+            <Activity size={20} className="text-gray-400" />
+          </div>
+          
+          <div className="space-y-3">
+            {[
+              { action: 'New user registered', time: '5 minutes ago', type: 'user' },
+              { action: 'Movie booking completed', time: '12 minutes ago', type: 'booking' },
+              { action: 'Review submitted', time: '1 hour ago', type: 'review' },
+              { action: 'Payment processed', time: '2 hours ago', type: 'payment' }
+            ].map((activity, index) => (
+              <motion.div 
+                key={index}
+                className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50 transition-colors"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: index * 0.1 + 0.5 }}
+              >
+                <div className={`w-2 h-2 rounded-full ${
+                  activity.type === 'user' ? 'bg-blue-500' :
+                  activity.type === 'booking' ? 'bg-green-500' :
+                  activity.type === 'review' ? 'bg-yellow-500' : 'bg-purple-500'
+                }`} />
+                <div className="flex-1">
+                  <p className="text-sm text-white">{activity.action}</p>
+                  <p className="text-xs text-gray-400">{activity.time}</p>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+          
+          <button className="w-full mt-4 text-sm text-blue-400 hover:text-blue-300 flex items-center justify-center">
+            View all activity
+            <ChevronRight size={16} className="ml-1" />
+          </button>
+        </motion.div>
+      </div>
+
+      {/* Legacy Components */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <motion.div 
+          className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-lg shadow-sm p-6"
+          variants={itemVariants}
+        >
+          <TopTheaters dashboardData={dashboardData} />
+        </motion.div>
+        
+        <motion.div 
+          className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-lg shadow-sm p-6"
+          variants={itemVariants}
+        >
+          <BookingsChart dashboardData={dashboardData} />
+        </motion.div>
+      </div>
+
+      <motion.div 
+        className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-lg shadow-sm p-6"
+        variants={itemVariants}
+      >
+        <RevenueByStatus dashboardData={dashboardData} />
+      </motion.div>
+    </motion.div>
   );
 };

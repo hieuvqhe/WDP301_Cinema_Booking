@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   getAllUsers,
   getUserById,
@@ -27,7 +28,7 @@ export const UserManagement = () => {
   const [limit] = useState(10);
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('');
-  const [sortBy, setSortBy] = useState<string>('createdAt');
+  const [sortBy, setSortBy] = useState<string>('created_at');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   
   // Modal states
@@ -46,8 +47,8 @@ export const UserManagement = () => {
         limit,
         search: searchTerm || undefined,
         role: roleFilter || undefined,
-        sortBy: sortBy as any,
-        sortOrder
+        sort_by: sortBy as any,
+        sort_order: sortOrder
       };
       
       const response = await getAllUsers(params);
@@ -55,23 +56,11 @@ export const UserManagement = () => {
       
       if (response?.result?.users) {
         setUsers(response.result.users);
-        // Handle different pagination structures
-        const totalUsers = response.result.pagination?.totalUsers || 
-                          response.result.total || 
-                          response.result.users.length || 0;
-        setTotalUsers(totalUsers);
-      } else if (response?.result && Array.isArray(response.result)) {
-        // Handle case where result is directly an array
-        setUsers(response.result);
-        setTotalUsers(response.result.length);
+        setTotalUsers(response.result.total);
       } else {
         console.warn('Unexpected response structure:', response);
         setUsers([]);
         setTotalUsers(0);
-        // Don't show error toast if we got some response, just warn
-        if (!response) {
-          toast.error('No response from server');
-        }
       }
     } catch (error) {
       console.error('Failed to fetch users:', error);
@@ -122,13 +111,13 @@ export const UserManagement = () => {
       console.log('Updating user role:', { userId, role }); // Debug log
       
       // Validate role
-      const validRoles = ['admin', 'user', 'partner'];
+      const validRoles = ['admin', 'customer', 'staff'];
       if (!validRoles.includes(role)) {
         toast.error('Invalid role selected');
         return;
       }
       
-      await updateUserRole(userId, { role: role as 'admin' | 'user' | 'partner' });
+      await updateUserRole(userId, { role: role as 'admin' | 'customer' | 'staff' });
       toast.success('User role updated successfully');
       fetchUsers();
     } catch (error) {
@@ -184,68 +173,107 @@ export const UserManagement = () => {
     fetchUsers();
   }, [currentPage, roleFilter, sortBy, sortOrder]);
 
+  // Animation variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        duration: 0.3,
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.4,
+        ease: "easeOut"
+      }
+    }
+  };
+
   return (
-    <div className="space-y-6">
-      <UserFilters
-        totalUsers={totalUsers}
-        searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
-        roleFilter={roleFilter}
-        setRoleFilter={setRoleFilter}
-        sortBy={sortBy}
-        setSortBy={setSortBy}
-        sortOrder={sortOrder}
-        setSortOrder={setSortOrder}
-        onSearch={handleSearch}
-        onRefresh={fetchUsers}
-      />
-
-      <UserTable
-        users={users}
-        usersLoading={usersLoading}
-        currentPage={currentPage}
-        totalUsers={totalUsers}
-        limit={limit}
-        onViewUser={handleViewUser}
-        onEditUser={handleEditUser}
-        onUpdateUserRole={handleUpdateUserRole}
-        onToggleUserStatus={handleToggleUserStatus}
-        onDeleteUser={confirmDeleteUser}
-        onPageChange={handlePageChange}
-      />
-
-      {/* Modals */}
-      {showUserModal && selectedUser && (
-        <UserDetailModal
-          user={selectedUser}
-          onClose={() => {
-            setShowUserModal(false);
-            setSelectedUser(null);
-          }}
+    <motion.div 
+      className="space-y-6"
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+    >
+      <motion.div variants={itemVariants}>
+        <UserFilters
+          totalUsers={totalUsers}
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          roleFilter={roleFilter}
+          setRoleFilter={setRoleFilter}
+          sortBy={sortBy}
+          setSortBy={setSortBy}
+          sortOrder={sortOrder}
+          setSortOrder={setSortOrder}
+          onSearch={handleSearch}
+          onRefresh={fetchUsers}
         />
-      )}
+      </motion.div>
 
-      {showEditModal && selectedUser && (
-        <EditUserModal
-          user={selectedUser}
-          onClose={() => {
-            setShowEditModal(false);
-            setSelectedUser(null);
-          }}
-          onSave={handleUpdateUser}
+      <motion.div variants={itemVariants}>
+        <UserTable
+          users={users}
+          usersLoading={usersLoading}
+          currentPage={currentPage}
+          totalUsers={totalUsers}
+          limit={limit}
+          onViewUser={handleViewUser}
+          onEditUser={handleEditUser}
+          onUpdateUserRole={handleUpdateUserRole}
+          onToggleUserStatus={handleToggleUserStatus}
+          onDeleteUser={confirmDeleteUser}
+          onPageChange={handlePageChange}
         />
-      )}
+      </motion.div>
 
-      {showDeleteModal && userToDelete && (
-        <DeleteConfirmModal
-          user={userToDelete}
-          onClose={() => {
-            setShowDeleteModal(false);
-            setUserToDelete(null);
-          }}
-          onConfirm={handleDeleteUser}
-        />
-      )}
-    </div>
+      {/* Modals with AnimatePresence */}
+      <AnimatePresence mode="wait">
+        {showUserModal && selectedUser && (
+          <UserDetailModal
+            user={selectedUser}
+            onClose={() => {
+              setShowUserModal(false);
+              setSelectedUser(null);
+            }}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence mode="wait">
+        {showEditModal && selectedUser && (
+          <EditUserModal
+            user={selectedUser}
+            onClose={() => {
+              setShowEditModal(false);
+              setSelectedUser(null);
+            }}
+            onSave={handleUpdateUser}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence mode="wait">
+        {showDeleteModal && userToDelete && (
+          <DeleteConfirmModal
+            user={userToDelete}
+            onClose={() => {
+              setShowDeleteModal(false);
+              setUserToDelete(null);
+            }}
+            onConfirm={handleDeleteUser}
+          />
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 };
