@@ -1,4 +1,5 @@
 import { Loader2, Eye, Edit, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import type { AdminUser } from '../../../../types/Admin.type';
 
 interface UserTableProps {
@@ -32,126 +33,231 @@ export const UserTable = ({
 
   if (usersLoading) {
     return (
-      <div className="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden">
+      <motion.div 
+        className="bg-gradient-to-r from-slate-800/90 to-slate-900/90 rounded-2xl border border-slate-700/50 overflow-hidden backdrop-blur-sm shadow-2xl"
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.3 }}
+      >
         <div className="flex items-center justify-center py-12">
-          <Loader2 size={32} className="animate-spin text-blue-400" />
-          <span className="ml-3 text-gray-400">Loading users...</span>
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+          >
+            <Loader2 size={32} className="text-blue-400" />
+          </motion.div>
+          <motion.span 
+            className="ml-3 text-gray-300"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2 }}
+          >
+            Loading users...
+          </motion.span>
         </div>
-      </div>
+      </motion.div>
     );
   }
 
   return (
-    <div className="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden">
+    <motion.div 
+      className="bg-gradient-to-r from-slate-800/90 to-slate-900/90 rounded-2xl border border-slate-700/50 overflow-hidden backdrop-blur-sm shadow-2xl"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, ease: "easeOut" }}
+    >
       <div className="overflow-x-auto">
         <table className="w-full">
-          <thead className="bg-gray-700">
+          <motion.thead 
+            className="bg-gradient-to-r from-slate-700/80 to-slate-800/80"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2, duration: 0.5 }}
+          >
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">User</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Role</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Status</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Joined</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Actions</th>
+              <th className="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">User</th>
+              <th className="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Role</th>
+              <th className="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Status</th>
+              <th className="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Stats</th>
+              <th className="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Joined</th>
+              <th className="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Actions</th>
             </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-700">
-            {users.map((userData) => (
-              <tr key={userData._id} className="hover:bg-gray-700 transition-colors">
+          </motion.thead>
+          <tbody className="divide-y divide-slate-700/50">
+            <AnimatePresence>
+              {users.map((userData, index) => (
+                <motion.tr 
+                  key={userData._id} 
+                  className="hover:bg-slate-700/30 transition-all duration-300 group"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                  transition={{ 
+                    delay: index * 0.05, 
+                    duration: 0.3,
+                    ease: "easeOut"
+                  }}
+                  whileHover={{ 
+                    scale: 1.01,
+                    transition: { duration: 0.2 }
+                  }}
+                >
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center">
-                    <div className="h-10 w-10 rounded-full bg-gradient-to-r from-blue-400 to-purple-500 flex items-center justify-center text-white font-semibold">
-                      {userData.name.charAt(0).toUpperCase()}
+                    <div className="h-10 w-10 rounded-full overflow-hidden bg-gradient-to-r from-blue-400 to-purple-500 flex items-center justify-center text-white font-semibold">
+                      {userData.avatar ? (
+                        <img 
+                          src={userData.avatar} 
+                          alt={userData.name}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                            const nextEl = e.currentTarget.nextElementSibling as HTMLElement;
+                            if (nextEl) nextEl.style.display = 'block';
+                          }}
+                        />
+                      ) : null}
+                      <span className={userData.avatar ? 'hidden' : 'block'}>
+                        {userData.name?.charAt(0)?.toUpperCase() || '?'}
+                      </span>
                     </div>
                     <div className="ml-4">
-                      <div className="text-sm font-medium text-white">{userData.name}</div>
+                      <div className="text-sm font-medium text-white">{userData.name || 'No name'}</div>
                       <div className="text-sm text-gray-400">{userData.email}</div>
+                      {userData.phone && (
+                        <div className="text-xs text-gray-500">{userData.phone}</div>
+                      )}
                     </div>
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <select
+                  <motion.select
                     value={userData.role}
                     onChange={(e) => onUpdateUserRole(userData._id, e.target.value)}
-                    className="px-2 py-1 bg-gray-600 text-white rounded border border-gray-500 text-sm"
+                    className="px-3 py-2 bg-slate-600/50 text-white rounded-lg border border-slate-500/50 text-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all duration-300"
+                    whileHover={{ scale: 1.05 }}
+                    whileFocus={{ scale: 1.05 }}
                   >
                     <option value="admin">Admin</option>
-                    <option value="user">User</option>
-                    <option value="partner">Partner</option>
-                  </select>
+                    <option value="customer">Customer</option>
+                    <option value="staff">Staff</option>
+                  </motion.select>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <button
-                    onClick={() => onToggleUserStatus(userData._id, userData.isVerified)}
-                    className={`px-2 py-1 rounded-full text-xs font-medium transition-colors ${
-                      userData.isVerified
-                        ? 'bg-green-100 text-green-800 hover:bg-green-200'
-                        : 'bg-red-100 text-red-800 hover:bg-red-200'
+                  <motion.button
+                    onClick={() => onToggleUserStatus(userData._id, userData.verify === 1)}
+                    className={`px-3 py-1 rounded-full text-xs font-medium transition-all duration-300 ${
+                      userData.verify === 1
+                        ? 'bg-green-500/20 text-green-400 border border-green-500/30 hover:bg-green-500/30'
+                        : userData.verify === 2
+                        ? 'bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30'
+                        : 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 hover:bg-yellow-500/30'
                     }`}
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.95 }}
                   >
-                    {userData.isVerified ? 'Active' : 'Banned'}
-                  </button>
+                    {userData.verify === 1 ? 'Verified' : userData.verify === 2 ? 'Banned' : 'Unverified'}
+                  </motion.button>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
-                  {new Date(userData.createdAt).toLocaleDateString()}
+                  {userData.stats && (
+                    <div className="text-xs space-y-1">
+                      <div>Bookings: {userData.stats.bookings_count}</div>
+                      <div>Ratings: {userData.stats.ratings_count}</div>
+                    </div>
+                  )}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
+                  {new Date(userData.created_at).toLocaleDateString()}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                   <div className="flex items-center gap-2">
-                    <button
+                    <motion.button
                       onClick={() => onViewUser(userData._id)}
-                      className="text-blue-400 hover:text-blue-300 transition-colors"
+                      className="text-blue-400 hover:text-blue-300 transition-colors p-1 rounded-lg hover:bg-blue-500/10"
                       title="View Details"
+                      whileHover={{ scale: 1.2, rotate: 5 }}
+                      whileTap={{ scale: 0.9 }}
                     >
                       <Eye size={16} />
-                    </button>
-                    <button
+                    </motion.button>
+                    <motion.button
                       onClick={() => onEditUser(userData)}
-                      className="text-yellow-400 hover:text-yellow-300 transition-colors"
+                      className="text-yellow-400 hover:text-yellow-300 transition-colors p-1 rounded-lg hover:bg-yellow-500/10"
                       title="Edit User"
+                      whileHover={{ scale: 1.2, rotate: -5 }}
+                      whileTap={{ scale: 0.9 }}
                     >
                       <Edit size={16} />
-                    </button>
-                    <button
+                    </motion.button>
+                    <motion.button
                       onClick={() => onDeleteUser(userData)}
-                      className="text-red-400 hover:text-red-300 transition-colors"
+                      className="text-red-400 hover:text-red-300 transition-colors p-1 rounded-lg hover:bg-red-500/10"
                       title="Delete User"
+                      whileHover={{ scale: 1.2, rotate: 5 }}
+                      whileTap={{ scale: 0.9 }}
                     >
                       <Trash2 size={16} />
-                    </button>
+                    </motion.button>
                   </div>
                 </td>
-              </tr>
+              </motion.tr>
             ))}
+            </AnimatePresence>
           </tbody>
         </table>
       </div>
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="bg-gray-700 px-6 py-3 flex items-center justify-between">
-          <div className="text-sm text-gray-400">
+        <motion.div 
+          className="bg-slate-800/50 px-6 py-4 flex items-center justify-between border-t border-slate-700/50"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4, duration: 0.3 }}
+        >
+          <motion.div 
+            className="text-sm text-gray-300"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5 }}
+          >
             Showing {((currentPage - 1) * limit) + 1} to {Math.min(currentPage * limit, totalUsers)} of {totalUsers} users
-          </div>
+          </motion.div>
           <div className="flex items-center gap-2">
-            <button
+            <motion.button
               onClick={() => onPageChange(currentPage - 1)}
               disabled={currentPage === 1}
-              className="px-3 py-1 bg-gray-600 text-white rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-500 transition-colors"
+              className="px-3 py-2 bg-slate-600/50 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-500/50 transition-all duration-300 flex items-center gap-1"
+              whileHover={{ scale: currentPage === 1 ? 1 : 1.05 }}
+              whileTap={{ scale: currentPage === 1 ? 1 : 0.95 }}
             >
               <ChevronLeft size={16} />
-            </button>
-            <span className="text-sm text-gray-300">
+              Previous
+            </motion.button>
+            
+            <motion.span 
+              className="text-sm px-3 py-2 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg text-white font-medium"
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.6, type: "spring" }}
+            >
               Page {currentPage} of {totalPages}
-            </span>
-            <button
+            </motion.span>
+            
+            <motion.button
               onClick={() => onPageChange(currentPage + 1)}
               disabled={currentPage === totalPages}
-              className="px-3 py-1 bg-gray-600 text-white rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-500 transition-colors"
+              className="px-3 py-2 bg-slate-600/50 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-500/50 transition-all duration-300 flex items-center gap-1"
+              whileHover={{ scale: currentPage === totalPages ? 1 : 1.05 }}
+              whileTap={{ scale: currentPage === totalPages ? 1 : 0.95 }}
             >
+              Next
               <ChevronRight size={16} />
-            </button>
+            </motion.button>
           </div>
-        </div>
+        </motion.div>
       )}
-    </div>
+    </motion.div>
   );
 };

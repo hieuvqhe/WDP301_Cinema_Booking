@@ -1,3 +1,4 @@
+// types/Showtime.type.ts
 export type Theater = {
   _id: string;
   name: string;
@@ -10,13 +11,22 @@ export type Screen = {
   screen_type: string;
 };
 
-export type Showtime = {
+export type Movie = {
+  _id: string;
+  title: string;
+  poster_url: string;
+  duration: number;
+};
+
+export type ShowtimeStatus = 'booking_open' | 'booking_closed' | 'completed';
+
+export interface Showtime {
   _id: string;
   movie_id: string;
   screen_id: string;
   theater_id: string;
-  start_time: Date;
-  end_time: Date;
+  start_time: string;
+  end_time: string;
   price: {
     regular: number;
     premium: number;
@@ -24,8 +34,46 @@ export type Showtime = {
     couple: number;
   };
   available_seats: number;
-  status: "booking_open" | "booking_closed" | "completed" | string;
-  movie: any | null;
-  theater: Theater | null;
+  status: ShowtimeStatus;
+  movie: Movie | null;
   screen: Screen | null;
-};
+  theater: Theater | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateShowtimeRequest {
+  movie_id: string;
+  screen_id: string;
+  theater_id: string;
+  start_time: string;
+  end_time: string;
+  price: {
+    regular: number;
+    premium: number;
+    recliner: number;
+    couple: number;
+  };
+  available_seats: number;
+  status: ShowtimeStatus;
+}
+
+export interface UpdateShowtimeRequest extends Partial<CreateShowtimeRequest> {}
+
+export interface ShowtimeQueryParams {
+  page?: number;
+  limit?: number;
+  movie_id?: string;
+  theater_id?: string;
+  status?: ShowtimeStatus;
+  date?: string;
+  sortBy?: 'start_time' | 'available_seats' | 'price.regular' | 'created_at';
+  sortOrder?: 'asc' | 'desc';
+}
+
+export interface LockedSeat {
+  row: string;
+  seat_number: number;
+  type: 'regular' | 'vip' | 'recliner' | 'couple';
+  status: 'locked' | 'booked';
+}

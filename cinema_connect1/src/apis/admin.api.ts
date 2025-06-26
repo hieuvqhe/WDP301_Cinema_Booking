@@ -85,8 +85,8 @@ export const getAllUsers = async (params?: UsersQueryParams): Promise<GetUsersRe
     if (params?.limit) queryParams.append('limit', params.limit.toString());
     if (params?.search) queryParams.append('search', params.search);
     if (params?.role) queryParams.append('role', params.role);
-    if (params?.sortBy) queryParams.append('sortBy', params.sortBy);
-    if (params?.sortOrder) queryParams.append('sortOrder', params.sortOrder);
+    if (params?.sort_by) queryParams.append('sort_by', params.sort_by);
+    if (params?.sort_order) queryParams.append('sort_order', params.sort_order);
     
     const url = `/admin/users${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
     const response = await adminApi.get<GetUsersResponse>(url);
