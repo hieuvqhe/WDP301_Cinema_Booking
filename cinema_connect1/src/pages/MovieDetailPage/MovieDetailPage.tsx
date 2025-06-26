@@ -1,7 +1,6 @@
 // MovieDetailsPage.tsx
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Button } from "../../components/ui/button";
 import { motion } from "framer-motion";
 import { FaStar } from "react-icons/fa";
 import type { Movie } from "../../types/Movie.type";
@@ -44,6 +43,7 @@ export default function MovieDetailsPage() {
   const [selectedTheaterId, setSelectedTheaterId] = useState<string | null>(
     null
   );
+  const [selectScreenId, setSelectScreenId] = useState<string | null>(null);
   const [feedbacks, setFeedbacks] = useState([
     {
       user: { email: "nguyenvana@gmail.com" },
@@ -212,7 +212,10 @@ export default function MovieDetailsPage() {
                     return (
                       <button
                         key={showtime._id}
-                        onClick={() => setSelectedShowtimeId(showtime._id)}
+                        onClick={() => {
+                          setSelectedShowtimeId(showtime._id);
+                          setSelectScreenId(showtime.screen_id);
+                        }}
                         className={`cursor-pointer px-4 py-2 rounded text-sm font-medium transition ${
                           isSelected
                             ? "bg-primary text-white hover:bg-primary-dull"
@@ -234,7 +237,7 @@ export default function MovieDetailsPage() {
                 <button
                   onClick={() =>
                     selectedShowtimeId &&
-                    navigate(`/movies/${movie._id}/${selectedShowtimeId}`)
+                    navigate(`/movies/${movie._id}/${selectScreenId}`)
                   }
                   disabled={!selectedShowtimeId}
                   className="px-4 py-2 text-xs text-white bg-primary hover:bg-primary-dull transition rounded-full font-medium cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
