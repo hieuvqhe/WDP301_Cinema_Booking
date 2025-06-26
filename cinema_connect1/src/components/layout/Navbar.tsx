@@ -18,6 +18,8 @@ const Navbar = () => {
     const baseItems = [
       { title: "Home", link: "/" },
       { title: "Movies", link: "/movies" },
+      { title: "Theater", link: "/my-bookings" },
+      { title: "Favourites", link: "/favourite" },
     ];
 
     if (!user) {
@@ -26,21 +28,15 @@ const Navbar = () => {
 
     switch (user.role) {
       case "admin":
-        return [
-          ...baseItems,
-          { title: "Admin Dashboard", link: "/admin" },
-        ];
+        return [...baseItems, { title: "Admin Dashboard", link: "/admin" }];
       case "staff":
-        return [
-          ...baseItems,
-          { title: "Partner Dashboard", link: "/partner" },
-        ];
+        return [...baseItems, { title: "Partner Dashboard", link: "/partner" }];
       case "customer":
       default:
         return [
           ...baseItems,
-          { title: "My Bookings", link: "/my-bookings" },
-          { title: "Favourites", link: "/favourite" },
+          // { title: "My Bookings", link: "/my-bookings" },
+          // { title: "Favourites", link: "/favourite" },
         ];
     }
   };
@@ -63,7 +59,7 @@ const Navbar = () => {
         title: "Sign out",
         link: "",
         action: () => logout(),
-      },
+      }
     ];
 
     if (user?.role === "customer") {
@@ -75,7 +71,7 @@ const Navbar = () => {
         },
         {
           title: "My Bookings",
-          link: "/my-bookings", 
+          link: "/my-bookings",
           action: () => console.log("My Bookings"),
         },
         ...baseActions,
@@ -133,8 +129,10 @@ const Navbar = () => {
                   <FaRegUser />
                 </PopoverButton>
 
-                <PopoverPanel className="absolute right-0 z-10 mt-2 w-56 origin-top-right bg-primary/40 border 
-                border-primary/20 rounded-lg shadow-md ring-1 ring-black/5">
+                <PopoverPanel
+                  className="absolute right-0 z-10 mt-2 w-56 origin-top-right bg-primary/40 border 
+                border-primary/20 rounded-lg shadow-md ring-1 ring-black/5"
+                >
                   <div className="text-sm py-2 px-4 text-center border-b-slate-50 border-b">
                     <p>Hello {user.name}</p>
                   </div>

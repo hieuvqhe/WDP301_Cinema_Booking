@@ -24,7 +24,7 @@ function App() {
       <Routes>
         {/* Auth routes - no layout */}
         <Route path="/register" element={<RegisterPage />} />
-        <Route path="/login" element={<LoginPage />} />
+        {/* <Route path="/login" element={<LoginPage />} /> */}
         <Route path="/verify" element={<VerifyPage />} />
 
         {/* Public landing page */}

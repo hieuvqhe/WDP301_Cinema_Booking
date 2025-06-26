@@ -11,6 +11,10 @@ import { getTheaters } from "../../apis/theater.api";
 import type { GetTheatersResponse } from "../../types/Theater.type";
 import { useAuthAction } from "../../hooks/useAuthAction";
 import LoginModal from "../../components/user/LoginModal";
+import ReactPlayer from "react-player";
+import Slider from "react-slick";
+import "slick-carousel/slick/slick.css";
+import "slick-carousel/slick/slick-theme.css";
 
 type SelectedInfo = {
   movieId: string;
@@ -49,6 +53,7 @@ export default function MovieDetailsPage() {
   const [theater, setTheater] = useState<GetTheatersResponse | null>(null);
   const navigate = useNavigate();
   const { requireAuth, showLoginModal, setShowLoginModal } = useAuthAction();
+  const [isPlayTrailer, setIsPlayTrailer] = useState(false);
 
   const [selectedInfo, setSelectedInfo] = useState<SelectedInfo>({
     movieId: id,
@@ -58,6 +63,14 @@ export default function MovieDetailsPage() {
     rating: 0,
     comment: "",
   });
+
+  const settings = {
+    dots: false,
+    infinite: true,
+    speed: 500,
+    slidesToShow: 4,
+    slidesToScroll: 2,
+  };
 
   const [feedbacks, setFeedbacks] = useState([
     {
@@ -190,6 +203,13 @@ export default function MovieDetailsPage() {
               alt={movie.title}
               className="rounded w-full"
             />
+
+            <button
+              className="px-3 py-1 bg-primary rounded-lg mt-4 hover:bg-primary/70 transition-colors duration-200"
+              onClick={() => setIsPlayTrailer(true)}
+            >
+              <p>Watch Trailer</p>
+            </button>
           </div>
           <div className="md:col-span-2">
             <h1 className="text-4xl font-bold mb-2">{movie.title}</h1>
@@ -203,9 +223,21 @@ export default function MovieDetailsPage() {
             </p>
             <p className="mb-1">Thời lượng: {movie.duration} phút</p>
             <p className="mb-1">Thể loại: {movie.genre.join(", ")}</p>
-            <p className="mb-1">
-              Diễn viên: {movie.cast.map((a) => a.name).join(", ")}
-            </p>
+            {/* <p className="mb-1">Diễn viên:</p>
+            <Slider {...settings}>
+              {movie.cast.map((cast) => (
+                <div className="cursor-pointer" key={cast.id}>
+                  <div className="flex flex-col items-center text-center">
+                    <img
+                      src={cast.profile_image}
+                      alt=""
+                      className="rounded-full h-20 md:h-20 aspect-square object-cover"
+                    />
+                    <p>{cast.name}</p>
+                  </div>
+                </div>
+              ))}
+            </Slider> */}
 
             <div className="flex items-center mb-2">
               {[...Array(5)].map((_, i) => (
@@ -356,8 +388,26 @@ export default function MovieDetailsPage() {
           )}
         </div>
       </div>
-      
+
       {showLoginModal && <LoginModal isFormOpen={setShowLoginModal} />}
+      {isPlayTrailer && (
+        <div
+          className="fixed inset-0 bg-black/70 background-blur-lg z-50 
+        flex items-center justify-center p-4w-full h-screen"
+          onClick={() => setIsPlayTrailer(false)}
+        >
+          <div className="w-fit h-fit border border-primary rounded-sm">
+            <ReactPlayer
+              url={movie.trailer_url}
+              controls={false}
+              playing={true}
+              className="mx-auto max-w-full"
+              width={"960px"}
+              height={"540px"}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
