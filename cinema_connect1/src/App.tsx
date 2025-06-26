@@ -63,7 +63,7 @@ function App() {
                   <MovieDetail />
                 </RoleProtectedRoute>
               } />
-              <Route path="/movies/:id/:date" element={
+              <Route path="/movies/:id/:screenId" element={
                 <RoleProtectedRoute allowedRoles={["customer", "admin"]}>
                   <SeatLayout />
                 </RoleProtectedRoute>

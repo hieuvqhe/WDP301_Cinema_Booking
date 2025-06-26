@@ -1,3 +1,4 @@
+// MovieDetailsPage.tsx
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "../../components/ui/button";
@@ -13,21 +14,21 @@ import type { GetTheatersResponse } from "../../types/Theater.type";
 
 function FeedbackItem({ feedback }: { feedback: any }) {
   return (
-    <div className="border-b py-3">
+    <div className="border-b border-gray-700 py-3">
       <div className="flex items-center">
         {[...Array(5)].map((_, i) => (
           <FaStar
             key={i}
             className={`text-sm ${
-              i < feedback.rating ? "text-yellow-400" : "text-gray-400"
+              i < feedback.rating ? "text-yellow-400" : "text-gray-500"
             }`}
           />
         ))}
-        <span className="ml-2 text-sm text-gray-600">
+        <span className="ml-2 text-sm text-gray-400">
           {feedback.user?.email || "Ẩn danh"}
         </span>
       </div>
-      <p className="text-sm">{feedback.comment}</p>
+      <p className="text-sm text-gray-300">{feedback.comment}</p>
     </div>
   );
 }
@@ -87,7 +88,6 @@ export default function MovieDetailsPage() {
       try {
         const theaterData = await getTheaters();
         setTheater(theaterData);
-
         const firstId = theaterData.result?.theaters?.[0]?._id;
         if (firstId && id) {
           setSelectedTheaterId(firstId);
@@ -113,26 +113,20 @@ export default function MovieDetailsPage() {
 
   if (!movie) {
     return (
-      <div className="text-center text-white mt-10">
+      <div className="text-center text-gray-300 mt-10">
         Đang tải thông tin phim...
       </div>
     );
   }
 
   return (
-    <div
-      className="relative min-h-screen bg-cover bg-center text-white"
-      style={{
-        backgroundImage: `linear-gradient(rgba(20,20,20,0.5),rgba(20,20,20,0.5)), url(${movie.poster_url})`,
-      }}
-    >
-      <div className="absolute inset-0 bg-black opacity-50" />
-      <div className="relative z-10 p-6 max-w-6xl mx-auto pt-20 mt-10">
+    <div className="relative min-h-screen bg-[#121212] text-gray-300 overflow-x-hidden">
+      <div className="relative z-10 px-6 md:px-16 lg:px-24 xl:px-44 pt-20">
         <motion.div
           initial={{ opacity: 0, y: 50 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="grid md:grid-cols-3 gap-6 bg-gray-900/90 p-6 rounded-[30px]"
+          className="grid md:grid-cols-3 gap-6 bg-[#1E1E1E] p-6 rounded-3xl shadow-xl"
         >
           <div className="flex flex-col items-center">
             <img
@@ -156,6 +150,7 @@ export default function MovieDetailsPage() {
             <p className="mb-1">
               Diễn viên: {movie.cast.map((a) => a.name).join(", ")}
             </p>
+
             <div className="flex items-center mb-2">
               {[...Array(5)].map((_, i) => (
                 <FaStar
@@ -163,7 +158,7 @@ export default function MovieDetailsPage() {
                   className={`mr-1 ${
                     i < Math.round((movie.average_rating || 0) / 2)
                       ? "text-yellow-400"
-                      : "text-gray-500"
+                      : "text-gray-600"
                   }`}
                 />
               ))}
@@ -172,13 +167,14 @@ export default function MovieDetailsPage() {
                 ({movie.ratings_count} đánh giá)
               </span>
             </div>
+
             <p className="mb-4">{movie.description}</p>
 
             <h2 className="text-2xl font-bold mb-4">Rạp</h2>
             <div className="mb-4">
               {theater?.result?.theaters?.length ? (
                 <select
-                  className="bg-gray-800 text-white px-4 py-2 rounded w-full md:w-1/2"
+                  className="bg-[#2A2A2A] text-gray-300 px-4 py-2 rounded-lg border border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary"
                   value={selectedTheaterId || ""}
                   onChange={(e) => {
                     const selectedId = e.target.value;
@@ -219,8 +215,8 @@ export default function MovieDetailsPage() {
                         onClick={() => setSelectedShowtimeId(showtime._id)}
                         className={`cursor-pointer px-4 py-2 rounded text-sm font-medium transition ${
                           isSelected
-                            ? "bg-orange-500 text-white hover:bg-orange-600"
-                            : "border border-orange-500 text-white hover:bg-orange-100"
+                            ? "bg-primary text-white hover:bg-primary-dull"
+                            : "border border-primary text-white hover:bg-[#1E1E1E]"
                         }`}
                       >
                         {time}
@@ -233,31 +229,31 @@ export default function MovieDetailsPage() {
               )}
             </div>
 
-            <div className="mt-4 mr-10 justify-end flex">
+            <div className="mt-4 flex justify-end">
               {userId ? (
-                <Button
+                <button
                   onClick={() =>
                     selectedShowtimeId &&
-                    navigate(`/booking/${selectedShowtimeId}`)
+                    navigate(`/movies/${movie._id}/${selectedShowtimeId}`)
                   }
                   disabled={!selectedShowtimeId}
-                  className="flex justify-center py-2 px-4 bg-orange-500 hover:bg-orange-600 text-white"
+                  className="px-4 py-2 text-xs text-white bg-primary hover:bg-primary-dull transition rounded-full font-medium cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Tiếp theo
-                </Button>
+                </button>
               ) : (
-                <Button
+                <button
                   onClick={() => navigate("/login")}
-                  className="bg-orange-500 hover:bg-orange-600 text-white"
+                  className="px-4 py-2 text-xs text-white bg-primary hover:bg-primary-dull transition rounded-full font-medium cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Đăng nhập để đặt vé
-                </Button>
+                </button>
               )}
             </div>
           </div>
         </motion.div>
 
-        <div className="mt-10 bg-gray-900/90 text-white rounded-[30px] p-6">
+        <div className="mt-10 bg-[#1E1E1E] text-gray-300 rounded-3xl p-6">
           <h2 className="text-2xl font-bold mb-4">Đánh giá phim</h2>
           {userId && (
             <div className="mb-6">
@@ -268,21 +264,21 @@ export default function MovieDetailsPage() {
                     key={i}
                     onClick={() => setRating(i + 1)}
                     className={`cursor-pointer text-2xl ${
-                      i < rating ? "text-yellow-400" : "text-gray-400"
+                      i < rating ? "text-yellow-400" : "text-gray-600"
                     }`}
                   />
                 ))}
               </div>
               <textarea
-                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full p-3 border border-gray-700 bg-[#2A2A2A] text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                 rows={4}
                 placeholder="Viết đánh giá của bạn tại đây..."
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
               />
-              <Button className="bg-orange-500 hover:bg-orange-600 text-white mt-2">
+              <button className="px-4 py-2 text-xs text-white bg-primary hover:bg-primary-dull transition rounded-full font-medium cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
                 Gửi đánh giá
-              </Button>
+              </button>
             </div>
           )}
           <h3 className="text-xl font-semibold mt-6">Phản hồi từ người xem:</h3>
