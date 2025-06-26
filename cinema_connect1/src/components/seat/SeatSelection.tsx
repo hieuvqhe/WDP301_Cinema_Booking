@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { Seat } from "../../types/Screen.type";
+import { useAuthAction } from "../../hooks/useAuthAction";
+import LoginModal from "../user/LoginModal";
 
 type Props = {
   seatLayout: Seat[][];
@@ -10,6 +12,7 @@ type Props = {
 export default function SeatSelection({ seatLayout, showConfirmButton = true }: Props) {
   const [selectedSeats, setSelectedSeats] = useState<string[]>([]);
   const navigate = useNavigate();
+  const { requireAuth, showLoginModal, setShowLoginModal } = useAuthAction();
 
   useEffect(() => {
     const stored = localStorage.getItem("selected-movie-info");
@@ -38,7 +41,9 @@ export default function SeatSelection({ seatLayout, showConfirmButton = true }: 
   };
 
   const handleCheckout = () => {
-    navigate("/checkout");
+    requireAuth(() => {
+      navigate("/checkout");
+    });
   };
 
   const getSeatColor = (
@@ -118,6 +123,8 @@ export default function SeatSelection({ seatLayout, showConfirmButton = true }: 
           Thanh toán ({selectedSeats.length} ghế)
         </button>
       )}
+      
+      {showLoginModal && <LoginModal isFormOpen={setShowLoginModal} />}
     </div>
   );
 }

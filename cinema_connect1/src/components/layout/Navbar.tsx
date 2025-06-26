@@ -15,25 +15,20 @@ const Navbar = () => {
 
   // Navigation items based on user role
   const getNavigationItems = () => {
-    if (!user) {
-      return [
-        { title: "Home", link: "/" },
-        { title: "Movies", link: "/movies" },
-        { title: "Theaters", link: "/theaters" },
-        { title: "Release", link: "/" },
-      ];
-    }
-
     const baseItems = [
-      { title: "Home", link: "/home" },
+      { title: "Home", link: "/" },
+      { title: "Movies", link: "/movies" },
     ];
+
+    if (!user) {
+      return baseItems;
+    }
 
     switch (user.role) {
       case "admin":
         return [
           ...baseItems,
           { title: "Admin Dashboard", link: "/admin" },
-          { title: "Movies", link: "/movies" },
         ];
       case "staff":
         return [
@@ -44,7 +39,6 @@ const Navbar = () => {
       default:
         return [
           ...baseItems,
-          { title: "Movies", link: "/movies" },
           { title: "My Bookings", link: "/my-bookings" },
           { title: "Favourites", link: "/favourite" },
         ];

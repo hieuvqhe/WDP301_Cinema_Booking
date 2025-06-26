@@ -15,7 +15,6 @@ import MyBooking from "./pages/MyBooking/MyBooking";
 import Favourite from "./pages/Favourite/Favourite";
 import ProtectedRoute from "./components/ProtectedRoute";
 import RoleProtectedRoute from "./components/RoleProtectedRoute";
-import { Check } from "lucide-react";
 import CheckoutPage from "./pages/CheckoutPage";
 
 function App() {
@@ -56,43 +55,31 @@ function App() {
           <>
             <Navbar />
             <Routes>
-              {/* Public routes - accessible to all authenticated users */}
-              <Route path="/home" element={
+              {/* Public routes - accessible to all users */}
+              <Route path="/home" element={<HomePage />} />
+              <Route path="/movies" element={<MoviesPage />} />
+              <Route path="/movies/:id" element={<MovieDetail />} />
+              
+              {/* Routes that require authentication */}
+              <Route path="/movies/:id/:screenId" element={
                 <ProtectedRoute>
-                  <HomePage />
+                  <SeatLayout />
                 </ProtectedRoute>
               } />
-
-              {/* Customer routes */}
-              <Route path="/movies" element={
-                <RoleProtectedRoute allowedRoles={["customer", "admin"]}>
-                  <MoviesPage />
-                </RoleProtectedRoute>
-              } />
-              <Route path="/movies/:id" element={
-                <RoleProtectedRoute allowedRoles={["customer", "admin"]}>
-                  <MovieDetail />
-                </RoleProtectedRoute>
-              } />
-              <Route path="/movies/:id/:screenId" element={
-                <RoleProtectedRoute allowedRoles={["customer", "admin"]}>
-                  <SeatLayout />
-                </RoleProtectedRoute>
-              } />
               <Route path="/checkout" element={
-                <RoleProtectedRoute allowedRoles={["customer", "admin"]}>
+                <ProtectedRoute>
                   <CheckoutPage />
-                </RoleProtectedRoute>
+                </ProtectedRoute>
               } />
               <Route path="/my-bookings" element={
-                <RoleProtectedRoute allowedRoles={["customer", "admin"]}>
+                <ProtectedRoute>
                   <MyBooking />
-                </RoleProtectedRoute>
+                </ProtectedRoute>
               } />
               <Route path="/favourite" element={
-                <RoleProtectedRoute allowedRoles={["customer", "admin"]}>
+                <ProtectedRoute>
                   <Favourite />
-                </RoleProtectedRoute>
+                </ProtectedRoute>
               } />
 
               {/* Default routes */}

@@ -33,7 +33,7 @@ const PartnerPage = () => {
 
   const handleLogout = async () => {
     await logout();
-    navigate('/login');
+    navigate('/home');
   };
 
   const menuItems = [

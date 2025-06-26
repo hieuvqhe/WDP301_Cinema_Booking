@@ -9,6 +9,8 @@ import type { Showtime } from "../../types/Showtime.type";
 import { getShowtimeByMovieIdAndTheaterId } from "../../apis/showtime.api";
 import { getTheaters } from "../../apis/theater.api";
 import type { GetTheatersResponse } from "../../types/Theater.type";
+import { useAuthAction } from "../../hooks/useAuthAction";
+import LoginModal from "../../components/user/LoginModal";
 
 type SelectedInfo = {
   movieId: string;
@@ -46,6 +48,7 @@ export default function MovieDetailsPage() {
   const [showtimes, setShowtimes] = useState<Showtime[]>([]);
   const [theater, setTheater] = useState<GetTheatersResponse | null>(null);
   const navigate = useNavigate();
+  const { requireAuth, showLoginModal, setShowLoginModal } = useAuthAction();
 
   const [selectedInfo, setSelectedInfo] = useState<SelectedInfo>({
     movieId: id,
@@ -137,6 +140,31 @@ export default function MovieDetailsPage() {
     } catch {
       setShowtimes([]);
     }
+  };
+
+  const handleSubmitFeedback = () => {
+    requireAuth(() => {
+      // Logic submit feedback ở đây
+      console.log("Submitting feedback:", {
+        rating: selectedInfo.rating,
+        comment: selectedInfo.comment,
+        movieId: id,
+      });
+      // Có thể gọi API submit feedback ở đây
+      // submitFeedback({ movieId: id, rating: selectedInfo.rating, comment: selectedInfo.comment });
+    });
+  };
+
+  const handleBookSeats = () => {
+    requireAuth(() => {
+      if (
+        selectedInfo.theaterId &&
+        selectedInfo.showtimeId &&
+        selectedInfo.screenId
+      ) {
+        navigate(`/movies/${id}/${selectedInfo.screenId}`);
+      }
+    });
   };
 
   if (!movie) {
@@ -269,25 +297,13 @@ export default function MovieDetailsPage() {
             </div>
 
             <div className="mt-4 flex justify-end">
-              {userId ? (
-                <button
-                  onClick={() =>
-                    selectedInfo.showtimeId &&
-                    navigate(`/movies/${movie._id}/${selectedInfo.screenId}`)
-                  }
-                  disabled={!selectedInfo.showtimeId}
-                  className="px-4 py-2 text-xs text-white bg-primary hover:bg-primary-dull transition rounded-full font-medium cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Tiếp theo
-                </button>
-              ) : (
-                <button
-                  onClick={() => navigate("/login")}
-                  className="px-4 py-2 text-xs text-white bg-primary hover:bg-primary-dull transition rounded-full font-medium cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Đăng nhập để đặt vé
-                </button>
-              )}
+              <button
+                onClick={handleBookSeats}
+                disabled={!selectedInfo.showtimeId}
+                className="px-4 py-2 text-xs text-white bg-primary hover:bg-primary-dull transition rounded-full font-medium cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Tiếp theo
+              </button>
             </div>
           </div>
         </motion.div>
@@ -324,7 +340,10 @@ export default function MovieDetailsPage() {
                   }))
                 }
               />
-              <button className="px-4 py-2 text-xs text-white bg-primary hover:bg-primary-dull transition rounded-full font-medium cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
+              <button
+                onClick={handleSubmitFeedback}
+                className="px-4 py-2 text-xs text-white bg-primary hover:bg-primary-dull transition rounded-full font-medium cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              >
                 Gửi đánh giá
               </button>
             </div>
@@ -337,6 +356,8 @@ export default function MovieDetailsPage() {
           )}
         </div>
       </div>
+      
+      {showLoginModal && <LoginModal isFormOpen={setShowLoginModal} />}
     </div>
   );
 }
