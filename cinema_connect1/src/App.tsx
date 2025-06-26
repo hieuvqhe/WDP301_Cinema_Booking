@@ -15,6 +15,8 @@ import MyBooking from "./pages/MyBooking/MyBooking";
 import Favourite from "./pages/Favourite/Favourite";
 import ProtectedRoute from "./components/ProtectedRoute";
 import RoleProtectedRoute from "./components/RoleProtectedRoute";
+import { Check } from "lucide-react";
+import CheckoutPage from "./pages/CheckoutPage";
 
 function App() {
   return (
@@ -66,6 +68,11 @@ function App() {
               <Route path="/movies/:id/:screenId" element={
                 <RoleProtectedRoute allowedRoles={["customer", "admin"]}>
                   <SeatLayout />
+                </RoleProtectedRoute>
+              } />
+              <Route path="/checkout" element={
+                <RoleProtectedRoute allowedRoles={["customer", "admin"]}>
+                  <CheckoutPage />
                 </RoleProtectedRoute>
               } />
               <Route path="/my-bookings" element={

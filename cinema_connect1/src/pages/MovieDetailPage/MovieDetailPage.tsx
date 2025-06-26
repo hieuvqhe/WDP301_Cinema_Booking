@@ -1,4 +1,3 @@
-// MovieDetailsPage.tsx
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -10,6 +9,15 @@ import type { Showtime } from "../../types/Showtime.type";
 import { getShowtimeByMovieIdAndTheaterId } from "../../apis/showtime.api";
 import { getTheaters } from "../../apis/theater.api";
 import type { GetTheatersResponse } from "../../types/Theater.type";
+
+type SelectedInfo = {
+  movieId: string;
+  theaterId: string | null;
+  showtimeId: string | null;
+  screenId: string | null;
+  rating: number;
+  comment: string;
+};
 
 function FeedbackItem({ feedback }: { feedback: any }) {
   return (
@@ -36,14 +44,18 @@ export default function MovieDetailsPage() {
   const { id = "" } = useParams<{ id: string }>();
   const [movie, setMovie] = useState<Movie | null>(null);
   const [showtimes, setShowtimes] = useState<Showtime[]>([]);
-  const [selectedShowtimeId, setSelectedShowtimeId] = useState<string | null>(
-    null
-  );
   const [theater, setTheater] = useState<GetTheatersResponse | null>(null);
-  const [selectedTheaterId, setSelectedTheaterId] = useState<string | null>(
-    null
-  );
-  const [selectScreenId, setSelectScreenId] = useState<string | null>(null);
+  const navigate = useNavigate();
+
+  const [selectedInfo, setSelectedInfo] = useState<SelectedInfo>({
+    movieId: id,
+    theaterId: null,
+    showtimeId: null,
+    screenId: null,
+    rating: 0,
+    comment: "",
+  });
+
   const [feedbacks, setFeedbacks] = useState([
     {
       user: { email: "nguyenvana@gmail.com" },
@@ -58,9 +70,6 @@ export default function MovieDetailsPage() {
       createdAt: "2025-06-22T14:30:00Z",
     },
   ]);
-  const [rating, setRating] = useState(0);
-  const [comment, setComment] = useState("");
-  const navigate = useNavigate();
 
   let userId: string | null = null;
   try {
@@ -71,7 +80,12 @@ export default function MovieDetailsPage() {
   }
 
   useEffect(() => {
+    localStorage.setItem("selected-movie-info", JSON.stringify(selectedInfo));
+  }, [selectedInfo]);
+
+  useEffect(() => {
     if (!id) return;
+
     const fetchMovie = async () => {
       try {
         const movieData = await getMovieById(id);
@@ -80,23 +94,38 @@ export default function MovieDetailsPage() {
         setMovie(null);
       }
     };
-    fetchMovie();
-  }, [id]);
 
-  useEffect(() => {
     const fetchTheater = async () => {
       try {
         const theaterData = await getTheaters();
         setTheater(theaterData);
         const firstId = theaterData.result?.theaters?.[0]?._id;
-        if (firstId && id) {
-          setSelectedTheaterId(firstId);
+        if (firstId) {
+          setSelectedInfo((prev) => ({
+            ...prev,
+            theaterId: firstId,
+          }));
           fetchShowtimesByTheater(firstId);
         }
       } catch {
         setTheater(null);
       }
     };
+
+    const stored = localStorage.getItem("selected-movie-info");
+    if (stored) {
+      const data = JSON.parse(stored);
+      setSelectedInfo({
+        movieId: id,
+        theaterId: data.theaterId || null,
+        showtimeId: data.showtimeId || null,
+        screenId: data.screenId || null,
+        rating: data.rating || 0,
+        comment: data.comment || "",
+      });
+    }
+
+    fetchMovie();
     fetchTheater();
   }, [id]);
 
@@ -105,7 +134,6 @@ export default function MovieDetailsPage() {
       if (!id) return;
       const data = await getShowtimeByMovieIdAndTheaterId(id, theaterId);
       setShowtimes(data);
-      setSelectedShowtimeId(null);
     } catch {
       setShowtimes([]);
     }
@@ -175,10 +203,15 @@ export default function MovieDetailsPage() {
               {theater?.result?.theaters?.length ? (
                 <select
                   className="bg-[#2A2A2A] text-gray-300 px-4 py-2 rounded-lg border border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary"
-                  value={selectedTheaterId || ""}
+                  value={selectedInfo.theaterId || ""}
                   onChange={(e) => {
                     const selectedId = e.target.value;
-                    setSelectedTheaterId(selectedId);
+                    setSelectedInfo((prev) => ({
+                      ...prev,
+                      theaterId: selectedId,
+                      showtimeId: null,
+                      screenId: null,
+                    }));
                     fetchShowtimesByTheater(selectedId);
                   }}
                 >
@@ -199,7 +232,7 @@ export default function MovieDetailsPage() {
               {showtimes.length ? (
                 <div className="flex flex-wrap gap-2">
                   {showtimes.map((showtime) => {
-                    const isSelected = selectedShowtimeId === showtime._id;
+                    const isSelected = selectedInfo.showtimeId === showtime._id;
                     const date = new Date(showtime.start_time);
                     const time = `${date.toLocaleDateString("vi-VN", {
                       weekday: "short",
@@ -212,10 +245,13 @@ export default function MovieDetailsPage() {
                     return (
                       <button
                         key={showtime._id}
-                        onClick={() => {
-                          setSelectedShowtimeId(showtime._id);
-                          setSelectScreenId(showtime.screen_id);
-                        }}
+                        onClick={() =>
+                          setSelectedInfo((prev) => ({
+                            ...prev,
+                            showtimeId: showtime._id,
+                            screenId: showtime.screen_id,
+                          }))
+                        }
                         className={`cursor-pointer px-4 py-2 rounded text-sm font-medium transition ${
                           isSelected
                             ? "bg-primary text-white hover:bg-primary-dull"
@@ -236,10 +272,10 @@ export default function MovieDetailsPage() {
               {userId ? (
                 <button
                   onClick={() =>
-                    selectedShowtimeId &&
-                    navigate(`/movies/${movie._id}/${selectScreenId}`)
+                    selectedInfo.showtimeId &&
+                    navigate(`/movies/${movie._id}/${selectedInfo.screenId}`)
                   }
-                  disabled={!selectedShowtimeId}
+                  disabled={!selectedInfo.showtimeId}
                   className="px-4 py-2 text-xs text-white bg-primary hover:bg-primary-dull transition rounded-full font-medium cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Tiếp theo
@@ -265,9 +301,13 @@ export default function MovieDetailsPage() {
                 {[...Array(5)].map((_, i) => (
                   <FaStar
                     key={i}
-                    onClick={() => setRating(i + 1)}
+                    onClick={() =>
+                      setSelectedInfo((prev) => ({ ...prev, rating: i + 1 }))
+                    }
                     className={`cursor-pointer text-2xl ${
-                      i < rating ? "text-yellow-400" : "text-gray-600"
+                      i < selectedInfo.rating
+                        ? "text-yellow-400"
+                        : "text-gray-600"
                     }`}
                   />
                 ))}
@@ -276,8 +316,13 @@ export default function MovieDetailsPage() {
                 className="w-full p-3 border border-gray-700 bg-[#2A2A2A] text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                 rows={4}
                 placeholder="Viết đánh giá của bạn tại đây..."
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
+                value={selectedInfo.comment}
+                onChange={(e) =>
+                  setSelectedInfo((prev) => ({
+                    ...prev,
+                    comment: e.target.value,
+                  }))
+                }
               />
               <button className="px-4 py-2 text-xs text-white bg-primary hover:bg-primary-dull transition rounded-full font-medium cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
                 Gửi đánh giá
