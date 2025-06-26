@@ -52,9 +52,11 @@ export interface AdminUser {
   _id: string;
   name: string;
   email: string;
+  username?: string;
+  avatar?: string;
   phone?: string;
-  role: 'admin' | 'user' | 'partner';
-  isVerified: boolean;
+  role: 'admin' | 'customer' | 'staff';
+  verify: number; // 0: not verified, 1: verified, 2: banned
   date_of_birth?: string;
   address?: {
     street: string;
@@ -63,30 +65,36 @@ export interface AdminUser {
     country: string;
     zipCode: string;
   };
-  createdAt: string;
-  updatedAt: string;
+  created_at: string;
+  updated_at: string;
+  email_verify_code?: string;
+  verify_code_expires_at?: string | null;
+  class?: string;
+  stats: {
+    bookings_count: number;
+    ratings_count: number;
+    feedbacks_count: number;
+    total_spent?: number;
+  };
+  recent_activity?: {
+    recent_bookings: any[];
+    recent_ratings: any[];
+    recent_feedbacks: any[];
+  };
 }
 
 export interface GetUsersResponse {
-  success: boolean;
   message: string;
   result: {
     users: AdminUser[];
-    pagination?: {
-      currentPage: number;
-      totalPages: number;
-      totalUsers: number;
-      limit: number;
-    };
-    // Alternative structure for some APIs
-    total?: number;
-    page?: number;
-    limit?: number;
+    total: number;
+    page: number;
+    limit: number;
+    total_pages: number;
   };
 }
 
 export interface GetUserByIdResponse {
-  success: boolean;
   message: string;
   result: AdminUser;
 }
@@ -106,11 +114,10 @@ export interface UpdateUserRequest {
 }
 
 export interface UpdateUserRoleRequest {
-  role: 'admin' | 'user' | 'partner';
+  role: 'admin' | 'customer' | 'staff';
 }
 
 export interface AdminResponse {
-  success: boolean;
   message: string;
   result?: any;
 }
@@ -120,8 +127,8 @@ export interface UsersQueryParams {
   limit?: number;
   search?: string;
   role?: string;
-  sortBy?: 'name' | 'email' | 'createdAt';
-  sortOrder?: 'asc' | 'desc';
+  sort_by?: 'name' | 'email' | 'created_at';
+  sort_order?: 'asc' | 'desc';
 }
 
 // Dashboard query parameters

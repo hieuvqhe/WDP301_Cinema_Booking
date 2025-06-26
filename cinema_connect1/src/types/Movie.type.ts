@@ -1,4 +1,12 @@
 // Movie related types
+export interface MovieCast {
+  id: number;
+  name: string;
+  character: string;
+  order: number;
+  profile_image: string;
+  gender: number;
+}
 export interface Movie {
   _id: string;
   title: string;
@@ -35,7 +43,7 @@ export interface CreateMovieRequest {
   description: string;
   genre: string[];
   director: string;
-  cast: string[];
+  cast: MovieCast[];
   duration: number;
   release_date: string;
   poster_url: string;

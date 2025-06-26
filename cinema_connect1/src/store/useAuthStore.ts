@@ -104,6 +104,8 @@ export const useAuthStore = create<AuthState>()(
             isLoading: false,
             error: null,
           });
+          // Redirect to home page (public route)
+          window.location.href = '/';
         },
 
         setTempEmail: (email: string) => set({ tempEmail: email }),

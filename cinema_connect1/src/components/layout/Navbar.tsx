@@ -13,28 +13,79 @@ const Navbar = () => {
   const [isLoginForm, setIsLoginForm] = useState(false);
   const { user, logout } = useAuthStore();
 
-  const userQuickAccess = [
-    {
-      title: "Account settings",
-      link: "",
-      action: () => console.log("Account settings"),
-    },
-    {
-      title: "Favourites",
-      link: "",
-      action: () => console.log("Favourites"),
-    },
-    {
-      title: "Profile",
-      link: "",
-      action: () => console.log("Profile"),
-    },
-    {
-      title: "Sign out",
-      link: "",
-      action:() => logout(),
-    },
-  ];
+  // Navigation items based on user role
+  const getNavigationItems = () => {
+    const baseItems = [
+      { title: "Home", link: "/" },
+      { title: "Movies", link: "/movies" },
+    ];
+
+    if (!user) {
+      return baseItems;
+    }
+
+    switch (user.role) {
+      case "admin":
+        return [
+          ...baseItems,
+          { title: "Admin Dashboard", link: "/admin" },
+        ];
+      case "staff":
+        return [
+          ...baseItems,
+          { title: "Partner Dashboard", link: "/partner" },
+        ];
+      case "customer":
+      default:
+        return [
+          ...baseItems,
+          { title: "My Bookings", link: "/my-bookings" },
+          { title: "Favourites", link: "/favourite" },
+        ];
+    }
+  };
+
+  const navigationItems = getNavigationItems();
+
+  const getUserQuickAccess = () => {
+    const baseActions = [
+      {
+        title: "Account settings",
+        link: "",
+        action: () => console.log("Account settings"),
+      },
+      {
+        title: "Profile",
+        link: "",
+        action: () => console.log("Profile"),
+      },
+      {
+        title: "Sign out",
+        link: "",
+        action: () => logout(),
+      },
+    ];
+
+    if (user?.role === "customer") {
+      return [
+        {
+          title: "Favourites",
+          link: "/favourite",
+          action: () => console.log("Favourites"),
+        },
+        {
+          title: "My Bookings",
+          link: "/my-bookings", 
+          action: () => console.log("My Bookings"),
+        },
+        ...baseActions,
+      ];
+    }
+
+    return baseActions;
+  };
+
+  const userQuickAccess = getUserQuickAccess();
 
   return (
     <>
@@ -60,41 +111,16 @@ const Navbar = () => {
             onClick={() => setIsOpen(!isOpen)}
             className="md:hidden absolute top-6 right-6 w-6 h-6 cursor-pointer"
           />
-          <Link
-            className="nav-hover-btn"
-            to={"/"}
-            onClick={() => setIsOpen(!isOpen)}
-          >
-            Home
-          </Link>
-          <Link
-            className="nav-hover-btn"
-            to={"/movies"}
-            onClick={() => setIsOpen(!isOpen)}
-          >
-            Movies
-          </Link>
-          <Link
-            className="nav-hover-btn"
-            to={"/theaters"}
-            onClick={() => setIsOpen(!isOpen)}
-          >
-            Theaters
-          </Link>
-          <Link
-            className="nav-hover-btn"
-            to={"/"}
-            onClick={() => setIsOpen(!isOpen)}
-          >
-            Release
-          </Link>
-          <Link
-            className="nav-hover-btn"
-            to={"/"}
-            onClick={() => setIsOpen(!isOpen)}
-          >
-            Favourites
-          </Link>
+          {navigationItems.map((item, index) => (
+            <Link
+              key={index}
+              className="nav-hover-btn"
+              to={item.link}
+              onClick={() => setIsOpen(!isOpen)}
+            >
+              {item.title}
+            </Link>
+          ))}
         </div>
 
         <div className="flex items-center gap-8">
