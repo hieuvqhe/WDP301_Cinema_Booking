@@ -146,40 +146,67 @@ export default function MovieDetailsPage() {
     );
   }
 
+  // Motion variants
+  const container = {
+    hidden: {},
+    visible: {
+      transition: {
+        staggerChildren: 0.3,
+        delayChildren: 0.2,
+      },
+    },
+  };
+
+  const fadeUp = {
+    hidden: { opacity: 0, y: 80 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: "easeOut" } },
+  };
+
   return (
     <div className="relative min-h-screen bg-[#121212] text-gray-300 overflow-x-hidden">
       <div className="relative z-10 px-6 md:px-16 lg:px-24 xl:px-44 pt-20">
         <motion.div
-          initial={{ opacity: 0, y: 50 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
+          variants={container}
+          initial="hidden"
+          animate="visible"
           className="grid md:grid-cols-3 gap-6 bg-[#1E1E1E] p-6 rounded-3xl shadow-xl"
         >
-          <div className="flex flex-col items-center">
+          <motion.div variants={fadeUp} className="flex flex-col items-center">
             <img
               src={movie.poster_url}
               alt={movie.title}
-              className="rounded w-full"
+              className="rounded w-full shadow-lg"
             />
-          </div>
-          <MovieInfo
-            movie={movie}
-            theater={theater}
+          </motion.div>
+
+          <motion.div variants={fadeUp} className="md:col-span-2">
+            <MovieInfo
+              movie={movie}
+              theater={theater}
+              selectedInfo={selectedInfo}
+              setSelectedInfo={setSelectedInfo}
+              showtimes={showtimes}
+              fetchShowtimesByTheater={fetchShowtimesByTheater}
+              handleBookSeats={handleBookSeats}
+              userId={userId}
+            />
+          </motion.div>
+        </motion.div>
+
+        <motion.div
+          variants={fadeUp}
+          initial="hidden"
+          animate="visible"
+          className="mt-10"
+        >
+          <FeedbackSection
+            userId={userId}
             selectedInfo={selectedInfo}
             setSelectedInfo={setSelectedInfo}
-            showtimes={showtimes}
-            fetchShowtimesByTheater={fetchShowtimesByTheater}
-            handleBookSeats={handleBookSeats}
-            userId={userId}
+            feedbacks={feedbacks}
+            handleSubmitFeedback={handleSubmitFeedback}
           />
         </motion.div>
-        <FeedbackSection
-          userId={userId}
-          selectedInfo={selectedInfo}
-          setSelectedInfo={setSelectedInfo}
-          feedbacks={feedbacks}
-          handleSubmitFeedback={handleSubmitFeedback}
-        />
       </div>
 
       {showLoginModal && <LoginModal isFormOpen={setShowLoginModal} />}

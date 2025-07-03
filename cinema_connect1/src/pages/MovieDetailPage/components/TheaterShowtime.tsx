@@ -22,7 +22,7 @@ export default function TheaterShowtime({
       <div className="mb-4">
         {theater?.result?.theaters?.length ? (
           <select
-            className="bg-[#2A2A2A] text-gray-300 px-4 py-2 rounded-lg border border-gray-700"
+            className="bg-[#2A2A2A] text-gray-300 px-4 py-2 rounded-lg border border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary transition"
             value={selectedInfo.theaterId || ""}
             onChange={(e) => {
               const selectedId = e.target.value;
