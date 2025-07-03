@@ -12,6 +12,7 @@ export default function CheckoutPage() {
   const [screen, setScreen] = useState<Screen | null>(null);
   const [movie, setMovie] = useState<Movie | null>(null);
   const [showtime, setShowtime] = useState<Showtime | null>(null);
+  const [price, setPrice] = useState<number>(0);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -36,6 +37,9 @@ export default function CheckoutPage() {
           .then(setShowtime)
           .catch(() => setShowtime(null));
       }
+      if (parsed.totalAmount) {
+        setPrice(parsed.totalAmount);
+      }
     }
   }, []);
 
@@ -49,12 +53,13 @@ export default function CheckoutPage() {
       year: "numeric",
     });
 
-  if (!screen || seats.length === 0)
+  if (!screen || seats.length === 0) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-[#121212] text-gray-400 text-lg">
         Không có thông tin ghế/vé.
       </div>
     );
+  }
 
   return (
     <div className="min-h-screen bg-[#121212] text-gray-300 px-6 md:px-16 lg:px-24 xl:px-44 pt-20 pb-12">
@@ -113,10 +118,21 @@ export default function CheckoutPage() {
           </div>
         </div>
 
+        {/* Tổng tiền */}
+        <div className="border-t border-gray-700 pt-4 mt-4">
+          <h2 className="text-lg font-semibold mb-3">
+            Số tiền cần thanh toán:
+          </h2>
+          <p className="text-lg font-semibold text-primary">
+            {price.toLocaleString("vi-VN")} VND
+          </p>
+        </div>
+
         {/* Nút thanh toán */}
         <button
           className="mt-8 w-full bg-green-600 hover:bg-green-700 py-2 rounded-lg text-white font-semibold transition"
           onClick={() => {
+            alert("Thanh toán thành công!");
             navigate("/home");
           }}
         >

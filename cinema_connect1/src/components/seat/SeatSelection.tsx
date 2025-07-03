@@ -4,6 +4,14 @@ import { motion } from "framer-motion";
 import type { Seat } from "../../types/Screen.type";
 import { useAuthAction } from "../../hooks/useAuthAction";
 import LoginModal from "../user/LoginModal";
+import { getShowtimeById } from "../../apis/showtime.api";
+
+type priceType = {
+  regular: number;
+  premium: number;
+  recliner: number;
+  couple: number;
+};
 
 type Props = {
   seatLayout: Seat[][];
@@ -17,9 +25,11 @@ export default function SeatSelection({
   onSelectSeat,
 }: Props) {
   const [selectedSeats, setSelectedSeats] = useState<string[]>([]);
+  const [price, setPrice] = useState<priceType | null>(null);
   const navigate = useNavigate();
   const { requireAuth, showLoginModal, setShowLoginModal } = useAuthAction();
 
+  // Lấy ghế đã chọn từ localStorage
   useEffect(() => {
     const stored = localStorage.getItem("selected-movie-info");
     if (stored) {
@@ -30,6 +40,7 @@ export default function SeatSelection({
     }
   }, []);
 
+  // Cập nhật seats đã chọn vào localStorage
   useEffect(() => {
     const prevData = localStorage.getItem("selected-movie-info");
     const parsed = prevData ? JSON.parse(prevData) : {};
@@ -38,6 +49,23 @@ export default function SeatSelection({
       JSON.stringify({ ...parsed, seats: selectedSeats })
     );
   }, [selectedSeats]);
+
+  // Lấy giá tiền từ showtimeId
+  useEffect(() => {
+    const data = localStorage.getItem("selected-movie-info");
+    if (data) {
+      const parsed = JSON.parse(data);
+      if (parsed.showtimeId) {
+        getShowtimeById(parsed.showtimeId)
+          .then((showtime) => {
+            setPrice(showtime.price);
+          })
+          .catch((error) => {
+            console.error("Failed to fetch showtime:", error);
+          });
+      }
+    }
+  }, []);
 
   const toggleSeat = (seat: Seat) => {
     const key = `${seat.row}${seat.number}`;
@@ -82,6 +110,43 @@ export default function SeatSelection({
     }
   };
 
+  // ✅ Tính tổng tiền ghế đã chọn theo loại ghế
+  const totalAmount = selectedSeats.reduce((sum, seatKey) => {
+    for (const row of seatLayout) {
+      for (const seat of row) {
+        const key = `${seat.row}${seat.number}`;
+        if (key === seatKey && price) {
+          return sum + (price[seat.type as keyof priceType] || 0);
+        }
+      }
+    }
+    return sum;
+  }, 0);
+
+  // ✅ Lưu totalAmount vào localStorage khi seats hoặc price đổi
+  useEffect(() => {
+    if (!price) return;
+
+    const totalAmount = selectedSeats.reduce((sum, seatKey) => {
+      for (const row of seatLayout) {
+        for (const seat of row) {
+          const key = `${seat.row}${seat.number}`;
+          if (key === seatKey) {
+            return sum + (price[seat.type as keyof priceType] || 0);
+          }
+        }
+      }
+      return sum;
+    }, 0);
+
+    const prevData = localStorage.getItem("selected-movie-info");
+    const parsed = prevData ? JSON.parse(prevData) : {};
+    localStorage.setItem(
+      "selected-movie-info",
+      JSON.stringify({ ...parsed, totalAmount })
+    );
+  }, [selectedSeats, price, seatLayout]);
+
   return (
     <motion.div
       className="flex flex-col gap-6 items-center text-gray-300"
@@ -97,7 +162,7 @@ export default function SeatSelection({
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: rowIndex * 0.05 }}
         >
-          {row.map((seat, i) => {
+          {row.map((seat) => {
             const key = `${seat.row}${seat.number}`;
             const isSelected = selectedSeats.includes(key);
             const isDisabled = seat.status !== "active";
@@ -126,6 +191,12 @@ export default function SeatSelection({
         <h3 className="font-semibold text-base mb-1">Ghế đã chọn</h3>
         <p className="text-sm text-gray-400">
           {selectedSeats.length ? selectedSeats.join(", ") : "Chưa chọn"}
+        </p>
+        <h3 className="font-semibold text-base mt-4">
+          Số tiền cần thanh toán:
+        </h3>
+        <p className="text-lg font-bold text-green-500">
+          {price ? totalAmount.toLocaleString("vi-VN") : "0"} VNĐ
         </p>
       </div>
 
