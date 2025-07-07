@@ -4,22 +4,12 @@ import BlurCircle from "../../components/layout/BlurCircle";
 import MovieCard from "../../components/movies/MovieCard/MovieCard";
 
 const Movies = () => {
-  const {
-    isLoading: isLoadingShowing,
-    isError: isErrorShowing,
-    data: moviesShowing,
-    error: errorShowing,
-  } = useQuery({
+  const { data: moviesShowing } = useQuery({
     queryKey: ["moviesShowing"],
-    queryFn: () => getPopularMovies(10),
+    queryFn: () => getPopularMovies(10, 1),
   });
 
-  const {
-    isLoading: isLoadingIncoming,
-    isError: isErrorIncoming,
-    data: moviesIncoming,
-    error: errorIncoming,
-  } = useQuery({
+  const { data: moviesIncoming } = useQuery({
     queryKey: ["moviesIncoming"],
     queryFn: () => getMoviesByStatus("coming_soon", 10),
   });

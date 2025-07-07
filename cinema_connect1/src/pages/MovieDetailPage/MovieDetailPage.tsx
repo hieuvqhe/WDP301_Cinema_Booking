@@ -10,7 +10,6 @@ import { getShowtimeByMovieIdAndTheaterId } from "../../apis/showtime.api";
 import { useAuthAction } from "../../hooks/useAuthAction";
 import LoginModal from "../../components/user/LoginModal";
 import ReactPlayer from "react-player";
-import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import MovieInfo from "./components/MovieInfo";
@@ -43,14 +42,6 @@ export default function MovieDetailsPage() {
     comment: "",
   });
 
-  const settings = {
-    dots: false,
-    infinite: true,
-    speed: 500,
-    slidesToShow: 4,
-    slidesToScroll: 2,
-  };
-
   const [feedbacks, setFeedbacks] = useState([
     {
       user: { email: "nguyenvana@gmail.com" },
@@ -63,8 +54,6 @@ export default function MovieDetailsPage() {
       rating: 3,
     },
   ]);
-  const navigate = useNavigate();
-  const { requireAuth, showLoginModal, setShowLoginModal } = useAuthAction();
 
   let userId: string | null = null;
   try {
