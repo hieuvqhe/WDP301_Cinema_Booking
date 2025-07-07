@@ -1,3 +1,4 @@
+import { motion } from "framer-motion";
 import { FaStar } from "react-icons/fa";
 import { getCountryDisplay } from "../../../const/language";
 import type { Movie } from "../../../types/Movie.type";
@@ -5,7 +6,6 @@ import CastList from "./CastList";
 import type { GetTheatersResponse } from "../../../types/Theater.type";
 import type { Showtime } from "../../../types/Showtime.type";
 import TheaterShowtime from "./TheaterShowtime";
-import { useNavigate } from "react-router-dom";
 import LoginModal from "../../../components/user/LoginModal";
 import { useState } from "react";
 
@@ -19,6 +19,7 @@ type Props = {
   handleBookSeats: () => void;
   userId?: string | null;
 };
+
 export default function MovieInfo({
   movie,
   selectedInfo,
@@ -30,18 +31,57 @@ export default function MovieInfo({
   userId,
 }: Props) {
   const [isLoginForm, setIsLoginForm] = useState(false);
+
+  const fadeUp = {
+    hidden: { opacity: 0, y: 40 },
+    visible: (i: number) => ({
+      opacity: 1,
+      y: 0,
+      transition: { delay: i * 0.05, duration: 0.5, ease: "easeOut" },
+    }),
+  };
+
   return (
-    <div className="md:col-span-2">
-      <h1 className="text-4xl font-bold mb-2">{movie.title}</h1>
-      <p className="mb-1">Đạo diễn: {movie.director}</p>
-      <p className="mb-1">Ngôn ngữ: {getCountryDisplay(movie.language)}</p>
-      <p className="mb-1">
+    <motion.div
+      className="md:col-span-2"
+      initial="hidden"
+      animate="visible"
+      exit="hidden"
+      variants={{
+        hidden: {},
+        visible: { transition: { staggerChildren: 0.05 } },
+      }}
+    >
+      <motion.h1
+        variants={fadeUp}
+        custom={0}
+        className="text-4xl font-bold mb-2"
+      >
+        {movie.title}
+      </motion.h1>
+
+      <motion.p variants={fadeUp} custom={1} className="mb-1">
+        Đạo diễn: {movie.director}
+      </motion.p>
+      <motion.p variants={fadeUp} custom={2} className="mb-1">
+        Ngôn ngữ: {getCountryDisplay(movie.language)}
+      </motion.p>
+      <motion.p variants={fadeUp} custom={3} className="mb-1">
         Ngày phát hành:{" "}
         {new Date(movie.release_date).toLocaleDateString("vi-VN")}
-      </p>
-      <p className="mb-1">Thời lượng: {movie.duration} phút</p>
-      <p className="mb-1">Thể loại: {movie.genre.join(", ")}</p>
-      <div className="flex items-center mb-2">
+      </motion.p>
+      <motion.p variants={fadeUp} custom={4} className="mb-1">
+        Thời lượng: {movie.duration} phút
+      </motion.p>
+      <motion.p variants={fadeUp} custom={5} className="mb-1">
+        Thể loại: {movie.genre.join(", ")}
+      </motion.p>
+
+      <motion.div
+        variants={fadeUp}
+        custom={6}
+        className="flex items-center mb-2"
+      >
         {[...Array(5)].map((_, i) => (
           <FaStar
             key={i}
@@ -56,17 +96,31 @@ export default function MovieInfo({
         <span className="ml-2 text-sm text-gray-400">
           ({movie.ratings_count} đánh giá)
         </span>
-      </div>
-      <p className="mb-4">{movie.description}</p>
-      <CastList movie={movie} />
-      <TheaterShowtime
-        theater={theater}
-        selectedInfo={selectedInfo}
-        setSelectedInfo={setSelectedInfo}
-        showtimes={showtimes}
-        fetchShowtimesByTheater={fetchShowtimesByTheater}
-      />
-      <div className="mt-4 flex justify-end">
+      </motion.div>
+
+      <motion.p variants={fadeUp} custom={7} className="mb-4">
+        {movie.description}
+      </motion.p>
+
+      <motion.div variants={fadeUp} custom={8}>
+        <CastList movie={movie} />
+      </motion.div>
+
+      <motion.div variants={fadeUp} custom={9}>
+        <TheaterShowtime
+          theater={theater}
+          selectedInfo={selectedInfo}
+          setSelectedInfo={setSelectedInfo}
+          showtimes={showtimes}
+          fetchShowtimesByTheater={fetchShowtimesByTheater}
+        />
+      </motion.div>
+
+      <motion.div
+        variants={fadeUp}
+        custom={10}
+        className="mt-4 flex justify-end"
+      >
         {userId ? (
           <button
             onClick={handleBookSeats}
@@ -83,8 +137,9 @@ export default function MovieInfo({
             Đăng nhập để đặt vé
           </button>
         )}
-      </div>
+      </motion.div>
+
       {isLoginForm && <LoginModal isFormOpen={setIsLoginForm} />}
-    </div>
+    </motion.div>
   );
 }
