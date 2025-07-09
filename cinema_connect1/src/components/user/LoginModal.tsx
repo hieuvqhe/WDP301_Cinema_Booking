@@ -202,7 +202,7 @@ const LoginModal = ({ isFormOpen }: LoginModalProps) => {
 
             <p className="text-center">
               Don't have account?{" "}
-              <span className="cursor-pointer hover:text-primary transition">
+              <span className="cursor-pointer hover:text-primary transition" onClick={() => navigate('/register')}>
                 Register
               </span>{" "}
             </p>

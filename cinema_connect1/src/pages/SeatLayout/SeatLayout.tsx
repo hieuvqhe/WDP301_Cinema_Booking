@@ -8,14 +8,16 @@ export default function SeatLayout() {
   const { screenId, id } = useParams<{ screenId: string; id: string }>();
   const [screen, setScreen] = useState<Screen | null>(null);
   const [loading, setLoading] = useState(true);
-  const [secondsLeft, setSecondsLeft] = useState(600); // 10 phút = 600 giây
+  const [secondsLeft, setSecondsLeft] = useState<number | null>(null); // null = chưa bắt đầu
   const navigate = useNavigate();
 
-  // ⏳ Đếm ngược thời gian
+  // ⏳ Đếm ngược thời gian giữ ghế
   useEffect(() => {
+    if (secondsLeft === null) return;
+
     const timer = setInterval(() => {
       setSecondsLeft((prev) => {
-        if (prev <= 1) {
+        if (!prev || prev <= 1) {
           clearInterval(timer);
           navigate(`/movies/${id}`);
           return 0;
@@ -25,7 +27,13 @@ export default function SeatLayout() {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [navigate, id]);
+  }, [secondsLeft, navigate, id]);
+
+  const startTimer = () => {
+    if (secondsLeft === null) {
+      setSecondsLeft(600); // 10 phút
+    }
+  };
 
   // 🖥️ Lấy thông tin màn hình chiếu
   useEffect(() => {
@@ -45,7 +53,6 @@ export default function SeatLayout() {
     fetchScreen();
   }, [screenId]);
 
-  // 🧮 Format thời gian còn lại
   const formatTime = (sec: number) => {
     const m = Math.floor(sec / 60)
       .toString()
@@ -73,11 +80,16 @@ export default function SeatLayout() {
       <div className="bg-[#1E1E1E] rounded-3xl shadow-xl p-8">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold text-center">{screen.name}</h1>
-          <div className="text-lg font-semibold text-red-400">
-            Thời gian giữ ghế: {formatTime(secondsLeft)}
-          </div>
+          {secondsLeft !== null && (
+            <div className="text-lg font-semibold text-red-400">
+              Thời gian giữ ghế: {formatTime(secondsLeft)}
+            </div>
+          )}
         </div>
-        <SeatSelection seatLayout={screen.seat_layout} />
+        <SeatSelection
+          seatLayout={screen.seat_layout}
+          onSelectSeat={startTimer}
+        />
       </div>
     </div>
   );
