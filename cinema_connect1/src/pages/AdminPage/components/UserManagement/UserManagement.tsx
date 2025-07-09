@@ -5,7 +5,6 @@ import {
   getAllUsers,
   getUserById,
   updateUser,
-  updateUserRole,
   deleteUser,
   toggleUserStatus
 } from '../../../../apis/admin.api';
@@ -103,26 +102,6 @@ export const UserManagement = () => {
     } catch (error) {
       console.error('Failed to update user:', error);
       toast.error('Failed to update user');
-    }
-  };
-
-  const handleUpdateUserRole = async (userId: string, role: string) => {
-    try {
-      console.log('Updating user role:', { userId, role }); // Debug log
-      
-      // Validate role
-      const validRoles = ['admin', 'customer', 'staff'];
-      if (!validRoles.includes(role)) {
-        toast.error('Invalid role selected');
-        return;
-      }
-      
-      await updateUserRole(userId, { role: role as 'admin' | 'customer' | 'staff' });
-      toast.success('User role updated successfully');
-      fetchUsers();
-    } catch (error) {
-      console.error('Failed to update user role:', error);
-      toast.error('Failed to update user role');
     }
   };
 
@@ -229,7 +208,6 @@ export const UserManagement = () => {
           limit={limit}
           onViewUser={handleViewUser}
           onEditUser={handleEditUser}
-          onUpdateUserRole={handleUpdateUserRole}
           onToggleUserStatus={handleToggleUserStatus}
           onDeleteUser={confirmDeleteUser}
           onPageChange={handlePageChange}

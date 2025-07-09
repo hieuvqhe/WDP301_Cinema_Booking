@@ -10,7 +10,6 @@ interface UserTableProps {
   limit: number;
   onViewUser: (userId: string) => void;
   onEditUser: (user: AdminUser) => void;
-  onUpdateUserRole: (userId: string, role: string) => void;
   onToggleUserStatus: (userId: string, isCurrentlyActive: boolean) => void;
   onDeleteUser: (user: AdminUser) => void;
   onPageChange: (page: number) => void;
@@ -24,7 +23,6 @@ export const UserTable = ({
   limit,
   onViewUser,
   onEditUser,
-  onUpdateUserRole,
   onToggleUserStatus,
   onDeleteUser,
   onPageChange
@@ -131,17 +129,15 @@ export const UserTable = ({
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <motion.select
-                    value={userData.role}
-                    onChange={(e) => onUpdateUserRole(userData._id, e.target.value)}
-                    className="px-3 py-2 bg-slate-600/50 text-white rounded-lg border border-slate-500/50 text-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all duration-300"
-                    whileHover={{ scale: 1.05 }}
-                    whileFocus={{ scale: 1.05 }}
-                  >
-                    <option value="admin">Admin</option>
-                    <option value="customer">Customer</option>
-                    <option value="staff">Staff</option>
-                  </motion.select>
+                  <span className={`px-3 py-1 rounded-full text-xs font-medium capitalize ${
+                    userData.role === 'admin'
+                      ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30'
+                      : userData.role === 'staff'
+                      ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                      : 'bg-green-500/20 text-green-400 border border-green-500/30'
+                  }`}>
+                    {userData.role}
+                  </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <motion.button

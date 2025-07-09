@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuthStore } from '../../store/useAuthStore';
-import { AdminHeader, AdminSidebar, Dashboard, UserManagement } from './components';
+import { AdminHeader, AdminSidebar, Dashboard, UserManagement, StaffManagement, ContractManagement } from './components';
 
 const AdminPage = () => {
   const navigate = useNavigate();
@@ -25,6 +25,10 @@ const AdminPage = () => {
         return <Dashboard />;
       case 'users':
         return <UserManagement />;
+      case 'staff':
+        return <StaffManagement />;
+      case 'contracts':
+        return <ContractManagement />;
       default:
         return <Dashboard />;
     }

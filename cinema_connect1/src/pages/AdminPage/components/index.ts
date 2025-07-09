@@ -15,3 +15,9 @@ export { UserManagement } from './UserManagement/UserManagement';
 export { UserTable } from './UserManagement/UserTable';
 export { UserFilters } from './UserManagement/UserFilters';
 export { UserDetailModal, EditUserModal, DeleteConfirmModal } from './UserManagement/UserModals';
+
+// Staff Management Components
+export { StaffManagement } from './StaffManagement/StaffManagement';
+
+// Contract Management Components
+export { ContractManagement } from './ContractManagement/ContractManagement';

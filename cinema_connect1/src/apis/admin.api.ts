@@ -151,6 +151,31 @@ export const toggleUserStatus = async (userId: string, action: 'ban' | 'unban'):
   }
 };
 
+// Promote user to staff with contract
+export const promoteUserToStaff = async (userId: string, contractData: {
+  position: string;
+  salary: number;
+  start_date: string;
+  end_date: string;
+  contract_type: 'full_time' | 'part_time' | 'contract';
+  benefits: string[];
+  terms: string;
+}): Promise<{
+  message: string;
+  result: {
+    user_id: string;
+    contract_id: string;
+  };
+}> => {
+  try {
+    const adminApi = createAdminRequest();
+    const response = await adminApi.put(`/admin/users/${userId}/promote-to-staff`, contractData);
+    return response.data;
+  } catch (error) {
+    throw handleAdminError(error);
+  }
+};
+
 // ===============================
 // ADMIN UTILITY FUNCTIONS
 // ===============================
@@ -232,6 +257,197 @@ export const bulkDeleteUsers = async (userIds: string[]): Promise<AdminResponse>
     const response = await adminApi.delete<AdminResponse>('/admin/users/bulk-delete', {
       data: { userIds }
     });
+    return response.data;
+  } catch (error) {
+    throw handleAdminError(error);
+  }
+};
+
+// ===============================
+// CONTRACT MANAGEMENT APIS
+// ===============================
+
+// Get all contracts with pagination and filters
+export const getAllContracts = async (params?: {
+  page?: number;
+  limit?: number;
+  search?: string;
+  sort_by?: string;
+  sort_order?: 'asc' | 'desc';
+}): Promise<{
+  message: string;
+  result: {
+    contracts: Array<{
+      _id: string;
+      staff_id: string;
+      admin_id: string;
+      contract_number: string;
+      staff_name: string | null;
+      staff_email: string | null;
+      staff_phone: string | null;
+      theater_name: string | null;
+      theater_location: string | null;
+      salary: number;
+      start_date: string;
+      end_date: string;
+      status: 'draft' | 'active' | 'terminated' | 'expired';
+      terms: string;
+      responsibilities: string[];
+      benefits: string[];
+      contract_file_url: string;
+      notes: string;
+      created_at: string;
+      updated_at: string;
+      staff: {
+        _id: string;
+        email: string;
+        name: string;
+        avatar: string;
+        phone?: string;
+      };
+      admin: {
+        _id: string;
+        email: string;
+        name: string;
+      };
+    }>;
+    total: number;
+    page: number;
+    limit: number;
+    total_pages: number;
+  };
+}> => {
+  try {
+    const adminApi = createAdminRequest();
+    const queryParams = new URLSearchParams();
+    
+    if (params?.page) queryParams.append('page', params.page.toString());
+    if (params?.limit) queryParams.append('limit', params.limit.toString());
+    if (params?.search) queryParams.append('search', params.search);
+    if (params?.sort_by) queryParams.append('sort_by', params.sort_by);
+    if (params?.sort_order) queryParams.append('sort_order', params.sort_order);
+    
+    const url = `/admin/contracts${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+    const response = await adminApi.get(url);
+    return response.data;
+  } catch (error) {
+    throw handleAdminError(error);
+  }
+};
+
+// Get contract by ID
+export const getContractById = async (contractId: string): Promise<{
+  message: string;
+  result: {
+    _id: string;
+    staff_id: string;
+    admin_id: string;
+    contract_number: string;
+    staff_name: string | null;
+    staff_email: string | null;
+    staff_phone: string | null;
+    theater_name: string | null;
+    theater_location: string | null;
+    salary: number;
+    start_date: string;
+    end_date: string;
+    status: 'draft' | 'active' | 'terminated' | 'expired';
+    terms: string;
+    responsibilities: string[];
+    benefits: string[];
+    contract_file_url: string;
+    notes: string;
+    created_at: string;
+    updated_at: string;
+    staff: {
+      _id: string;
+      email: string;
+      name: string;
+      avatar: string;
+      phone?: string;
+    };
+    admin: {
+      _id: string;
+      email: string;
+      name: string;
+    };
+  };
+}> => {
+  try {
+    const adminApi = createAdminRequest();
+    const response = await adminApi.get(`/admin/contracts/${contractId}`);
+    return response.data;
+  } catch (error) {
+    throw handleAdminError(error);
+  }
+};
+
+// Update contract
+export const updateContract = async (contractId: string, contractData: {
+  position?: string;
+  salary?: number;
+  contract_type?: 'full_time' | 'part_time' | 'contract';
+  start_date?: string;
+  end_date?: string;
+  benefits?: string[];
+  terms?: string;
+}): Promise<{
+  message: string;
+  result: {
+    contract_id: string;
+  };
+}> => {
+  try {
+    const adminApi = createAdminRequest();
+    const response = await adminApi.put(`/admin/contracts/${contractId}`, contractData);
+    return response.data;
+  } catch (error) {
+    throw handleAdminError(error);
+  }
+};
+
+// Activate contract
+export const activateContract = async (contractId: string): Promise<{
+  message: string;
+  result: {
+    contract_id: string;
+  };
+}> => {
+  try {
+    const adminApi = createAdminRequest();
+    const response = await adminApi.put(`/admin/contracts/${contractId}/activate`);
+    return response.data;
+  } catch (error) {
+    throw handleAdminError(error);
+  }
+};
+
+// Terminate contract
+export const terminateContract = async (contractId: string, reason: string): Promise<{
+  message: string;
+  result: {
+    contract_id: string;
+  };
+}> => {
+  try {
+    const adminApi = createAdminRequest();
+    const response = await adminApi.put(`/admin/contracts/${contractId}/terminate`, { reason });
+    return response.data;
+  } catch (error) {
+    throw handleAdminError(error);
+  }
+};
+
+// Check for expired contracts
+export const checkExpiredContracts = async (): Promise<{
+  message: string;
+  result: {
+    expired_count: number;
+  };
+}> => {
+  try {
+    const adminApi = createAdminRequest();
+    const response = await adminApi.post('/admin/contracts/check-expired');
     return response.data;
   } catch (error) {
     throw handleAdminError(error);

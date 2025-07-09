@@ -8,7 +8,8 @@ import {
   Settings, 
   Ticket, 
   Building, 
-  ChevronRight 
+  ChevronRight,
+  FileText
 } from 'lucide-react';
 
 interface AdminSidebarProps {
@@ -32,6 +33,20 @@ export const AdminSidebar = ({ activeTab, onTabChange, isCollapsed }: AdminSideb
       icon: Users,
       count: 1247,
       color: 'from-emerald-500 to-teal-500'
+    },
+    {
+      id: 'staff',
+      label: 'Staff Management',
+      icon: Users,
+      count: null,
+      color: 'from-indigo-500 to-purple-500'
+    },
+    {
+      id: 'contracts',
+      label: 'Manager Contracts',
+      icon: FileText,
+      count: null,
+      color: 'from-teal-500 to-green-500'
     },
     {
       id: 'movies',
@@ -275,7 +290,7 @@ export const AdminSidebar = ({ activeTab, onTabChange, isCollapsed }: AdminSideb
 
       {/* Bottom Menu */}
       <div className="p-3 border-t border-slate-700/50">
-        {bottomMenuItems.map((item, index) => {
+        {bottomMenuItems.map((item) => {
           const Icon = item.icon;
           const isActive = activeTab === item.id;
           
