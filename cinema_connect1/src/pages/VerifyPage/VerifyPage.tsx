@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import { Button } from '../../components/ui/button';
 import { useAuthStore } from '../../store/useAuthStore';
 import { resendOtpCode } from '../../apis/user.api';
 import { Mail, RefreshCw, Ticket } from 'lucide-react';
+import RegisterModal from '../../components/user/RegisterModal';
 
 const VerifyPage = () => {
   const navigate = useNavigate();
@@ -19,6 +19,7 @@ const VerifyPage = () => {
   
   const [otpCode, setOtpCode] = useState('');
   const [resendCooldown, setResendCooldown] = useState(0);
+  const [showRegisterModal, setShowRegisterModal] = useState(false);
 
   // Clear form on mount
   useEffect(() => {
@@ -50,12 +51,19 @@ const VerifyPage = () => {
       return;
     }
     
+    const emailToUse = email || tempEmail;
+    
+    if (!emailToUse) {
+      toast.error('Email address is missing');
+      return;
+    }
+    
     try {
       setIsVerifying(true);
       toast.loading('Verifying your email...');
       
       const success = await verifyOtp({
-        email: email || tempEmail || '',
+        email: emailToUse,
         otpVerify: otpCode
       });
       
@@ -77,7 +85,13 @@ const VerifyPage = () => {
     }
   };    // Function to resend OTP code
   const handleResendOtp = async () => {
-    if (!email && !tempEmail) {
+    const emailToUse = email || tempEmail;
+    
+    console.log('Resend OTP - Email from URL:', email);
+    console.log('Resend OTP - TempEmail from store:', tempEmail);
+    console.log('Resend OTP - Email to use:', emailToUse);
+    
+    if (!emailToUse) {
       toast.error('Email address is missing');
       return;
     }
@@ -86,8 +100,6 @@ const VerifyPage = () => {
       toast.error(`Please wait ${resendCooldown} seconds before requesting a new code`);
       return;
     }
-    
-    const emailToUse = email || tempEmail || '';
     
     try {
       setIsResending(true);
@@ -107,21 +119,21 @@ const VerifyPage = () => {
   };return (
       <div className="py-16 px-4 sm:px-6 lg:px-8 flex justify-center items-center bg-gray-900"
            style={{ minHeight: 'calc(100vh - 160px)' }}>
-        <div className="max-w-md w-full bg-gray-800 p-8 rounded-lg shadow-lg text-white">
+        <div className="max-w-md w-full bg-gray-800 p-8 rounded-xl shadow-xl text-white">
         <div className="text-center mb-6">
           <div className="flex justify-center mb-3">
-            <Ticket size={40} className="text-orange-400" />
+            <Ticket size={40} className="text-pink-500" />
           </div>
-          <h1 className="text-3xl font-bold text-orange-400">Cinema Connect</h1>
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-red-500 to-pink-600 bg-clip-text text-transparent">Cinema Connect</h1>
           <p className="mt-2 text-gray-300">Verify your email to complete registration</p>
         </div>
         
         <form onSubmit={handleOtpSubmit} className="space-y-6">
           <div className="text-center mb-4">
             <div className="flex justify-center mb-3">
-              <Mail size={30} className="text-orange-400" />
+              <Mail size={30} className="text-pink-500" />
             </div>
-            <h2 className="text-xl font-medium text-orange-400">Verify Your Email</h2>
+            <h2 className="text-xl font-medium bg-gradient-to-r from-red-500 to-pink-600 bg-clip-text text-transparent">Verify Your Email</h2>
             <p className="mt-2 text-sm text-gray-300">
               We've sent a 6-digit code to {email || tempEmail || 'your email'}.<br />
               The code is valid for 2 minutes.
@@ -142,50 +154,61 @@ const VerifyPage = () => {
                 setOtpCode(value);
               }}
               placeholder="000000"
-              className="mt-1 block w-full px-3 py-2 border border-gray-600 bg-gray-700 rounded-md shadow-sm text-center text-2xl tracking-widest focus:outline-none focus:ring-orange-500 focus:border-orange-500 text-white"
+              className="mt-1 block w-full px-3 py-2 border border-gray-600 bg-gray-700 rounded-md shadow-sm text-center text-2xl tracking-widest focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 text-white"
               autoComplete="one-time-code"
             />
           </div>
             <div>
-            <Button
+            <button
               type="submit"
-              className="w-full flex justify-center py-2 px-4 bg-orange-500 hover:bg-orange-600 text-white"
+              className="w-full flex justify-center items-center py-3 px-4 bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-600 transition-all duration-300 rounded-lg shadow-md hover:shadow-lg hover:shadow-pink-500/15 text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={isVerifying}
             >
               {isVerifying ? 'Verifying...' : 'Verify Email'}
-            </Button>
+            </button>
           </div>
             <div className="text-center mt-4 flex items-center justify-center">
             <button 
               type="button"
               onClick={handleResendOtp}
-              className={`text-sm flex items-center ${
+              className={`text-sm flex items-center transition-colors ${
                 resendCooldown > 0 || isResending
                   ? 'text-gray-500 cursor-not-allowed'
-                  : 'text-orange-400 hover:text-orange-300'
+                  : 'text-pink-400 hover:text-pink-300'
               }`}
               disabled={isResending || resendCooldown > 0}
             >
-              <RefreshCw size={14} className="mr-1" />
+              {/* <RefreshCw size={14} className="mr-1" />
               {resendCooldown > 0 
                 ? `Resend in ${resendCooldown}s` 
                 : isResending 
                   ? 'Sending...'
                   : 'Resend verification code'
-              }
+              } */}
             </button>
           </div>
 
           <div className="text-center mt-4">
             <button 
               type="button"
-              onClick={() => navigate('/register')}
-              className="text-gray-400 hover:text-gray-300 text-sm"
+              onClick={() => setShowRegisterModal(true)}
+              className="text-gray-400 hover:text-pink-300 text-sm transition-colors"
             >
               Back to Register
             </button>
-          </div></form>
+          </div>        </form>
       </div>
+
+      {/* Register Modal */}
+      {showRegisterModal && (
+        <RegisterModal 
+          isFormOpen={setShowRegisterModal}
+          onSwitchToLogin={() => {
+            setShowRegisterModal(false);
+            // After closing register modal, user stays on verify page
+          }}
+        />
+      )}
     </div>
   );
 };

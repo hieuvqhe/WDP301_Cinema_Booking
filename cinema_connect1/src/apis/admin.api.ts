@@ -453,3 +453,71 @@ export const checkExpiredContracts = async (): Promise<{
     throw handleAdminError(error);
   }
 };
+
+// Add contract response types
+interface ContractCheckResponse {
+  message: string;
+  result: {
+    _id: string;
+    staff_id: string;
+    admin_id: string;
+    contract_number: string;
+    staff_name: string | null;
+    staff_email: string | null;
+    staff_phone: string | null;
+    theater_name: string | null;
+    theater_location: string | null;
+    salary: number;
+    start_date: string;
+    end_date: string;
+    status: 'active' | 'inactive' | 'expired';
+    terms: string;
+    responsibilities: string[];
+    benefits: string[];
+    contract_file_url: string;
+    notes: string;
+    created_at: string;
+    updated_at: string;
+    admin: {
+      _id: string;
+      email: string;
+      name: string;
+    };
+  } | null;
+}
+
+// Check staff contract for admin purposes
+export const checkStaffContractAdmin = async (staffId: string): Promise<ContractCheckResponse> => {
+  try {
+    const adminApi = createAdminRequest();
+    const response = await adminApi.get<ContractCheckResponse>(`/admin/contracts/check-staff/${staffId}`);
+    return response.data;
+  } catch (error) {
+    throw handleAdminError(error);
+  }
+};
+
+// Check current staff's own contract status
+export const checkStaffContract = async (): Promise<ContractCheckResponse> => {
+  try {
+    const adminApi = createAdminRequest();
+    const response = await adminApi.get('/staff/contract');
+    return response.data;
+  } catch (error) {
+    throw handleAdminError(error);
+  }
+};
+
+// Helper function to validate contract status
+export const isContractActive = (contract: ContractCheckResponse): boolean => {
+  if (!contract.result) {
+    return false;
+  }
+  
+  const { status, start_date, end_date } = contract.result;
+  const now = new Date();
+  const startDate = new Date(start_date);
+  const endDate = new Date(end_date);
+  
+  return status === 'active' && now >= startDate && now <= endDate;
+};

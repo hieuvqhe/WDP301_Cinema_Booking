@@ -3,7 +3,7 @@ import { getRedirectPathByRole, useAuthStore} from "../../store/useAuthStore";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
-// import RegisterModal from "./RegisterModal";
+import RegisterModal from "./RegisterModal";
 
 interface LoginModalProps {
   isFormOpen: (value: boolean) => void;
@@ -14,6 +14,9 @@ const LoginModal = ({ isFormOpen }: LoginModalProps) => {
   const navigate = useNavigate();
   // Local loading state for better control
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Modal state to switch between login and register
+  const [showRegisterModal, setShowRegisterModal] = useState(false);
 
 
   // Login form state
@@ -49,19 +52,43 @@ const LoginModal = ({ isFormOpen }: LoginModalProps) => {
     }
   };
 
+  // Function to handle blur events - auto trim spaces
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    
+    // Only trim email field, not password
+    if (name === 'email') {
+      setFormData({
+        ...formData,
+        [name]: value.trim().toLowerCase(),
+      });
+    }
+  };
+
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
     // Validate email
+    const trimmedEmail = formData.email.trim().toLowerCase();
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!formData.email.trim()) {
+    if (!trimmedEmail) {
       newErrors.email = "Email is required";
-    } else if (!emailRegex.test(formData.email)) {
-      newErrors.email = "Invalid email format";
+    } else if (/^\s|\s$/.test(formData.email)) {
+      newErrors.email = "Email cannot start or end with spaces";
+    } else if (/\s/.test(trimmedEmail)) {
+      newErrors.email = "Email cannot contain spaces";
+    } else if (!emailRegex.test(trimmedEmail)) {
+      newErrors.email = "Please enter a valid email address (e.g., user@example.com)";
+    } else if (trimmedEmail.length > 254) {
+      newErrors.email = "Email is too long";
     }
 
     // Validate password
     if (!formData.password) {
+      newErrors.password = "Password is required";
+    } else if (/^\s|\s$/.test(formData.password)) {
+      newErrors.password = "Password cannot start or end with spaces";
+    } else if (formData.password.length < 1) {
       newErrors.password = "Password is required";
     }
 
@@ -158,11 +185,16 @@ const LoginModal = ({ isFormOpen }: LoginModalProps) => {
                 id="email"
                 name="email"
                 placeholder="Your Email"
-                className="w-full px-4 py-2 border border-gray-600 rounded-lg focus:ring-2
-                  focus:ring-violet-500 focus:border-violet-500 bg-gray-700"
+                className={`w-full px-4 py-2 border ${
+                  errors.email ? "border-red-500" : "border-gray-600"
+                } rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 bg-gray-700 text-white`}
                 onChange={handleChange}
+                onBlur={handleBlur}
                 value={formData.email}
               />
+              {errors.email && (
+                <p className="mt-1 text-sm text-red-500">{errors.email}</p>
+              )}
             </div>
 
             <div>
@@ -176,12 +208,16 @@ const LoginModal = ({ isFormOpen }: LoginModalProps) => {
                 type="password"
                 id="password"
                 name="password"
-                placeholder="Your Email"
-                className="w-full px-4 py-2 border border-gray-600 rounded-lg focus:ring-2
-                  focus:ring-violet-500 focus:border-violet-500 bg-gray-700"
+                placeholder="Your Password"
+                className={`w-full px-4 py-2 border ${
+                  errors.password ? "border-red-500" : "border-gray-600"
+                } rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 bg-gray-700 text-white`}
                 onChange={handleChange}
                 value={formData.password}
               />
+              {errors.password && (
+                <p className="mt-1 text-sm text-red-500">{errors.password}</p>
+              )}
             </div>
 
             <div className="flex justify-end text-xs pb-3">
@@ -202,17 +238,28 @@ const LoginModal = ({ isFormOpen }: LoginModalProps) => {
 
             <p className="text-center">
               Don't have account?{" "}
-              <span className="cursor-pointer hover:text-primary transition" onClick={() => navigate('/register')}>
+              <span 
+                className="cursor-pointer hover:text-primary transition" 
+                onClick={() => setShowRegisterModal(true)}
+              >
                 Register
               </span>{" "}
             </p>
           </form>
 
-
         </div>
       </div>
 
-      {/* <RegisterModal /> */}
+      {/* Register Modal */}
+      {showRegisterModal && (
+        <RegisterModal 
+          isFormOpen={setShowRegisterModal}
+          onSwitchToLogin={() => {
+            setShowRegisterModal(false);
+            // Keep login modal open
+          }}
+        />
+      )}
     </div>
   );
 };
