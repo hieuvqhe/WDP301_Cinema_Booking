@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import ReactPlayer from "react-player";
+import VideoPlayer from "../../VideoPlayer";
 import { BiPlayCircle } from "react-icons/bi";
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
@@ -20,12 +20,11 @@ const TrailerSection = () => {
   const [currentTrailer, setCurrentTrailer] = useState<string | undefined>(
     undefined
   );
-  const [isChangeTrailer, setIsChangeTrailer] = useState(false)
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const movies = await getPopularMovies(10);
+        const movies = await getPopularMovies(10, 1);
         setGetShowingMovies(movies);
         if (movies.length > 0) {
           setCurrentTrailer(movies[0].trailer_url);
@@ -43,7 +42,6 @@ const TrailerSection = () => {
 
     const trailerElement = document.getElementById("trailer-main");
     trailerElement?.scrollIntoView({ behavior: "smooth", block: "start" });
-    setIsChangeTrailer(true)
   };
 
   return (
@@ -54,14 +52,14 @@ const TrailerSection = () => {
 
       <div className="relative mt-6">
         <BlurCircle top="-100px" right="-100px" />
-        <ReactPlayer
-          url={currentTrailer}
-          controls={false}
-          playing={isChangeTrailer ? true : false}
-          className="mx-auto max-w-full"
-          width={"960px"}
-          height={"540px"}
-        />
+        <div className="mx-auto max-w-[960px] h-[540px]">
+          {currentTrailer && (
+            <VideoPlayer 
+              src={currentTrailer} 
+              classNames="w-full h-full"
+            />
+          )}
+        </div>
       </div>
       <div className="mt-8 max-w-3xl mx-auto">
         {/* <div className=""> */}

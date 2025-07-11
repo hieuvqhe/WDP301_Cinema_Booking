@@ -1,5 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { useState} from "react";
+import { useState } from "react";
+import type { Dispatch, SetStateAction } from "react";
 import {
   Building2,
   Users,
@@ -8,21 +9,23 @@ import {
   Settings,
   Film,
   Clock,
+  FileText,
 } from "lucide-react";
 
 interface SidebarProps {
   activeTab: string
-  setActiveTab: SetStateAction
+  setActiveTab: Dispatch<SetStateAction<string>>
 }
 
 const Sidebar = ({ activeTab, setActiveTab }: SidebarProps) => {
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarCollapsed] = useState(false);
   const menuItems = [
     { id: "overview", label: "Overview", icon: BarChart3 },
     { id: "theaters", label: "Theater", icon: Building2 },
     { id: "movies", label: "Movies", icon: Film },
     { id: "showtimes", label: "Showtimes", icon: Clock },
     { id: "bookings", label: "Bookings", icon: Calendar },
+    { id: "contract", label: "My Contract", icon: FileText },
     { id: "staff", label: "Staff", icon: Users },
     { id: "settings", label: "Settings", icon: Settings },
   ];

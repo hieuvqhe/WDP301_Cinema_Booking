@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
-import { checkStaffContract, isContractActive } from '../apis/admin.api';
+import { checkStaffContract, isContractActive } from '../apis/staff.api';
 import ContractStatusMessage from './ContractStatusMessage';
 
 interface RoleProtectedRouteProps {

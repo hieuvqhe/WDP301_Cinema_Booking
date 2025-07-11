@@ -14,6 +14,16 @@ const showtimeApi = axios.create({
   },
 });
 
+// Utility function để lọc suất chiếu chỉ lấy những suất chiếu trong tương lai
+const filterFutureShowtimes = (showtimes: Showtime[]): Showtime[] => {
+  const now = new Date();
+  return showtimes.filter(showtime => {
+    // Tạo DateTime từ start_time
+    const showtimeDate = new Date(showtime.start_time);
+    return showtimeDate > now;
+  });
+};
+
 // Xử lý lỗi
 const handleShowtimeError = (error: unknown): Error => {
   if (axios.isAxiosError(error)) {
@@ -37,16 +47,20 @@ const handleShowtimeError = (error: unknown): Error => {
   return new Error("Lỗi mạng. Vui lòng kiểm tra kết nối.");
 };
 
-// Lấy tất cả showtime
+// Lấy tất cả showtime (chỉ suất chiếu tương lai)
 export const getShowtimes = async (): Promise<Showtime[]> => {
   try {
     const res = await showtimeApi.get<{
       showtimes?: Showtime[];
       result?: { showtimes: Showtime[] };
     }>("");
-    if (res.data.showtimes) return res.data.showtimes;
-    if (res.data.result?.showtimes) return res.data.result.showtimes;
-    return [];
+    
+    let showtimes: Showtime[] = [];
+    if (res.data.showtimes) showtimes = res.data.showtimes;
+    else if (res.data.result?.showtimes) showtimes = res.data.result.showtimes;
+    
+    // Lọc chỉ lấy suất chiếu tương lai
+    return filterFutureShowtimes(showtimes);
   } catch (error) {
     throw handleShowtimeError(error);
   }
@@ -76,7 +90,7 @@ export const getShowtimeById = async (
   }
 };
 
-// Lấy theo movie ID
+// Lấy theo movie ID (chỉ suất chiếu tương lai)
 export const getShowtimeByMovieId = async (
   movie_id: string
 ): Promise<Showtime[]> => {
@@ -85,15 +99,19 @@ export const getShowtimeByMovieId = async (
       params: { movie_id },
     });
     console.log("Showtime by movie_id response:", res.data);
-    if (res.data.showtimes) return res.data.showtimes;
-    if (res.data.result?.showtimes) return res.data.result.showtimes;
-    return [];
+    
+    let showtimes: Showtime[] = [];
+    if (res.data.showtimes) showtimes = res.data.showtimes;
+    else if (res.data.result?.showtimes) showtimes = res.data.result.showtimes;
+    
+    // Lọc chỉ lấy suất chiếu tương lai
+    return filterFutureShowtimes(showtimes);
   } catch (error) {
     throw handleShowtimeError(error);
   }
 };
 
-// Lấy theo movie ID và theater ID
+// Lấy theo movie ID và theater ID (chỉ suất chiếu tương lai)
 export const getShowtimeByMovieIdAndTheaterId = async (
   movie_id: string,
   theater_id: string
@@ -102,9 +120,13 @@ export const getShowtimeByMovieIdAndTheaterId = async (
     const res = await showtimeApi.get<any>("", {
       params: { movie_id, theater_id },
     });
-    if (res.data.showtimes) return res.data.showtimes;
-    if (res.data.result?.showtimes) return res.data.result.showtimes;
-    return [];
+    
+    let showtimes: Showtime[] = [];
+    if (res.data.showtimes) showtimes = res.data.showtimes;
+    else if (res.data.result?.showtimes) showtimes = res.data.result.showtimes;
+    
+    // Lọc chỉ lấy suất chiếu tương lai
+    return filterFutureShowtimes(showtimes);
   } catch (error) {
     throw handleShowtimeError(error);
   }
@@ -156,4 +178,54 @@ export const getLockedSeats = async (
     throw handleShowtimeError(error);
   }
 };
-  
+
+// Lấy tất cả showtime (bao gồm cả quá khứ) - dành cho admin
+export const getAllShowtimes = async (): Promise<Showtime[]> => {
+  try {
+    const res = await showtimeApi.get<{
+      showtimes?: Showtime[];
+      result?: { showtimes: Showtime[] };
+    }>("");
+    
+    if (res.data.showtimes) return res.data.showtimes;
+    if (res.data.result?.showtimes) return res.data.result.showtimes;
+    return [];
+  } catch (error) {
+    throw handleShowtimeError(error);
+  }
+};
+
+// Lấy theo movie ID (bao gồm cả quá khứ) - dành cho admin
+export const getAllShowtimeByMovieId = async (
+  movie_id: string
+): Promise<Showtime[]> => {
+  try {
+    const res = await showtimeApi.get<any>("", {
+      params: { movie_id },
+    });
+    
+    if (res.data.showtimes) return res.data.showtimes;
+    if (res.data.result?.showtimes) return res.data.result.showtimes;
+    return [];
+  } catch (error) {
+    throw handleShowtimeError(error);
+  }
+};
+
+// Lấy theo movie ID và theater ID (bao gồm cả quá khứ) - dành cho admin
+export const getAllShowtimeByMovieIdAndTheaterId = async (
+  movie_id: string,
+  theater_id: string
+): Promise<Showtime[]> => {
+  try {
+    const res = await showtimeApi.get<any>("", {
+      params: { movie_id, theater_id },
+    });
+    
+    if (res.data.showtimes) return res.data.showtimes;
+    if (res.data.result?.showtimes) return res.data.result.showtimes;
+    return [];
+  } catch (error) {
+    throw handleShowtimeError(error);
+  }
+};

@@ -8,10 +8,10 @@ import Showtimes from "./contents/Showtimes";
 import Bookings from "./contents/Bookings";
 import Staffs from "./contents/Staffs";
 import Movies from "./contents/Movies";
+import ContractDetails from "./contents/ContractDetails";
 
 const PartnerPage = () => {
   const [activeTab, setActiveTab] = useState("overview");
-  // Enhanced Mock data for different tabs with Orange Cinema theme
 
   const renderContent = () => {
     switch (activeTab) {
@@ -29,6 +29,9 @@ const PartnerPage = () => {
 
       case "bookings":
         return <Bookings />;
+
+      case "contract":
+        return <ContractDetails />;
 
       case "staff":
         return <Staffs />;
@@ -64,7 +67,7 @@ const PartnerPage = () => {
 
       <div className="flex mt-24 h-screen overflow-hidden">
         {/* Sidebar */}
-        {/* <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} /> */}
+        <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
 
         {/* Main Content */}
         <motion.main
