@@ -7,7 +7,6 @@ import {
   MapPin,
   Clock,
   QrCode,
-  Download,
   X,
   Filter,
   Search,
@@ -30,6 +29,7 @@ import {
   formatDateTime,
   formatSeats,
 } from "../../utils/format";
+import QRSection from "../../components/QR/QRSection";
 
 const MyBooking: React.FC = () => {
   const [filters, setFilters] = useState<BookingQueryParams>({
@@ -38,6 +38,8 @@ const MyBooking: React.FC = () => {
     sort_by: "booking_time",
     sort_order: "desc",
   });
+  const [bookingData, setBookingData] = useState<any>(null);
+  console.log("bookingData", bookingData);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [showFilters, setShowFilters] = useState(false);
@@ -287,6 +289,7 @@ const MyBooking: React.FC = () => {
           ) : (
             bookingsData?.bookings?.map((booking, index) => (
               <motion.div
+                onClick={() => setBookingData(booking)}
                 key={booking._id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -403,7 +406,7 @@ const MyBooking: React.FC = () => {
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              className="bg-white rounded-2xl p-6 max-w-sm w-full"
+              className="bg-white rounded-2xl p-6 max-w-[500px] w-full"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="text-center">
@@ -411,29 +414,13 @@ const MyBooking: React.FC = () => {
                   Your Ticket
                 </h3>
                 <div className="bg-gray-100 rounded-lg p-4 mb-4">
-                  <img
-                    src={qrData.qr_code}
-                    alt="Ticket QR Code"
-                    className="w-full max-w-[200px] mx-auto"
+                  <QRSection
+                    content={selectedTicket}
+                    amount={bookingData?.total_amount}
                   />
                 </div>
-                <p className="text-gray-600 text-sm mb-4">
-                  Show this QR code at the theater entrance
-                </p>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => {
-                      const link = document.createElement("a");
-                      link.href = qrData.qr_code;
-                      link.download = `ticket-${selectedTicket}.png`;
-                      link.click();
-                    }}
-                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white 
-                             rounded-lg hover:bg-blue-700 transition-colors"
-                  >
-                    <Download className="h-4 w-4" />
-                    Download
-                  </button>
+
+                <div className="flex w-full justify-center gap-2">
                   <button
                     onClick={() => setSelectedTicket(null)}
                     className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors"

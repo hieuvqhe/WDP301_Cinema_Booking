@@ -1,5 +1,6 @@
-import axios from 'axios';
-import type { 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import axios from "axios";
+import type {
   DashboardStats,
   DashboardQueryParams,
   AdminUser,
@@ -8,11 +9,17 @@ import type {
   UpdateUserRequest,
   UpdateUserRoleRequest,
   AdminResponse,
-  UsersQueryParams
-} from '../types/Admin.type';
-import { getAuthToken } from './user.api';
+  UsersQueryParams,
+  PaymentQueryParams,
+  PaymentStatsResponse,
+  PaymentStatsQueryParams,
+  UpdatePaymentStatusRequest,
+  PaymentDetailResponse,
+  PaymentListResponse,
+} from "../types/Admin.type";
+import { getAuthToken } from "./user.api";
 
-const BASE_URL = 'https://bookmovie-5n6n.onrender.com';
+const BASE_URL = "https://bookmovie-5n6n.onrender.com";
 
 // Create authenticated axios instance for admin requests
 const createAdminRequest = () => {
@@ -21,8 +28,8 @@ const createAdminRequest = () => {
     baseURL: BASE_URL,
     headers: {
       Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    }
+      "Content-Type": "application/json",
+    },
   });
 };
 
@@ -31,22 +38,22 @@ const handleAdminError = (error: unknown): Error => {
   if (axios.isAxiosError(error)) {
     const status = error.response?.status;
     const message = error.response?.data?.message;
-    
+
     if (status === 401) {
-      throw new Error('Unauthorized. Please login as admin.');
+      throw new Error("Unauthorized. Please login as admin.");
     } else if (status === 403) {
-      throw new Error('Access denied. Admin privileges required.');
+      throw new Error("Access denied. Admin privileges required.");
     } else if (status === 404) {
-      throw new Error(message || 'Resource not found.');
+      throw new Error(message || "Resource not found.");
     } else if (status === 400) {
-      throw new Error(message || 'Invalid request data.');
+      throw new Error(message || "Invalid request data.");
     } else if (status === 500) {
-      throw new Error('Server error. Please try again later.');
+      throw new Error("Server error. Please try again later.");
     } else {
-      throw new Error(message || 'Request failed.');
+      throw new Error(message || "Request failed.");
     }
   }
-  throw new Error('Network error. Please check your connection.');
+  throw new Error("Network error. Please check your connection.");
 };
 
 // ===============================
@@ -54,16 +61,20 @@ const handleAdminError = (error: unknown): Error => {
 // ===============================
 
 // Get dashboard statistics
-export const getDashboardStats = async (params?: DashboardQueryParams): Promise<DashboardStats> => {
+export const getDashboardStats = async (
+  params?: DashboardQueryParams
+): Promise<DashboardStats> => {
   try {
     const adminApi = createAdminRequest();
     const queryParams = new URLSearchParams();
-    
-    if (params?.period) queryParams.append('period', params.period);
-    if (params?.start_date) queryParams.append('start_date', params.start_date);
-    if (params?.end_date) queryParams.append('end_date', params.end_date);
-    
-    const url = `/admin/dashboard${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+
+    if (params?.period) queryParams.append("period", params.period);
+    if (params?.start_date) queryParams.append("start_date", params.start_date);
+    if (params?.end_date) queryParams.append("end_date", params.end_date);
+
+    const url = `/admin/dashboard${
+      queryParams.toString() ? `?${queryParams.toString()}` : ""
+    }`;
     const response = await adminApi.get<{ result: DashboardStats }>(url);
     return response.data.result;
   } catch (error) {
@@ -76,19 +87,23 @@ export const getDashboardStats = async (params?: DashboardQueryParams): Promise<
 // ===============================
 
 // Get all users with pagination and filters
-export const getAllUsers = async (params?: UsersQueryParams): Promise<GetUsersResponse> => {
+export const getAllUsers = async (
+  params?: UsersQueryParams
+): Promise<GetUsersResponse> => {
   try {
     const adminApi = createAdminRequest();
     const queryParams = new URLSearchParams();
-    
-    if (params?.page) queryParams.append('page', params.page.toString());
-    if (params?.limit) queryParams.append('limit', params.limit.toString());
-    if (params?.search) queryParams.append('search', params.search);
-    if (params?.role) queryParams.append('role', params.role);
-    if (params?.sort_by) queryParams.append('sort_by', params.sort_by);
-    if (params?.sort_order) queryParams.append('sort_order', params.sort_order);
-    
-    const url = `/admin/users${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+
+    if (params?.page) queryParams.append("page", params.page.toString());
+    if (params?.limit) queryParams.append("limit", params.limit.toString());
+    if (params?.search) queryParams.append("search", params.search);
+    if (params?.role) queryParams.append("role", params.role);
+    if (params?.sort_by) queryParams.append("sort_by", params.sort_by);
+    if (params?.sort_order) queryParams.append("sort_order", params.sort_order);
+
+    const url = `/admin/users${
+      queryParams.toString() ? `?${queryParams.toString()}` : ""
+    }`;
     const response = await adminApi.get<GetUsersResponse>(url);
     return response.data;
   } catch (error) {
@@ -100,7 +115,9 @@ export const getAllUsers = async (params?: UsersQueryParams): Promise<GetUsersRe
 export const getUserById = async (userId: string): Promise<AdminUser> => {
   try {
     const adminApi = createAdminRequest();
-    const response = await adminApi.get<GetUserByIdResponse>(`/admin/users/${userId}`);
+    const response = await adminApi.get<GetUserByIdResponse>(
+      `/admin/users/${userId}`
+    );
     return response.data.result;
   } catch (error) {
     throw handleAdminError(error);
@@ -108,10 +125,16 @@ export const getUserById = async (userId: string): Promise<AdminUser> => {
 };
 
 // Update user information
-export const updateUser = async (userId: string, userData: UpdateUserRequest): Promise<AdminResponse> => {
+export const updateUser = async (
+  userId: string,
+  userData: UpdateUserRequest
+): Promise<AdminResponse> => {
   try {
     const adminApi = createAdminRequest();
-    const response = await adminApi.put<AdminResponse>(`/admin/users/${userId}`, userData);
+    const response = await adminApi.put<AdminResponse>(
+      `/admin/users/${userId}`,
+      userData
+    );
     return response.data;
   } catch (error) {
     throw handleAdminError(error);
@@ -119,10 +142,16 @@ export const updateUser = async (userId: string, userData: UpdateUserRequest): P
 };
 
 // Update user role
-export const updateUserRole = async (userId: string, roleData: UpdateUserRoleRequest): Promise<AdminResponse> => {
+export const updateUserRole = async (
+  userId: string,
+  roleData: UpdateUserRoleRequest
+): Promise<AdminResponse> => {
   try {
     const adminApi = createAdminRequest();
-    const response = await adminApi.put<AdminResponse>(`/admin/users/${userId}/role`, roleData);
+    const response = await adminApi.put<AdminResponse>(
+      `/admin/users/${userId}/role`,
+      roleData
+    );
     return response.data;
   } catch (error) {
     throw handleAdminError(error);
@@ -133,7 +162,9 @@ export const updateUserRole = async (userId: string, roleData: UpdateUserRoleReq
 export const deleteUser = async (userId: string): Promise<AdminResponse> => {
   try {
     const adminApi = createAdminRequest();
-    const response = await adminApi.delete<AdminResponse>(`/admin/users/${userId}`);
+    const response = await adminApi.delete<AdminResponse>(
+      `/admin/users/${userId}`
+    );
     return response.data;
   } catch (error) {
     throw handleAdminError(error);
@@ -141,10 +172,15 @@ export const deleteUser = async (userId: string): Promise<AdminResponse> => {
 };
 
 // Ban/Unban user
-export const toggleUserStatus = async (userId: string, action: 'ban' | 'unban'): Promise<AdminResponse> => {
+export const toggleUserStatus = async (
+  userId: string,
+  action: "ban" | "unban"
+): Promise<AdminResponse> => {
   try {
     const adminApi = createAdminRequest();
-    const response = await adminApi.put<AdminResponse>(`/admin/users/${userId}/${action}`);
+    const response = await adminApi.put<AdminResponse>(
+      `/admin/users/${userId}/${action}`
+    );
     return response.data;
   } catch (error) {
     throw handleAdminError(error);
@@ -152,15 +188,18 @@ export const toggleUserStatus = async (userId: string, action: 'ban' | 'unban'):
 };
 
 // Promote user to staff with contract
-export const promoteUserToStaff = async (userId: string, contractData: {
-  position: string;
-  salary: number;
-  start_date: string;
-  end_date: string;
-  contract_type: 'full_time' | 'part_time' | 'contract';
-  benefits: string[];
-  terms: string;
-}): Promise<{
+export const promoteUserToStaff = async (
+  userId: string,
+  contractData: {
+    position: string;
+    salary: number;
+    start_date: string;
+    end_date: string;
+    contract_type: "full_time" | "part_time" | "contract";
+    benefits: string[];
+    terms: string;
+  }
+): Promise<{
   message: string;
   result: {
     user_id: string;
@@ -169,7 +208,10 @@ export const promoteUserToStaff = async (userId: string, contractData: {
 }> => {
   try {
     const adminApi = createAdminRequest();
-    const response = await adminApi.put(`/admin/users/${userId}/promote-to-staff`, contractData);
+    const response = await adminApi.put(
+      `/admin/users/${userId}/promote-to-staff`,
+      contractData
+    );
     return response.data;
   } catch (error) {
     throw handleAdminError(error);
@@ -184,27 +226,33 @@ export const promoteUserToStaff = async (userId: string, contractData: {
 export const checkAdminPrivileges = async (): Promise<boolean> => {
   try {
     const adminApi = createAdminRequest();
-    await adminApi.get('/admin/dashboard');
+    await adminApi.get("/admin/dashboard");
     return true;
   } catch (error) {
+    console.log("Admin privileges check failed:", error);
+
     return false;
   }
 };
 
 // Export users data (CSV format)
-export const exportUsersData = async (params?: UsersQueryParams): Promise<Blob> => {
+export const exportUsersData = async (
+  params?: UsersQueryParams
+): Promise<Blob> => {
   try {
     const adminApi = createAdminRequest();
     const queryParams = new URLSearchParams();
-    
-    if (params?.search) queryParams.append('search', params.search);
-    if (params?.role) queryParams.append('role', params.role);
-    
-    const url = `/admin/users/export${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+
+    if (params?.search) queryParams.append("search", params.search);
+    if (params?.role) queryParams.append("role", params.role);
+
+    const url = `/admin/users/export${
+      queryParams.toString() ? `?${queryParams.toString()}` : ""
+    }`;
     const response = await adminApi.get(url, {
-      responseType: 'blob'
+      responseType: "blob",
     });
-    
+
     return response.data;
   } catch (error) {
     throw handleAdminError(error);
@@ -212,10 +260,15 @@ export const exportUsersData = async (params?: UsersQueryParams): Promise<Blob> 
 };
 
 // Get user activity logs
-export const getUserActivityLogs = async (userId: string, limit = 50): Promise<any[]> => {
+export const getUserActivityLogs = async (
+  userId: string,
+  limit = 50
+): Promise<any[]> => {
   try {
     const adminApi = createAdminRequest();
-    const response = await adminApi.get(`/admin/users/${userId}/activity?limit=${limit}`);
+    const response = await adminApi.get(
+      `/admin/users/${userId}/activity?limit=${limit}`
+    );
     return response.data.result || [];
   } catch (error) {
     throw handleAdminError(error);
@@ -223,14 +276,20 @@ export const getUserActivityLogs = async (userId: string, limit = 50): Promise<a
 };
 
 // Send notification to user
-export const sendNotificationToUser = async (userId: string, notification: {
-  title: string;
-  message: string;
-  type?: 'info' | 'warning' | 'success' | 'error';
-}): Promise<AdminResponse> => {
+export const sendNotificationToUser = async (
+  userId: string,
+  notification: {
+    title: string;
+    message: string;
+    type?: "info" | "warning" | "success" | "error";
+  }
+): Promise<AdminResponse> => {
   try {
     const adminApi = createAdminRequest();
-    const response = await adminApi.post<AdminResponse>(`/admin/users/${userId}/notify`, notification);
+    const response = await adminApi.post<AdminResponse>(
+      `/admin/users/${userId}/notify`,
+      notification
+    );
     return response.data;
   } catch (error) {
     throw handleAdminError(error);
@@ -238,25 +297,36 @@ export const sendNotificationToUser = async (userId: string, notification: {
 };
 
 // Bulk operations
-export const bulkUpdateUsers = async (userIds: string[], updates: Partial<UpdateUserRequest>): Promise<AdminResponse> => {
+export const bulkUpdateUsers = async (
+  userIds: string[],
+  updates: Partial<UpdateUserRequest>
+): Promise<AdminResponse> => {
   try {
     const adminApi = createAdminRequest();
-    const response = await adminApi.put<AdminResponse>('/admin/users/bulk-update', {
-      userIds,
-      updates
-    });
+    const response = await adminApi.put<AdminResponse>(
+      "/admin/users/bulk-update",
+      {
+        userIds,
+        updates,
+      }
+    );
     return response.data;
   } catch (error) {
     throw handleAdminError(error);
   }
 };
 
-export const bulkDeleteUsers = async (userIds: string[]): Promise<AdminResponse> => {
+export const bulkDeleteUsers = async (
+  userIds: string[]
+): Promise<AdminResponse> => {
   try {
     const adminApi = createAdminRequest();
-    const response = await adminApi.delete<AdminResponse>('/admin/users/bulk-delete', {
-      data: { userIds }
-    });
+    const response = await adminApi.delete<AdminResponse>(
+      "/admin/users/bulk-delete",
+      {
+        data: { userIds },
+      }
+    );
     return response.data;
   } catch (error) {
     throw handleAdminError(error);
@@ -273,7 +343,7 @@ export const getAllContracts = async (params?: {
   limit?: number;
   search?: string;
   sort_by?: string;
-  sort_order?: 'asc' | 'desc';
+  sort_order?: "asc" | "desc";
 }): Promise<{
   message: string;
   result: {
@@ -290,7 +360,7 @@ export const getAllContracts = async (params?: {
       salary: number;
       start_date: string;
       end_date: string;
-      status: 'draft' | 'active' | 'terminated' | 'expired';
+      status: "draft" | "active" | "terminated" | "expired";
       terms: string;
       responsibilities: string[];
       benefits: string[];
@@ -320,14 +390,16 @@ export const getAllContracts = async (params?: {
   try {
     const adminApi = createAdminRequest();
     const queryParams = new URLSearchParams();
-    
-    if (params?.page) queryParams.append('page', params.page.toString());
-    if (params?.limit) queryParams.append('limit', params.limit.toString());
-    if (params?.search) queryParams.append('search', params.search);
-    if (params?.sort_by) queryParams.append('sort_by', params.sort_by);
-    if (params?.sort_order) queryParams.append('sort_order', params.sort_order);
-    
-    const url = `/admin/contracts${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+
+    if (params?.page) queryParams.append("page", params.page.toString());
+    if (params?.limit) queryParams.append("limit", params.limit.toString());
+    if (params?.search) queryParams.append("search", params.search);
+    if (params?.sort_by) queryParams.append("sort_by", params.sort_by);
+    if (params?.sort_order) queryParams.append("sort_order", params.sort_order);
+
+    const url = `/admin/contracts${
+      queryParams.toString() ? `?${queryParams.toString()}` : ""
+    }`;
     const response = await adminApi.get(url);
     return response.data;
   } catch (error) {
@@ -336,7 +408,9 @@ export const getAllContracts = async (params?: {
 };
 
 // Get contract by ID
-export const getContractById = async (contractId: string): Promise<{
+export const getContractById = async (
+  contractId: string
+): Promise<{
   message: string;
   result: {
     _id: string;
@@ -351,7 +425,7 @@ export const getContractById = async (contractId: string): Promise<{
     salary: number;
     start_date: string;
     end_date: string;
-    status: 'draft' | 'active' | 'terminated' | 'expired';
+    status: "draft" | "active" | "terminated" | "expired";
     terms: string;
     responsibilities: string[];
     benefits: string[];
@@ -383,15 +457,18 @@ export const getContractById = async (contractId: string): Promise<{
 };
 
 // Update contract
-export const updateContract = async (contractId: string, contractData: {
-  position?: string;
-  salary?: number;
-  contract_type?: 'full_time' | 'part_time' | 'contract';
-  start_date?: string;
-  end_date?: string;
-  benefits?: string[];
-  terms?: string;
-}): Promise<{
+export const updateContract = async (
+  contractId: string,
+  contractData: {
+    position?: string;
+    salary?: number;
+    contract_type?: "full_time" | "part_time" | "contract";
+    start_date?: string;
+    end_date?: string;
+    benefits?: string[];
+    terms?: string;
+  }
+): Promise<{
   message: string;
   result: {
     contract_id: string;
@@ -399,7 +476,10 @@ export const updateContract = async (contractId: string, contractData: {
 }> => {
   try {
     const adminApi = createAdminRequest();
-    const response = await adminApi.put(`/admin/contracts/${contractId}`, contractData);
+    const response = await adminApi.put(
+      `/admin/contracts/${contractId}`,
+      contractData
+    );
     return response.data;
   } catch (error) {
     throw handleAdminError(error);
@@ -407,7 +487,9 @@ export const updateContract = async (contractId: string, contractData: {
 };
 
 // Activate contract
-export const activateContract = async (contractId: string): Promise<{
+export const activateContract = async (
+  contractId: string
+): Promise<{
   message: string;
   result: {
     contract_id: string;
@@ -415,7 +497,9 @@ export const activateContract = async (contractId: string): Promise<{
 }> => {
   try {
     const adminApi = createAdminRequest();
-    const response = await adminApi.put(`/admin/contracts/${contractId}/activate`);
+    const response = await adminApi.put(
+      `/admin/contracts/${contractId}/activate`
+    );
     return response.data;
   } catch (error) {
     throw handleAdminError(error);
@@ -423,7 +507,10 @@ export const activateContract = async (contractId: string): Promise<{
 };
 
 // Terminate contract
-export const terminateContract = async (contractId: string, reason: string): Promise<{
+export const terminateContract = async (
+  contractId: string,
+  reason: string
+): Promise<{
   message: string;
   result: {
     contract_id: string;
@@ -431,7 +518,10 @@ export const terminateContract = async (contractId: string, reason: string): Pro
 }> => {
   try {
     const adminApi = createAdminRequest();
-    const response = await adminApi.put(`/admin/contracts/${contractId}/terminate`, { reason });
+    const response = await adminApi.put(
+      `/admin/contracts/${contractId}/terminate`,
+      { reason }
+    );
     return response.data;
   } catch (error) {
     throw handleAdminError(error);
@@ -447,7 +537,7 @@ export const checkExpiredContracts = async (): Promise<{
 }> => {
   try {
     const adminApi = createAdminRequest();
-    const response = await adminApi.post('/admin/contracts/check-expired');
+    const response = await adminApi.post("/admin/contracts/check-expired");
     return response.data;
   } catch (error) {
     throw handleAdminError(error);
@@ -455,13 +545,145 @@ export const checkExpiredContracts = async (): Promise<{
 };
 
 // Check staff contract for admin purposes
-export const checkStaffContractAdmin = async (staffId: string): Promise<{
+export const checkStaffContractAdmin = async (
+  staffId: string
+): Promise<{
   message: string;
   result: any;
 }> => {
   try {
     const adminApi = createAdminRequest();
-    const response = await adminApi.get(`/admin/contracts/check-staff/${staffId}`);
+    const response = await adminApi.get(
+      `/admin/contracts/check-staff/${staffId}`
+    );
+    return response.data;
+  } catch (error) {
+    throw handleAdminError(error);
+  }
+};
+export const getAllPayments = async (
+  params?: PaymentQueryParams
+): Promise<PaymentListResponse> => {
+  try {
+    const adminApi = createAdminRequest();
+    const queryParams = new URLSearchParams();
+
+    if (params?.page) queryParams.append("page", params.page.toString());
+    if (params?.limit) queryParams.append("limit", params.limit.toString());
+    if (params?.status) queryParams.append("status", params.status);
+    if (params?.payment_method)
+      queryParams.append("payment_method", params.payment_method);
+    if (params?.sort_by) queryParams.append("sort_by", params.sort_by);
+    if (params?.sort_order) queryParams.append("sort_order", params.sort_order);
+    if (params?.date_from) queryParams.append("date_from", params.date_from);
+    if (params?.date_to) queryParams.append("date_to", params.date_to);
+    if (params?.search) queryParams.append("search", params.search);
+
+    const url = `/admin/payments${
+      queryParams.toString() ? `?${queryParams.toString()}` : ""
+    }`;
+    const response = await adminApi.get<PaymentListResponse>(url);
+    return response.data;
+  } catch (error) {
+    throw handleAdminError(error);
+  }
+};
+
+// Get payment by ID
+export const getPaymentById = async (
+  paymentId: string
+): Promise<PaymentDetailResponse> => {
+  try {
+    const adminApi = createAdminRequest();
+    const response = await adminApi.get<PaymentDetailResponse>(
+      `/admin/payments/${paymentId}`
+    );
+    return response.data;
+  } catch (error) {
+    throw handleAdminError(error);
+  }
+};
+
+// Update payment status
+export const updatePaymentStatus = async (
+  paymentId: string,
+  data: UpdatePaymentStatusRequest
+): Promise<AdminResponse> => {
+  try {
+    const adminApi = createAdminRequest();
+    const response = await adminApi.put<AdminResponse>(
+      `/admin/payments/${paymentId}/status`,
+      data
+    );
+    return response.data;
+  } catch (error) {
+    throw handleAdminError(error);
+  }
+};
+
+// Get payment statistics
+export const getPaymentStats = async (
+  params?: PaymentStatsQueryParams
+): Promise<PaymentStatsResponse> => {
+  try {
+    const adminApi = createAdminRequest();
+    const queryParams = new URLSearchParams();
+
+    if (params?.period) queryParams.append("period", params.period);
+    if (params?.start_date) queryParams.append("start_date", params.start_date);
+    if (params?.end_date) queryParams.append("end_date", params.end_date);
+
+    const url = `/admin/payments/stats${
+      queryParams.toString() ? `?${queryParams.toString()}` : ""
+    }`;
+    const response = await adminApi.get<PaymentStatsResponse>(url);
+    return response.data;
+  } catch (error) {
+    throw handleAdminError(error);
+  }
+};
+
+// Bulk update payment status
+export const bulkUpdatePaymentStatus = async (
+  paymentIds: string[],
+  status: string
+): Promise<AdminResponse> => {
+  try {
+    const adminApi = createAdminRequest();
+    const response = await adminApi.put<AdminResponse>(
+      "/admin/payments/bulk-update-status",
+      {
+        paymentIds,
+        status,
+      }
+    );
+    return response.data;
+  } catch (error) {
+    throw handleAdminError(error);
+  }
+};
+
+// Export payment data
+export const exportPaymentData = async (
+  params?: PaymentQueryParams
+): Promise<Blob> => {
+  try {
+    const adminApi = createAdminRequest();
+    const queryParams = new URLSearchParams();
+
+    if (params?.status) queryParams.append("status", params.status);
+    if (params?.payment_method)
+      queryParams.append("payment_method", params.payment_method);
+    if (params?.date_from) queryParams.append("date_from", params.date_from);
+    if (params?.date_to) queryParams.append("date_to", params.date_to);
+
+    const url = `/admin/payments/export${
+      queryParams.toString() ? `?${queryParams.toString()}` : ""
+    }`;
+    const response = await adminApi.get(url, {
+      responseType: "blob",
+    });
+
     return response.data;
   } catch (error) {
     throw handleAdminError(error);

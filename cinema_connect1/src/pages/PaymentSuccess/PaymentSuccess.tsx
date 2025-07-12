@@ -12,19 +12,24 @@ import {
   ArrowRight,
   Share2,
   MessageSquare,
+  Copy,
+  Check,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import bookingApi from "../../apis/booking.api";
 import { formatCurrency, formatDateTime } from "../../utils/format";
+import QRSection from "../../components/QR/QRSection";
 
 const PaymentSuccess: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const [isCopied, setIsCopied] = useState(false);
 
   const bookingId = searchParams.get("bookingId");
   console.log("Booking ID from URL:", bookingId);
 
-  // Mock booking data - replace with actual API call
+  // Fetch booking data
   const { data: bookingDatas, isLoading: isLoadingBooking } = useQuery({
     queryKey: ["booking", bookingId],
     queryFn: () => bookingApi.getBookingById(bookingId || ""),
@@ -32,21 +37,73 @@ const PaymentSuccess: React.FC = () => {
   const bookingData = bookingDatas?.data?.result;
 
   const handleDownloadTicket = () => {
-    // Implement ticket download logic
-    console.log("Downloading ticket...");
+    const ticketInfo = `
+CINEMA TICKET 🎬
+━━━━━━━━━━━━━━━━━━━━━━━━
+${bookingData?.movie?.title}
+${formatDateTime(bookingData?.showtime?.start_time as any)}
+${bookingData?.theater?.name}
+Ghế: ${bookingData?.seats?.map((s: any) => `${s.row}${s.number}`).join(", ")}
+Mã vé: ${bookingData?.ticket_code}
+Tổng tiền: ${formatCurrency(bookingData?.total_amount as any)}
+━━━━━━━━━━━━━━━━━━━━━━━━
+Vui lòng đến rạp trước 15 phút!
+    `;
+
+    const element = document.createElement("a");
+    const file = new Blob([ticketInfo], { type: "text/plain" });
+    element.href = URL.createObjectURL(file);
+    element.download = `ticket-${bookingData?.ticket_code}.txt`;
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
   };
 
-  const handleShareExperience = () => {
-    // Implement social sharing logic
-    console.log("Sharing experience...");
+  const handleCopyTicketCode = async () => {
+    if (bookingData?.ticket_code) {
+      try {
+        await navigator.clipboard.writeText(bookingData.ticket_code);
+        setIsCopied(true);
+        setTimeout(() => setIsCopied(false), 2000);
+      } catch (err) {
+        console.error("Failed to copy:", err);
+      }
+    }
   };
+
+  const handleShareExperience = async () => {
+    const shareData = {
+      title: `Đã đặt vé xem ${bookingData?.movie?.title}! 🎬`,
+      text: `Tôi vừa đặt vé xem phim "${bookingData?.movie?.title}" tại ${bookingData?.theater?.name}. Cùng đi xem nhé! 🍿`,
+      url: window.location.href,
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        // Fallback - copy to clipboard
+        await navigator.clipboard.writeText(
+          `${shareData.title}\n${shareData.text}\n${shareData.url}`
+        );
+        alert("Đã copy link chia sẻ!");
+      }
+    } catch (err) {
+      console.error("Error sharing:", err);
+    }
+  };
+
   if (isLoadingBooking) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-100">
-        <p className="text-gray-500">Loading booking details...</p>
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-white">Đang tải thông tin đặt vé...</p>
+        </div>
       </div>
     );
   }
+
   const handleWriteReview = () => {
     // Navigate to review page or open review modal
     navigate(`/movies/${bookingData?.movie?.title}?tab=reviews&write=true`);
@@ -78,7 +135,7 @@ const PaymentSuccess: React.FC = () => {
             transition={{ delay: 0.3 }}
             className="text-4xl font-bold text-white mb-2"
           >
-            Payment Successful!
+            Đặt vé thành công! 🎉
           </motion.h1>
           <motion.p
             initial={{ opacity: 0, y: 20 }}
@@ -86,7 +143,7 @@ const PaymentSuccess: React.FC = () => {
             transition={{ delay: 0.4 }}
             className="text-xl text-gray-300"
           >
-            Your tickets have been confirmed
+            Vé của bạn đã được xác nhận
           </motion.p>
         </motion.div>
 
@@ -109,21 +166,43 @@ const PaymentSuccess: React.FC = () => {
                     src={bookingData.movie.poster_url}
                     alt={bookingData.movie.title}
                     className="w-20 h-28 object-cover rounded-lg shadow-lg"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src =
+                        "/placeholder-movie.png";
+                    }}
                   />
                   <div>
                     <h2 className="text-2xl font-bold text-white mb-1">
                       {bookingData.movie.title}
                     </h2>
                     <p className="text-gray-300">
-                      {bookingData.movie.duration} minutes
+                      {bookingData.movie.duration} phút
                     </p>
+                    <div className="flex items-center gap-2 mt-2">
+                      <span className="px-2 py-1 bg-green-500/20 text-green-300 rounded text-sm">
+                        Đã thanh toán
+                      </span>
+                    </div>
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-gray-400 text-sm">Ticket Code</p>
-                  <p className="text-2xl font-bold text-green-400 font-mono">
-                    {bookingData?.ticket_code}
-                  </p>
+                  <p className="text-gray-400 text-sm">Mã vé</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-2xl font-bold text-green-400 font-mono">
+                      {bookingData?.ticket_code}
+                    </p>
+                    <button
+                      onClick={handleCopyTicketCode}
+                      className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                      title="Copy mã vé"
+                    >
+                      {isCopied ? (
+                        <Check className="h-5 w-5 text-green-400" />
+                      ) : (
+                        <Copy className="h-5 w-5 text-gray-400" />
+                      )}
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -134,7 +213,7 @@ const PaymentSuccess: React.FC = () => {
                   <div className="flex items-start gap-3">
                     <MapPin className="h-5 w-5 text-purple-400 mt-1" />
                     <div>
-                      <p className="text-gray-400 text-sm">Cinema</p>
+                      <p className="text-gray-400 text-sm">Rạp chiếu</p>
                       <p className="text-white font-semibold">
                         {bookingData.theater.name}
                       </p>
@@ -147,9 +226,12 @@ const PaymentSuccess: React.FC = () => {
                   <div className="flex items-start gap-3">
                     <Calendar className="h-5 w-5 text-purple-400 mt-1" />
                     <div>
-                      <p className="text-gray-400 text-sm">Showtime</p>
+                      <p className="text-gray-400 text-sm">Suất chiếu</p>
                       <p className="text-white font-semibold">
                         {formatDateTime(bookingData.showtime.start_time)}
+                      </p>
+                      <p className="text-orange-400 text-sm font-medium">
+                        ⏰ Vui lòng có mặt trước 15 phút
                       </p>
                     </div>
                   </div>
@@ -160,9 +242,9 @@ const PaymentSuccess: React.FC = () => {
                   <div className="flex items-start gap-3">
                     <Ticket className="h-5 w-5 text-purple-400 mt-1" />
                     <div>
-                      <p className="text-gray-400 text-sm">Seats</p>
+                      <p className="text-gray-400 text-sm">Ghế ngồi</p>
                       <div className="flex flex-wrap gap-2 mt-1">
-                        {bookingData.seats.map((seat, index) => (
+                        {bookingData.seats.map((seat: any, index: number) => (
                           <span
                             key={index}
                             className="px-3 py-1 bg-green-500/20 text-green-300 rounded-full text-sm font-medium"
@@ -178,27 +260,22 @@ const PaymentSuccess: React.FC = () => {
                   <div className="flex items-start gap-3">
                     <Star className="h-5 w-5 text-purple-400 mt-1" />
                     <div>
-                      <p className="text-gray-400 text-sm">Total Paid</p>
+                      <p className="text-gray-400 text-sm">Tổng thanh toán</p>
                       <p className="text-2xl font-bold text-green-400">
                         {formatCurrency(bookingData.total_amount)}
                       </p>
                       <p className="text-gray-400 text-sm">
-                        via {(bookingData.payment as any).method}
+                        qua {(bookingData.payment as any)?.method || "VNPay"}
                       </p>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* QR Code Placeholder */}
-              <div className="flex justify-center py-6 border-t border-white/20">
-                <div className="w-32 h-32 bg-white/20 rounded-lg flex items-center justify-center">
-                  <div className="text-center">
-                    <div className="w-24 h-24 bg-white/30 rounded-lg mb-2 mx-auto"></div>
-                    <p className="text-gray-400 text-xs">QR Code</p>
-                  </div>
-                </div>
-              </div>
+              <QRSection
+                content={bookingData?.ticket_code}
+                amount={bookingData?.total_amount}
+              />
             </motion.div>
           )}
 
@@ -207,29 +284,34 @@ const PaymentSuccess: React.FC = () => {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.7 }}
-          className="grid md:grid-cols-2 gap-4 mb-8"
+          className="grid md:grid-cols-3 gap-4 mb-8"
         >
-          <motion.button
+          <button
             onClick={handleDownloadTicket}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            className="flex items-center justify-center gap-3 py-4 px-6 bg-gradient-to-r from-blue-600 to-blue-700 
-                     text-white font-semibold rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all"
+            className="flex items-center justify-center gap-3 p-4 bg-blue-600 hover:bg-blue-700 
+                     text-white rounded-xl transition-colors font-medium"
           >
             <Download className="h-5 w-5" />
-            Download Ticket
-          </motion.button>
+            Tải vé xuống
+          </button>
 
-          <motion.button
+          <button
             onClick={handleShareExperience}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            className="flex items-center justify-center gap-3 py-4 px-6 bg-gradient-to-r from-green-600 to-green-700 
-                     text-white font-semibold rounded-xl hover:from-green-700 hover:to-green-800 transition-all"
+            className="flex items-center justify-center gap-3 p-4 bg-purple-600 hover:bg-purple-700 
+                     text-white rounded-xl transition-colors font-medium"
           >
             <Share2 className="h-5 w-5" />
-            Share Experience
-          </motion.button>
+            Chia sẻ
+          </button>
+
+          <button
+            onClick={handleWriteReview}
+            className="flex items-center justify-center gap-3 p-4 bg-green-600 hover:bg-green-700 
+                     text-white rounded-xl transition-colors font-medium"
+          >
+            <MessageSquare className="h-5 w-5" />
+            Viết đánh giá
+          </button>
         </motion.div>
 
         {/* Next Steps */}
@@ -241,17 +323,15 @@ const PaymentSuccess: React.FC = () => {
         >
           <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
             <Star className="h-5 w-5 text-yellow-400" />
-            What's Next?
+            Bước tiếp theo
           </h3>
 
           <div className="space-y-4">
             <div className="flex items-center justify-between p-4 bg-white/5 rounded-lg">
               <div>
-                <p className="text-white font-medium">
-                  Arrive 15 minutes early
-                </p>
+                <p className="text-white font-medium">Đến rạp sớm 15 phút</p>
                 <p className="text-gray-400 text-sm">
-                  Present your ticket at the entrance
+                  Đưa mã QR hoặc mã vé cho nhân viên
                 </p>
               </div>
               <ArrowRight className="h-5 w-5 text-gray-400" />
@@ -259,26 +339,9 @@ const PaymentSuccess: React.FC = () => {
 
             <div className="flex items-center justify-between p-4 bg-white/5 rounded-lg">
               <div>
-                <p className="text-white font-medium">Enjoyed the movie?</p>
+                <p className="text-white font-medium">Xem vé đã đặt</p>
                 <p className="text-gray-400 text-sm">
-                  Share your review with other movie lovers
-                </p>
-              </div>
-              <button
-                onClick={handleWriteReview}
-                className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg 
-                         hover:bg-purple-700 transition-colors"
-              >
-                <MessageSquare className="h-4 w-4" />
-                Write Review
-              </button>
-            </div>
-
-            <div className="flex items-center justify-between p-4 bg-white/5 rounded-lg">
-              <div>
-                <p className="text-white font-medium">View your bookings</p>
-                <p className="text-gray-400 text-sm">
-                  Manage all your cinema tickets in one place
+                  Quản lý tất cả vé xem phim của bạn
                 </p>
               </div>
               <button
@@ -287,7 +350,7 @@ const PaymentSuccess: React.FC = () => {
                          hover:bg-blue-700 transition-colors"
               >
                 <Ticket className="h-4 w-4" />
-                My Bookings
+                Vé của tôi
               </button>
             </div>
           </div>
@@ -304,7 +367,7 @@ const PaymentSuccess: React.FC = () => {
             onClick={() => navigate("/movies")}
             className="text-purple-400 hover:text-purple-300 transition-colors font-medium"
           >
-            Book Another Movie →
+            Đặt vé phim khác →
           </button>
         </motion.div>
       </div>
