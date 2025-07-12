@@ -566,11 +566,28 @@ const Movies = () => {
                     {selectedMovie.cast && selectedMovie.cast.length > 0 && (
                       <div>
                         <p className="text-slate-400 text-sm mb-3">Cast</p>
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                           {selectedMovie.cast.map((actor, index) => (
-                            <div key={index} className="bg-slate-700/30 p-3 rounded-lg">
-                              <p className="text-white font-medium">{actor.name}</p>
-                              <p className="text-slate-400 text-sm">{actor.character}</p>
+                            <div key={index} className="bg-slate-700/30 p-3 rounded-lg flex items-center space-x-3">
+                              {actor.profile_image && (
+                                <img
+                                  src={actor.profile_image}
+                                  alt={actor.name}
+                                  className="w-12 h-12 rounded-full object-cover flex-shrink-0"
+                                  onError={(e) => {
+                                    (e.target as HTMLImageElement).style.display = 'none';
+                                  }}
+                                />
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <p className="text-white font-medium truncate">{actor.name}</p>
+                                <p className="text-slate-400 text-sm truncate">{actor.character}</p>
+                                {actor.gender !== undefined && (
+                                  <p className="text-slate-500 text-xs">
+                                    {actor.gender === 0 ? 'Male' : actor.gender === 1 ? 'Female' : 'Other'}
+                                  </p>
+                                )}
+                              </div>
                             </div>
                           ))}
                         </div>
