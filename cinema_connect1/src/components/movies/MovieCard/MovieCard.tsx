@@ -4,6 +4,7 @@ import type { Movie } from "../../../types";
 
 type MovieCardProps = {
   movie: Movie;
+  onBookTicket?: (movieId: string) => void; // Optional callback for booking tickets
 };
 
 const MovieCard = ({ movie }: MovieCardProps) => {
@@ -25,8 +26,8 @@ const MovieCard = ({ movie }: MovieCardProps) => {
       <p className="font-semibold mt-2 truncate">{movie.title}</p>
 
       <p className="text-sm text-gray-400 mt-2">
-        {new Date(movie.release_date).getFullYear()} |{" "}
-        {movie.genre.join(" - ")} | {movie.duration} mins
+        {new Date(movie.release_date).getFullYear()} | {movie.genre.join(" - ")}{" "}
+        | {movie.duration} mins
       </p>
 
       <div className="flex items-center justify-between mt-4 pb-3">

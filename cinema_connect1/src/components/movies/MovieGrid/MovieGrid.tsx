@@ -1,6 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Button } from "../../ui/button";
-import { MovieCard } from "../MovieCard/MovieCard";
 import type { Movie } from "../../../types/Movie.type";
+import MovieCard from "../MovieCard/MovieCard";
 
 interface MovieGridProps {
   movies: Movie[];
@@ -10,18 +11,21 @@ interface MovieGridProps {
   onResetFilters?: () => void;
 }
 
-export const MovieGrid = ({ 
-  movies, 
-  isLoading, 
-  onBookTicket, 
-  searchTerm = '',
-  onResetFilters 
+export const MovieGrid = ({
+  movies,
+  isLoading,
+  onBookTicket,
+  searchTerm = "",
+  onResetFilters,
 }: MovieGridProps) => {
   if (isLoading) {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {Array.from({ length: 8 }).map((_, index) => (
-          <div key={index} className="bg-gray-800 rounded-lg overflow-hidden shadow-lg animate-pulse">
+          <div
+            key={index}
+            className="bg-gray-800 rounded-lg overflow-hidden shadow-lg animate-pulse"
+          >
             <div className="w-full h-64 bg-gray-700"></div>
             <div className="p-4 space-y-3">
               <div className="h-4 bg-gray-700 rounded w-3/4"></div>
@@ -39,7 +43,7 @@ export const MovieGrid = ({
     return (
       <div className="col-span-full text-center py-12">
         <div className="text-gray-400 text-lg mb-4">
-          {searchTerm ? 'Không tìm thấy phim nào' : 'Chưa có phim nào'}
+          {searchTerm ? "Không tìm thấy phim nào" : "Chưa có phim nào"}
         </div>
         {onResetFilters && (
           <Button
@@ -60,8 +64,7 @@ export const MovieGrid = ({
         <MovieCard
           key={movie._id}
           movie={movie}
-          onBookTicket={onBookTicket}
-          variant="default"
+          onBookTicket={onBookTicket as any}
         />
       ))}
     </div>

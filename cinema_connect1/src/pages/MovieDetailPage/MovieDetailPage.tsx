@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -13,7 +14,7 @@ import ReactPlayer from "react-player";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import MovieInfo from "./components/MovieInfo";
-import FeedbackSection from "./components/FeedbackSection";
+import MovieFeedbackSection from "../../components/movie/MovieFeedbackSection";
 
 type SelectedInfo = {
   movieId: string;
@@ -42,19 +43,7 @@ export default function MovieDetailsPage() {
     comment: "",
   });
 
-  const [feedbacks, setFeedbacks] = useState([
-    {
-      user: { email: "nguyenvana@gmail.com" },
-      comment: "Phim rất hay, kỹ xảo đẹp mắt!",
-      rating: 5,
-    },
-    {
-      user: { email: "" },
-      comment: "Kịch bản hơi chậm, nhưng tổng thể ổn.",
-      rating: 3,
-    },
-  ]);
-
+  // Remove mock feedbacks - now handled by MovieFeedbackSection
   let userId: string | null = null;
   try {
     const authStorage = localStorage.getItem("auth-storage");
@@ -73,7 +62,7 @@ export default function MovieDetailsPage() {
     const fetchMovie = async () => {
       try {
         const movieData = await getMovieById(id);
-        setMovie(movieData);
+        setMovie(movieData as any);
       } catch {
         setMovie(null);
       }
@@ -134,20 +123,15 @@ export default function MovieDetailsPage() {
     });
   };
 
-  const handleSubmitFeedback = () => {
-    requireAuth(() => {
-      console.log("Submit feedback:", {
-        rating: selectedInfo.rating,
-        comment: selectedInfo.comment,
-        movieId: id,
-      });
-    });
-  };
+  // Remove old handleSubmitFeedback - now handled by MovieFeedbackSection
 
   if (!movie) {
     return (
-      <div className="text-center text-gray-300 mt-10">
-        Đang tải thông tin phim...
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-400 mx-auto mb-4" />
+          <p className="text-gray-300">Loading movie information...</p>
+        </div>
       </div>
     );
   }
@@ -165,24 +149,61 @@ export default function MovieDetailsPage() {
 
   const fadeUp = {
     hidden: { opacity: 0, y: 80 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: "easeOut" } },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.8, ease: "easeOut" },
+    },
   };
 
   return (
-    <div className="relative min-h-screen bg-[#121212] text-gray-300 overflow-x-hidden">
-      <div className="relative z-10 px-6 md:px-16 lg:px-24 xl:px-44 pt-20">
+    <div className="relative min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-gray-300 overflow-x-hidden">
+      {/* Background Elements - matching your design theme */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-20 left-10 w-72 h-72 bg-purple-500/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-20 right-10 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl" />
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-radial from-purple-500/5 to-transparent rounded-full" />
+      </div>
+
+      <div className="relative z-10 px-6 md:px-16 lg:px-24 xl:px-44 pt-20 pb-20">
+        {/* Movie Info Section */}
         <motion.div
           variants={container}
           initial="hidden"
           animate="visible"
-          className="grid md:grid-cols-3 gap-6 bg-[#1E1E1E] p-6 rounded-3xl shadow-xl"
+          className="grid md:grid-cols-3 gap-6 bg-white/10 backdrop-blur-lg p-6 rounded-3xl shadow-xl border border-white/20 mb-10"
         >
           <motion.div variants={fadeUp} className="flex flex-col items-center">
             <img
               src={movie.poster_url}
               alt={movie.title}
-              className="rounded w-full shadow-lg"
+              className="rounded-lg w-full shadow-2xl border border-white/10"
             />
+
+            {/* Play Trailer Button */}
+            {movie.trailer_url && (
+              <motion.button
+                onClick={() => setIsPlayTrailer(true)}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="mt-4 w-full py-3 bg-gradient-to-r from-red-600 to-red-700 text-white 
+                         font-semibold rounded-lg hover:from-red-700 hover:to-red-800 transition-all
+                         flex items-center justify-center gap-2"
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                Watch Trailer
+              </motion.button>
+            )}
           </motion.div>
 
           <motion.div variants={fadeUp} className="md:col-span-2">
@@ -199,40 +220,63 @@ export default function MovieDetailsPage() {
           </motion.div>
         </motion.div>
 
+        {/* Feedback Section - New integrated component */}
         <motion.div
           variants={fadeUp}
           initial="hidden"
           animate="visible"
-          className="mt-10"
+          className="bg-white/5 backdrop-blur-lg rounded-3xl p-8 border border-white/10"
         >
-          <FeedbackSection
-            userId={userId}
-            selectedInfo={selectedInfo}
-            setSelectedInfo={setSelectedInfo}
-            feedbacks={feedbacks}
-            handleSubmitFeedback={handleSubmitFeedback}
+          <MovieFeedbackSection
+            movieId={id}
+            movieTitle={movie.title}
+            moviePoster={movie.poster_url}
           />
         </motion.div>
       </div>
 
+      {/* Login Modal */}
       {showLoginModal && <LoginModal isFormOpen={setShowLoginModal} />}
-      {isPlayTrailer && (
-        <div
-          className="fixed inset-0 bg-black/70 background-blur-lg z-50 
-        flex items-center justify-center p-4w-full h-screen"
+
+      {/* Trailer Modal */}
+      {isPlayTrailer && movie.trailer_url && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 bg-black/90 backdrop-blur-lg z-50 
+                   flex items-center justify-center p-4"
           onClick={() => setIsPlayTrailer(false)}
         >
-          <div className="w-fit h-fit border border-primary rounded-sm">
-            <ReactPlayer
-              url={movie.trailer_url}
-              controls={false}
-              playing={true}
-              className="mx-auto max-w-full"
-              width={"960px"}
-              height={"540px"}
-            />
-          </div>
-        </div>
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.8, opacity: 0 }}
+            className="relative w-full max-w-5xl mx-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close Button */}
+            <button
+              onClick={() => setIsPlayTrailer(false)}
+              className="absolute -top-12 right-0 text-white/80 hover:text-white text-xl
+                       w-10 h-10 rounded-full bg-white/10 backdrop-blur flex items-center justify-center
+                       hover:bg-white/20 transition-colors z-10"
+            >
+              ✕
+            </button>
+
+            <div className="w-full h-0 pb-[56.25%] relative rounded-lg overflow-hidden border border-white/20">
+              <ReactPlayer
+                url={movie.trailer_url}
+                controls={true}
+                playing={true}
+                width="100%"
+                height="100%"
+                className="absolute top-0 left-0"
+              />
+            </div>
+          </motion.div>
+        </motion.div>
       )}
     </div>
   );

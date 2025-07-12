@@ -1,6 +1,5 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import RegisterPage from "./pages/RegisterPage";
-import LoginPage from "./pages/LoginPage";
 import HomePage from "./pages/HomePage";
 import PartnerPage from "./pages/PartnerPage";
 import AdminPage from "./pages/AdminPage";
@@ -16,6 +15,10 @@ import Favourite from "./pages/Favourite/Favourite";
 import ProtectedRoute from "./components/ProtectedRoute";
 import RoleProtectedRoute from "./components/RoleProtectedRoute";
 import CheckoutPage from "./pages/CheckoutPage";
+import PaymentPage from "./pages/PaymentPage/PaymentPage";
+import PaymentHistory from "./pages/PaymentHistory/PaymentHistory";
+import PaymentSuccess from "./pages/PaymentSuccess/PaymentSuccess";
+import PaymentFailed from "./pages/PaymentFailed/PaymentFailed";
 
 function App() {
   return (
@@ -28,67 +31,127 @@ function App() {
         <Route path="/verify" element={<VerifyPage />} />
 
         {/* Public landing page */}
-        <Route path="/" element={
-          <>
-            <Navbar />
-            <HomePage />
-            <Footer />
-          </>
-        } />
+        <Route
+          path="/"
+          element={
+            <>
+              <Navbar />
+              <HomePage />
+              <Footer />
+            </>
+          }
+        />
 
         {/* Admin routes - has own layout */}
-        <Route path="/admin" element={
-          <RoleProtectedRoute allowedRoles={["admin"]}>
-            <AdminPage />
-          </RoleProtectedRoute>
-        } />
+        <Route
+          path="/admin"
+          element={
+            <RoleProtectedRoute allowedRoles={["admin"]}>
+              <AdminPage />
+            </RoleProtectedRoute>
+          }
+        />
 
         {/* Partner/Staff routes - has own layout */}
-        <Route path="/partner" element={
-          <RoleProtectedRoute allowedRoles={["staff"]}>
-            <PartnerPage />
-          </RoleProtectedRoute>
-        } />
+        <Route
+          path="/partner"
+          element={
+            <RoleProtectedRoute allowedRoles={["staff"]}>
+              <PartnerPage />
+            </RoleProtectedRoute>
+          }
+        />
 
         {/* Public/Customer routes with main layout */}
-        <Route path="/*" element={
-          <>
-            <Navbar />
-            <Routes>
-              {/* Public routes - accessible to all users */}
-              <Route path="/home" element={<HomePage />} />
-              <Route path="/movies" element={<MoviesPage />} />
-              <Route path="/movies/:id" element={<MovieDetail />} />
-              
-              {/* Routes that require authentication */}
-              <Route path="/movies/:id/:screenId" element={
-                <ProtectedRoute>
-                  <SeatLayout />
-                </ProtectedRoute>
-              } />
-              <Route path="/checkout" element={
-                <ProtectedRoute>
-                  <CheckoutPage />
-                </ProtectedRoute>
-              } />
-              <Route path="/my-bookings" element={
-                <ProtectedRoute>
-                  <MyBooking />
-                </ProtectedRoute>
-              } />
-              <Route path="/favourite" element={
-                <ProtectedRoute>
-                  <Favourite />
-                </ProtectedRoute>
-              } />
+        <Route
+          path="/*"
+          element={
+            <>
+              <Navbar />
+              <Routes>
+                {/* Public routes - accessible to all users */}
+                <Route path="/home" element={<HomePage />} />
+                <Route path="/movies" element={<MoviesPage />} />
+                <Route path="/movies/:id" element={<MovieDetail />} />
 
-              {/* Default routes */}
-              <Route path="/home" element={<Navigate to="/" replace />} />
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-            <Footer />
-          </>
-        } />
+                {/* Routes that require authentication */}
+                <Route
+                  path="/movies/:id/:screenId"
+                  element={
+                    <ProtectedRoute>
+                      <SeatLayout />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/checkout"
+                  element={
+                    <ProtectedRoute>
+                      <CheckoutPage />
+                    </ProtectedRoute>
+                  }
+                />
+
+                {/* Payment routes */}
+                <Route
+                  path="/payment"
+                  element={
+                    <ProtectedRoute>
+                      <PaymentPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/payment/success"
+                  element={
+                    <ProtectedRoute>
+                      <PaymentSuccess />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/payment/failed"
+                  element={
+                    <ProtectedRoute>
+                      <PaymentFailed />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/payment-history"
+                  element={
+                    <ProtectedRoute>
+                      <PaymentHistory />
+                    </ProtectedRoute>
+                  }
+                />
+
+                {/* Booking and user routes */}
+                <Route
+                  path="/my-bookings"
+                  element={
+                    <ProtectedRoute>
+                      <MyBooking />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/favourite"
+                  element={
+                    <ProtectedRoute>
+                      <Favourite />
+                    </ProtectedRoute>
+                  }
+                />
+
+                {/* Default routes */}
+                <Route path="/home" element={<Navigate to="/" replace />} />
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+              <Footer />
+            </>
+          }
+        />
       </Routes>
     </>
   );

@@ -1,5 +1,5 @@
-import axios from 'axios';
-import type { 
+import axios from "axios";
+import type {
   Movie,
   CreateMovieRequest,
   UpdateMovieRequest,
@@ -7,11 +7,12 @@ import type {
   MovieQueryParams,
   GetMoviesResponse,
   GetMovieByIdResponse,
-  MovieResponse
-} from '../types/Movie.type';
-import { getAuthToken } from './user.api';
+  MovieResponse,
+} from "../types/Movie.type";
+import { getAuthToken } from "./user.api";
+import type { SuccessResponse } from "../types";
 
-const BASE_URL = 'https://bookmovie-5n6n.onrender.com';
+const BASE_URL = "https://bookmovie-5n6n.onrender.com";
 
 // Create authenticated axios instance for movie requests
 const createMovieRequest = () => {
@@ -20,8 +21,8 @@ const createMovieRequest = () => {
     baseURL: BASE_URL,
     headers: {
       Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    }
+      "Content-Type": "application/json",
+    },
   });
 };
 
@@ -30,8 +31,8 @@ const createPublicMovieRequest = () => {
   return axios.create({
     baseURL: BASE_URL,
     headers: {
-      'Content-Type': 'application/json'
-    }
+      "Content-Type": "application/json",
+    },
   });
 };
 
@@ -40,24 +41,24 @@ const handleMovieError = (error: unknown): Error => {
   if (axios.isAxiosError(error)) {
     const status = error.response?.status;
     const message = error.response?.data?.message;
-    
+
     if (status === 401) {
-      throw new Error('Unauthorized. Please login.');
+      throw new Error("Unauthorized. Please login.");
     } else if (status === 403) {
-      throw new Error('Access denied. Insufficient privileges.');
+      throw new Error("Access denied. Insufficient privileges.");
     } else if (status === 404) {
-      throw new Error(message || 'Movie not found.');
+      throw new Error(message || "Movie not found.");
     } else if (status === 400) {
-      throw new Error(message || 'Invalid request data.');
+      throw new Error(message || "Invalid request data.");
     } else if (status === 409) {
-      throw new Error(message || 'Movie already exists.');
+      throw new Error(message || "Movie already exists.");
     } else if (status === 500) {
-      throw new Error('Server error. Please try again later.');
+      throw new Error("Server error. Please try again later.");
     } else {
-      throw new Error(message || 'Request failed.');
+      throw new Error(message || "Request failed.");
     }
   }
-  throw new Error('Network error. Please check your connection.');
+  throw new Error("Network error. Please check your connection.");
 };
 
 // ===============================
@@ -65,21 +66,25 @@ const handleMovieError = (error: unknown): Error => {
 // ===============================
 
 // Get all movies (public)
-export const getAllMovies = async (params?: MovieQueryParams): Promise<GetMoviesResponse> => {
+export const getAllMovies = async (
+  params?: MovieQueryParams
+): Promise<GetMoviesResponse> => {
   try {
     const movieApi = createPublicMovieRequest();
     const queryParams = new URLSearchParams();
-    
-    if (params?.page) queryParams.append('page', params.page.toString());
-    if (params?.limit) queryParams.append('limit', params.limit.toString());
-    if (params?.search) queryParams.append('search', params.search);
-    if (params?.genre) queryParams.append('genre', params.genre);
-    if (params?.status) queryParams.append('status', params.status);
-    if (params?.language) queryParams.append('language', params.language);
-    if (params?.sortBy) queryParams.append('sortBy', params.sortBy);
-    if (params?.sortOrder) queryParams.append('sortOrder', params.sortOrder);
-    
-    const url = `/cinema/movies${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+
+    if (params?.page) queryParams.append("page", params.page.toString());
+    if (params?.limit) queryParams.append("limit", params.limit.toString());
+    if (params?.search) queryParams.append("search", params.search);
+    if (params?.genre) queryParams.append("genre", params.genre);
+    if (params?.status) queryParams.append("status", params.status);
+    if (params?.language) queryParams.append("language", params.language);
+    if (params?.sortBy) queryParams.append("sortBy", params.sortBy);
+    if (params?.sortOrder) queryParams.append("sortOrder", params.sortOrder);
+
+    const url = `/cinema/movies${
+      queryParams.toString() ? `?${queryParams.toString()}` : ""
+    }`;
     const response = await movieApi.get<GetMoviesResponse>(url);
     return response.data;
   } catch (error) {
@@ -88,10 +93,12 @@ export const getAllMovies = async (params?: MovieQueryParams): Promise<GetMovies
 };
 
 // Get movie by ID (public)
-export const getMovieById = async (movieId: string): Promise<Movie> => {
+export const getMovieById = async (movieId: string) => {
   try {
     const movieApi = createPublicMovieRequest();
-    const response = await movieApi.get<GetMovieByIdResponse>(`/cinema/movies/${movieId}`);
+    const response = await movieApi.get<SuccessResponse<GetMovieByIdResponse>>(
+      `/cinema/movies/${movieId}`
+    );
     return response.data.result;
   } catch (error) {
     throw handleMovieError(error);
@@ -103,10 +110,15 @@ export const getMovieById = async (movieId: string): Promise<Movie> => {
 // ===============================
 
 // Create a new movie (Admin only)
-export const createMovie = async (movieData: CreateMovieRequest): Promise<MovieResponse> => {
+export const createMovie = async (
+  movieData: CreateMovieRequest
+): Promise<MovieResponse> => {
   try {
     const movieApi = createMovieRequest();
-    const response = await movieApi.post<MovieResponse>('/cinema/movies', movieData);
+    const response = await movieApi.post<MovieResponse>(
+      "/cinema/movies",
+      movieData
+    );
     return response.data;
   } catch (error) {
     throw handleMovieError(error);
@@ -114,10 +126,16 @@ export const createMovie = async (movieData: CreateMovieRequest): Promise<MovieR
 };
 
 // Update movie information (Admin only)
-export const updateMovie = async (movieId: string, movieData: UpdateMovieRequest): Promise<MovieResponse> => {
+export const updateMovie = async (
+  movieId: string,
+  movieData: UpdateMovieRequest
+): Promise<MovieResponse> => {
   try {
     const movieApi = createMovieRequest();
-    const response = await movieApi.put<MovieResponse>(`/cinema/movies/${movieId}`, movieData);
+    const response = await movieApi.put<MovieResponse>(
+      `/cinema/movies/${movieId}`,
+      movieData
+    );
     return response.data;
   } catch (error) {
     throw handleMovieError(error);
@@ -128,7 +146,9 @@ export const updateMovie = async (movieId: string, movieData: UpdateMovieRequest
 export const deleteMovie = async (movieId: string): Promise<MovieResponse> => {
   try {
     const movieApi = createMovieRequest();
-    const response = await movieApi.delete<MovieResponse>(`/cinema/movies/${movieId}`);
+    const response = await movieApi.delete<MovieResponse>(
+      `/cinema/movies/${movieId}`
+    );
     return response.data;
   } catch (error) {
     throw handleMovieError(error);
@@ -136,10 +156,16 @@ export const deleteMovie = async (movieId: string): Promise<MovieResponse> => {
 };
 
 // Update movie feature status (Admin only)
-export const updateMovieFeatureStatus = async (movieId: string, featureData: UpdateMovieFeatureRequest): Promise<MovieResponse> => {
+export const updateMovieFeatureStatus = async (
+  movieId: string,
+  featureData: UpdateMovieFeatureRequest
+): Promise<MovieResponse> => {
   try {
     const movieApi = createMovieRequest();
-    const response = await movieApi.put<MovieResponse>(`/admin/movies/${movieId}/feature`, featureData);
+    const response = await movieApi.put<MovieResponse>(
+      `/admin/movies/${movieId}/feature`,
+      featureData
+    );
     return response.data;
   } catch (error) {
     throw handleMovieError(error);
@@ -151,9 +177,17 @@ export const updateMovieFeatureStatus = async (movieId: string, featureData: Upd
 // ===============================
 
 // Get movies by status
-export const getMoviesByStatus = async (status: 'now_showing' | 'coming_soon' | 'ended', limit?: number): Promise<Movie[]> => {
+export const getMoviesByStatus = async (
+  status: "now_showing" | "coming_soon" | "ended",
+  limit?: number
+): Promise<Movie[]> => {
   try {
-    const response = await getAllMovies({ status, limit, sortBy: 'release_date', sortOrder: 'desc' });
+    const response = await getAllMovies({
+      status,
+      limit,
+      sortBy: "release_date",
+      sortOrder: "desc",
+    });
     return response.result.movies;
   } catch (error) {
     throw handleMovieError(error);
@@ -164,7 +198,9 @@ export const getMoviesByStatus = async (status: 'now_showing' | 'coming_soon' | 
 export const getFeaturedMovies = async (limit = 10): Promise<Movie[]> => {
   try {
     const movieApi = createPublicMovieRequest();
-    const response = await movieApi.get<GetMoviesResponse>(`/cinema/movies?is_featured=true&limit=${limit}`);
+    const response = await movieApi.get<GetMoviesResponse>(
+      `/cinema/movies?is_featured=true&limit=${limit}`
+    );
     return response.data.result.movies;
   } catch (error) {
     throw handleMovieError(error);
@@ -172,7 +208,10 @@ export const getFeaturedMovies = async (limit = 10): Promise<Movie[]> => {
 };
 
 // Search movies
-export const searchMovies = async (searchTerm: string, limit = 20): Promise<Movie[]> => {
+export const searchMovies = async (
+  searchTerm: string,
+  limit = 20
+): Promise<Movie[]> => {
   try {
     const response = await getAllMovies({ search: searchTerm, limit });
     return response.result.movies;
@@ -182,7 +221,10 @@ export const searchMovies = async (searchTerm: string, limit = 20): Promise<Movi
 };
 
 // Get movies by genre
-export const getMoviesByGenre = async (genre: string, limit = 20): Promise<Movie[]> => {
+export const getMoviesByGenre = async (
+  genre: string,
+  limit = 20
+): Promise<Movie[]> => {
   try {
     const response = await getAllMovies({ genre, limit });
     return response.result.movies;
@@ -192,14 +234,17 @@ export const getMoviesByGenre = async (genre: string, limit = 20): Promise<Movie
 };
 
 // Get popular movies (sorted by rating)
-export const getPopularMovies = async (limit = 10, pages: number): Promise<Movie[]> => {
+export const getPopularMovies = async (
+  limit = 10,
+  pages: number
+): Promise<Movie[]> => {
   try {
-    const response = await getAllMovies({ 
+    const response = await getAllMovies({
       page: pages,
-      sortBy: 'average_rating', 
-      sortOrder: 'desc', 
+      sortBy: "average_rating",
+      sortOrder: "desc",
       limit,
-      status: 'now_showing'
+      status: "now_showing",
     });
     return response.result.movies;
   } catch (error) {
@@ -210,10 +255,10 @@ export const getPopularMovies = async (limit = 10, pages: number): Promise<Movie
 // Get latest movies
 export const getLatestMovies = async (limit = 10): Promise<Movie[]> => {
   try {
-    const response = await getAllMovies({ 
-      sortBy: 'release_date', 
-      sortOrder: 'desc', 
-      limit 
+    const response = await getAllMovies({
+      sortBy: "release_date",
+      sortOrder: "desc",
+      limit,
     });
     return response.result.movies;
   } catch (error) {
