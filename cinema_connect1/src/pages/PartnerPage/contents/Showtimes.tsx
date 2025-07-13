@@ -258,10 +258,64 @@ const Showtimes = () => {
     }
   };
 
+  // Check if showtime has any bookings
+  const hasBookings = (showtime: Showtime): boolean => {
+    // Check if booked_seats array exists and has any bookings
+    if (showtime.booked_seats && showtime.booked_seats.length > 0) {
+      return true;
+    }
+    
+    // Fallback: Check if available seats is less than total capacity
+    if (showtime.screen?.capacity) {
+      const totalCapacity = showtime.screen.capacity;
+      const availableSeats = showtime.available_seats;
+      return availableSeats < totalCapacity;
+    }
+    
+    return false;
+  };
+
+  // Check if showtime can be edited/deleted
+  const canModifyShowtime = (showtime: Showtime): boolean => {
+    // Cannot modify if it has bookings
+    if (hasBookings(showtime)) return false;
+    
+    // Cannot modify if it's in the past
+    const now = new Date();
+    const showtimeStart = new Date(showtime.start_time);
+    if (showtimeStart <= now) return false;
+    
+    // Cannot modify if status is completed or cancelled
+    if (showtime.status === 'completed' || showtime.status === 'cancelled') return false;
+    
+    return true;
+  };
+
   // Handle showtime deletion
-  const handleDeleteShowtime = (showtimeId: string, movieTitle: string) => {
-    setShowtimeToDelete({ id: showtimeId, movie: movieTitle });
-    setShowDeleteModal(true);
+  const handleDeleteShowtime = async (showtime: Showtime) => {
+    try {
+      // First, fetch the latest showtime data to get current booking status
+      const latestShowtimeResponse = await getShowtimeById(showtime._id);
+      const latestShowtime = latestShowtimeResponse.result;
+
+      // Check if showtime can be modified with latest data
+      if (!canModifyShowtime(latestShowtime)) {
+        if (hasBookings(latestShowtime)) {
+          toast.error('Cannot delete showtime with existing bookings');
+        } else if (new Date(latestShowtime.start_time) <= new Date()) {
+          toast.error('Cannot delete past showtimes');
+        } else {
+          toast.error('Cannot delete this showtime');
+        }
+        return;
+      }
+
+      setShowtimeToDelete({ id: latestShowtime._id, movie: latestShowtime.movie?.title || 'Unknown' });
+      setShowDeleteModal(true);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch showtime details';
+      toast.error(errorMessage);
+    }
   };
 
   // Confirm delete showtime
@@ -310,29 +364,45 @@ const Showtimes = () => {
   };
 
   const handleEditShowtime = async (showtime: Showtime) => {
-    setSelectedShowtime(showtime);
-    setFormData({
-      movie_id: showtime.movie_id,
-      screen_id: showtime.screen_id,
-      theater_id: showtime.theater_id,
-      start_time: showtime.start_time,
-      end_time: showtime.end_time,
-      price: showtime.price,
-      available_seats: showtime.available_seats
-    });
-    
     try {
+      // First, fetch the latest showtime data to get current booking status
+      const latestShowtimeResponse = await getShowtimeById(showtime._id);
+      const latestShowtime = latestShowtimeResponse.result;
+
+      // Check if showtime can be modified with latest data
+      if (!canModifyShowtime(latestShowtime)) {
+        if (hasBookings(latestShowtime)) {
+          toast.error('Cannot edit showtime with existing bookings');
+        } else if (new Date(latestShowtime.start_time) <= new Date()) {
+          toast.error('Cannot edit past showtimes');
+        } else {
+          toast.error('Cannot edit this showtime');
+        }
+        return;
+      }
+
+      setSelectedShowtime(latestShowtime);
+      setFormData({
+        movie_id: latestShowtime.movie_id,
+        screen_id: latestShowtime.screen_id,
+        theater_id: latestShowtime.theater_id,
+        start_time: latestShowtime.start_time,
+        end_time: latestShowtime.end_time,
+        price: latestShowtime.price,
+        available_seats: latestShowtime.available_seats
+      });
+      
       // Fetch movie details and find screen
       const [movieResponse] = await Promise.all([
-        getMovieById(showtime.movie_id)
+        getMovieById(latestShowtime.movie_id)
       ]);
       
-      const screen = screens.find(s => s._id === showtime.screen_id);
+      const screen = screens.find(s => s._id === latestShowtime.screen_id);
       setSelectedMovie(movieResponse.result);
       setSelectedScreen(screen || null);
       
       // Set date and time from start_time
-      const startDate = new Date(showtime.start_time);
+      const startDate = new Date(latestShowtime.start_time);
       setShowDate(startDate.toISOString().split('T')[0]);
       setShowTime(startDate.toTimeString().substring(0, 5));
       
@@ -340,7 +410,7 @@ const Showtimes = () => {
       setIsSubmitting(false);
       setShowEditModal(true);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch movie details';
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch showtime details';
       toast.error(errorMessage);
     }
   };
@@ -354,24 +424,6 @@ const Showtimes = () => {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch showtime details';
       toast.error(errorMessage);
     }
-  };
-
-  const openEditModal = (showtime: Showtime) => {
-    setSelectedShowtime(showtime);
-    setShowEditModal(true);
-    // Pre-populate form data - we'll fetch the full movie and screen data when needed
-    const startTime = new Date(showtime.start_time);
-    setShowDate(startTime.toISOString().split('T')[0]);
-    setShowTime(startTime.toTimeString().slice(0, 5));
-    setFormData({
-      ...formData,
-      movie_id: showtime.movie_id,
-      screen_id: showtime.screen_id,
-      start_time: showtime.start_time,
-      end_time: showtime.end_time,
-      price: showtime.price,
-      available_seats: showtime.available_seats
-    });
   };
 
   const closeModals = () => {
@@ -684,17 +736,44 @@ const Showtimes = () => {
                             </div>
                           </td>
                           <td className="px-6 py-4">
-                            <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getShowtimeStatusColor(showtime.status)}`}>
-                              {getShowtimeStatusDisplay(showtime.status)}
-                            </span>
+                            <div className="space-y-1">
+                              <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getShowtimeStatusColor(showtime.status)}`}>
+                                {getShowtimeStatusDisplay(showtime.status)}
+                              </span>
+                              {hasBookings(showtime) && (
+                                <div className="flex items-center text-xs text-amber-400">
+                                  <Users size={12} className="mr-1" />
+                                  Has bookings
+                                </div>
+                              )}
+                              {!canModifyShowtime(showtime) && !hasBookings(showtime) && (
+                                <div className="text-xs text-gray-400">
+                                  {new Date(showtime.start_time) <= new Date() ? 'Past showtime' : 'Cannot modify'}
+                                </div>
+                              )}
+                            </div>
                           </td>
                           <td className="px-6 py-4">
                             <div className="flex gap-2">
                               <motion.button
                                 onClick={() => handleEditShowtime(showtime)}
-                                className="bg-orange-500/20 hover:bg-orange-500/30 text-orange-400 px-3 py-1 rounded text-sm font-medium transition-colors duration-300 flex items-center"
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
+                                className={`px-3 py-1 rounded text-sm font-medium transition-colors duration-300 flex items-center ${
+                                  canModifyShowtime(showtime) 
+                                    ? 'bg-orange-500/20 hover:bg-orange-500/30 text-orange-400 cursor-pointer' 
+                                    : 'bg-gray-500/20 text-gray-400 cursor-not-allowed opacity-50'
+                                }`}
+                                whileHover={canModifyShowtime(showtime) ? { scale: 1.05 } : {}}
+                                whileTap={canModifyShowtime(showtime) ? { scale: 0.95 } : {}}
+                                disabled={!canModifyShowtime(showtime)}
+                                title={
+                                  !canModifyShowtime(showtime) 
+                                    ? hasBookings(showtime) 
+                                      ? 'Cannot edit showtime with existing bookings'
+                                      : new Date(showtime.start_time) <= new Date()
+                                      ? 'Cannot edit past showtimes' 
+                                      : 'Cannot edit this showtime'
+                                    : 'Edit showtime'
+                                }
                               >
                                 <Edit size={14} className="mr-1" />
                                 Edit
@@ -709,10 +788,24 @@ const Showtimes = () => {
                                 View
                               </motion.button>
                               <motion.button
-                                onClick={() => handleDeleteShowtime(showtime._id, showtime.movie?.title || 'Unknown')}
-                                className="bg-red-500/20 hover:bg-red-500/30 text-red-400 px-3 py-1 rounded text-sm font-medium transition-colors duration-300"
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
+                                onClick={() => handleDeleteShowtime(showtime)}
+                                className={`px-3 py-1 rounded text-sm font-medium transition-colors duration-300 ${
+                                  canModifyShowtime(showtime) 
+                                    ? 'bg-red-500/20 hover:bg-red-500/30 text-red-400 cursor-pointer' 
+                                    : 'bg-gray-500/20 text-gray-400 cursor-not-allowed opacity-50'
+                                }`}
+                                whileHover={canModifyShowtime(showtime) ? { scale: 1.05 } : {}}
+                                whileTap={canModifyShowtime(showtime) ? { scale: 0.95 } : {}}
+                                disabled={!canModifyShowtime(showtime)}
+                                title={
+                                  !canModifyShowtime(showtime) 
+                                    ? hasBookings(showtime) 
+                                      ? 'Cannot delete showtime with existing bookings'
+                                      : new Date(showtime.start_time) <= new Date()
+                                      ? 'Cannot delete past showtimes' 
+                                      : 'Cannot delete this showtime'
+                                    : 'Delete showtime'
+                                }
                               >
                                 <Trash2 size={14} />
                               </motion.button>
@@ -1481,6 +1574,18 @@ const Showtimes = () => {
                         <span className="text-slate-400 mr-2">Available:</span>
                         {selectedShowtime.available_seats} seats
                       </div>
+                      <div className="flex items-center text-slate-300">
+                        <Users size={16} className="mr-2 text-slate-400" />
+                        <span className="text-slate-400 mr-2">Total Capacity:</span>
+                        {selectedShowtime.screen?.capacity} seats
+                      </div>
+                      {selectedShowtime.booked_seats && selectedShowtime.booked_seats.length > 0 && (
+                        <div className="flex items-center text-amber-400">
+                          <Users size={16} className="mr-2" />
+                          <span className="text-slate-400 mr-2">Booked:</span>
+                          {selectedShowtime.booked_seats.length} seats
+                        </div>
+                      )}
                       <div className="space-y-2">
                         <div className="flex justify-between text-slate-300">
                           <span className="text-slate-400">Regular:</span>
@@ -1502,22 +1607,50 @@ const Showtimes = () => {
                 </div>
 
                 {/* Status */}
-                <div className="flex items-center justify-between pt-4 border-t border-slate-700">
-                  <div className="flex items-center">
-                    <span className="text-slate-400 mr-2">Status:</span>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getShowtimeStatusColor(selectedShowtime.status)}`}>
-                      {getShowtimeStatusDisplay(selectedShowtime.status)}
-                    </span>
-                  </div>
-                  
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => openEditModal(selectedShowtime)}
-                      className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center"
-                    >
-                      <Edit size={16} className="mr-2" />
-                      Edit
-                    </button>
+                <div className="space-y-4 pt-4 border-t border-slate-700">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center">
+                        <span className="text-slate-400 mr-2">Status:</span>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getShowtimeStatusColor(selectedShowtime.status)}`}>
+                          {getShowtimeStatusDisplay(selectedShowtime.status)}
+                        </span>
+                      </div>
+                      
+                      {hasBookings(selectedShowtime) && (
+                        <div className="flex items-center text-amber-400">
+                          <Users size={16} className="mr-1" />
+                          <span className="text-sm font-medium">Has Active Bookings</span>
+                        </div>
+                      )}
+                      
+                      {!canModifyShowtime(selectedShowtime) && (
+                        <div className="flex items-center text-red-400">
+                          <AlertTriangle size={16} className="mr-1" />
+                          <span className="text-sm font-medium">Cannot Edit/Delete</span>
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleEditShowtime(selectedShowtime)}
+                        className={`px-4 py-2 rounded-lg font-medium transition-colors flex items-center ${
+                          canModifyShowtime(selectedShowtime)
+                            ? 'bg-orange-500 hover:bg-orange-600 text-white'
+                            : 'bg-gray-500/50 text-gray-400 cursor-not-allowed'
+                        }`}
+                        disabled={!canModifyShowtime(selectedShowtime)}
+                        title={
+                          !canModifyShowtime(selectedShowtime) 
+                            ? 'Cannot edit showtime with existing bookings or past showtimes'
+                            : 'Edit showtime'
+                        }
+                      >
+                        <Edit size={16} className="mr-2" />
+                        Edit
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
