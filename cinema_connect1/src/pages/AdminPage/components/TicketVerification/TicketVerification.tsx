@@ -43,18 +43,43 @@ const TicketVerification: React.FC = () => {
     setQrScanner(scanner);
     return scanner;
   };
+
   const startCamera = async () => {
     try {
       setError(null);
       setCameraStatus("starting");
 
+      // Wait a bit to ensure DOM element is ready
+      await new Promise((resolve) => setTimeout(resolve, 300));
+
+      // Check if element exists
+      const element = document.getElementById("qr-reader");
+      if (!element) {
+        throw new Error("QR reader element not found");
+      }
+
       const scanner = setupQrScanner();
       if (!scanner) return;
 
       const config = {
-        fps: 10,
-        qrbox: { width: 250, height: 250 },
-        aspectRatio: 1.777778, // 16:9
+        fps: 15, // Tăng FPS để detect tốt hơn
+        qrbox: function (viewfinderWidth: number, viewfinderHeight: number) {
+          // Dynamic qrbox size - 70% of smaller dimension
+          const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
+          const qrboxSize = Math.floor(minEdge * 0.7);
+          return {
+            width: qrboxSize,
+            height: qrboxSize,
+          };
+        },
+        aspectRatio: 1.0, // Vuông để tốt hơn cho QR
+        rememberLastUsedCamera: true,
+        // Tối ưu constraints cho QR scanning
+        videoConstraints: {
+          width: { min: 640, ideal: 1280, max: 1920 },
+          height: { min: 480, ideal: 720, max: 1080 },
+          facingMode: "environment", // Ưu tiên camera sau
+        },
       };
 
       // Try environment camera first, fallback to user camera
@@ -81,9 +106,9 @@ const TicketVerification: React.FC = () => {
               }, 3000);
             }
           },
-          (errorMessage: string) => {
-            // Error callback - can be used for debugging
-            console.warn("QR scanning error:", errorMessage);
+          () => {
+            // Completely suppress all scanning errors to avoid console spam
+            // These errors are normal when no QR code is in view
           }
         );
       } catch (err: any) {
@@ -115,17 +140,49 @@ const TicketVerification: React.FC = () => {
                 }, 3000);
               }
             },
-            (errorMessage: string) => {
-              // Error callback - can be used for debugging
-              console.warn("QR scanning error:", errorMessage);
+            () => {
+              // Completely suppress all scanning errors to avoid console spam
+              // These errors are normal when no QR code is in view
             }
           );
         } catch (userCamErr: any) {
           console.log("User camera also not available", userCamErr);
-
           throw new Error("No camera available");
         }
       }
+
+      // Add a small delay to ensure video element is created
+      setTimeout(() => {
+        const videoElement = element.querySelector("video");
+        if (videoElement) {
+          console.log("✅ Video element found and should be visible");
+          console.log(
+            "Video dimensions:",
+            videoElement.videoWidth,
+            "x",
+            videoElement.videoHeight
+          );
+          console.log("Video playing:", !videoElement.paused);
+
+          // Force video to be visible
+          videoElement.style.display = "block";
+          videoElement.style.width = "100%";
+          videoElement.style.height = "100%";
+          videoElement.style.objectFit = "cover";
+
+          // Add event listeners for debugging
+          videoElement.addEventListener("loadedmetadata", () => {
+            console.log("📹 Video metadata loaded:", {
+              width: videoElement.videoWidth,
+              height: videoElement.videoHeight,
+              duration: videoElement.duration,
+            });
+          });
+        } else {
+          console.warn("❌ Video element not found after scanner start");
+          setError("Video element not created. Try refreshing the page.");
+        }
+      }, 500);
 
       setCameraStatus("active");
       setIsScanning(true);
@@ -133,7 +190,7 @@ const TicketVerification: React.FC = () => {
     } catch (err) {
       console.error("Error accessing camera:", err);
       setCameraStatus("error");
-      setError("Could not access camera");
+      setError("Could not access camera: " + (err as Error).message);
     }
   };
 
@@ -142,13 +199,18 @@ const TicketVerification: React.FC = () => {
     // Stop QR scanner
     if (qrScanner) {
       try {
-        if (qrScanner.getState() === Html5QrcodeScannerState.SCANNING) {
+        const currentState = qrScanner.getState();
+        if (currentState === Html5QrcodeScannerState.SCANNING) {
           await qrScanner.stop();
         }
-        await qrScanner.clear();
+        if (currentState !== Html5QrcodeScannerState.NOT_STARTED) {
+          await qrScanner.clear();
+        }
         setQrScanner(null);
       } catch (err) {
         console.error("Error stopping scanner:", err);
+        // Force clear the scanner state
+        setQrScanner(null);
       }
     }
 
@@ -337,9 +399,16 @@ const TicketVerification: React.FC = () => {
                 {/* Html5Qrcode scanner container */}
                 <div
                   id="qr-reader"
-                  className={`w-full h-full ${
+                  className={`${
                     cameraStatus === "active" ? "block" : "hidden"
                   }`}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    minHeight: "300px",
+                    position: "relative",
+                    backgroundColor: "transparent",
+                  }}
                 />
 
                 {cameraStatus === "starting" && (
@@ -355,7 +424,7 @@ const TicketVerification: React.FC = () => {
                   <>
                     {/* Scanning overlay - only show when actually scanning */}
                     {isScanning && (
-                      <div className="absolute inset-0 pointer-events-none">
+                      <div className="absolute inset-0 pointer-events-none z-10">
                         <div className="absolute inset-4 border-2 border-blue-400 rounded-lg">
                           <motion.div
                             className="absolute top-0 left-0 right-0 h-0.5 bg-blue-400"
@@ -370,14 +439,19 @@ const TicketVerification: React.FC = () => {
                         </div>
                         <ScanLine className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 h-8 w-8 text-blue-400" />
                         {/* Scanning text */}
-                        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-blue-500 bg-opacity-80 text-white px-3 py-1 rounded-full text-sm">
-                          Scanning for QR codes...
+                        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-blue-500 bg-opacity-90 text-white px-4 py-2 rounded-full text-sm font-medium">
+                          🔍 Scanning for QR codes...
+                        </div>
+
+                        {/* Additional instruction overlay */}
+                        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-70 text-white px-3 py-1 rounded text-xs">
+                          Position QR code within the frame
                         </div>
                       </div>
                     )}
 
                     {/* Camera status indicator */}
-                    <div className="absolute top-2 right-2 bg-green-500 text-white px-2 py-1 rounded text-xs">
+                    <div className="absolute top-2 right-2 bg-green-500 text-white px-2 py-1 rounded text-xs z-20">
                       Live
                     </div>
                   </>
@@ -392,9 +466,9 @@ const TicketVerification: React.FC = () => {
                           ? "Camera error"
                           : "Camera not active"}
                       </p>
-                      {cameraStatus === "error" && (
-                        <p className="text-red-400 text-sm mt-2">
-                          Check console for details
+                      {cameraStatus === "error" && error && (
+                        <p className="text-red-400 text-sm mt-2 max-w-xs mx-auto">
+                          {error}
                         </p>
                       )}
                     </div>
@@ -403,12 +477,19 @@ const TicketVerification: React.FC = () => {
               </div>
 
               {/* Debug info */}
-              <div className="mt-2 text-xs text-gray-500">
-                Status: {cameraStatus} | Scanning: {isScanning ? "Yes" : "No"} |
-                Last:{" "}
-                {lastScannedCode
-                  ? lastScannedCode.substring(0, 10) + "..."
-                  : "None"}
+              <div className="mt-2 text-xs text-gray-500 bg-slate-800 p-2 rounded">
+                <div>
+                  Status: {cameraStatus} | Scanning: {isScanning ? "Yes" : "No"}
+                </div>
+                <div>
+                  Last Code:{" "}
+                  {lastScannedCode
+                    ? lastScannedCode.substring(0, 15) + "..."
+                    : "None"}
+                </div>
+                <div className="mt-1 text-yellow-400">
+                  💡 Tip: Hold QR code 10-30cm from camera, ensure good lighting
+                </div>
               </div>
             </div>
             {/* Camera Controls */}
@@ -444,6 +525,36 @@ const TicketVerification: React.FC = () => {
                   className="px-4 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors text-sm"
                 >
                   Clear
+                </button>
+              )}
+
+              {/* Debug camera button */}
+              {cameraStatus === "active" && (
+                <button
+                  onClick={() => {
+                    const qrReaderDiv = document.getElementById("qr-reader");
+                    const video = qrReaderDiv?.querySelector("video");
+                    if (video) {
+                      toast.info(
+                        `📹 Video: ${video.videoWidth}x${
+                          video.videoHeight
+                        } | Playing: ${!video.paused}`
+                      );
+                      console.log("🔍 Camera Debug:", {
+                        videoElement: video,
+                        dimensions: `${video.videoWidth}x${video.videoHeight}`,
+                        playing: !video.paused,
+                        currentTime: video.currentTime,
+                        readyState: video.readyState,
+                      });
+                    } else {
+                      toast.error("❌ No video element found");
+                    }
+                  }}
+                  className="px-3 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors text-sm"
+                  title="Debug camera info"
+                >
+                  📹
                 </button>
               )}
             </div>
@@ -633,11 +744,52 @@ const TicketVerification: React.FC = () => {
                 </li>
                 <li>• Green result = Valid ticket, allow entry</li>
                 <li>• Red result = Invalid ticket, deny entry</li>
+                <li className="text-orange-600 font-medium">
+                  📱 QR Scanning Tips:
+                </li>
+                <li className="ml-4">
+                  - Hold QR code 10-30cm away from camera
+                </li>
+                <li className="ml-4">- Ensure good lighting (avoid shadows)</li>
+                <li className="ml-4">- Keep QR code flat and steady</li>
+                <li className="ml-4">
+                  - If camera shows black screen, try refreshing page
+                </li>
               </ul>
             </div>
           </div>
         </motion.div>
       </div>
+
+      {/* Custom CSS để đảm bảo video hiển thị đúng */}
+      <style>{`
+        #qr-reader video {
+          width: 100% !important;
+          height: 100% !important;
+          object-fit: cover !important;
+          display: block !important;
+          border-radius: 8px;
+          background: #000;
+        }
+
+        #qr-reader canvas {
+          display: none !important;
+        }
+
+        #qr-reader > div {
+          position: relative !important;
+          width: 100% !important;
+          height: 100% !important;
+          min-height: 300px !important;
+        }
+
+        /* Ensure proper aspect ratio */
+        #qr-reader {
+          min-height: 300px !important;
+          background: #1e293b;
+          border-radius: 8px;
+        }
+      `}</style>
     </div>
   );
 };
