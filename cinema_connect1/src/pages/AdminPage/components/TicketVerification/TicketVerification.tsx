@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Camera,
@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { verifyTicketCode } from "../../../../apis/admin.api";
 import { toast } from "sonner";
-import QrScanner from "qr-scanner";
+import { Html5Qrcode, Html5QrcodeScannerState } from "html5-qrcode";
 
 interface VerificationResult {
   booking_id: string;
@@ -28,59 +28,18 @@ interface VerificationResult {
 const TicketVerification: React.FC = () => {
   const [isScanning, setIsScanning] = useState(false);
   const [scanResult, setScanResult] = useState<VerificationResult | null>(null);
-  const [qrScanner, setQrScanner] = useState<QrScanner | null>(null);
+  const [qrScanner, setQrScanner] = useState<Html5Qrcode | null>(null);
 
   const [error, setError] = useState<string | null>(null);
   const [isVerifying, setIsVerifying] = useState(false);
   const [manualInput, setManualInput] = useState("");
-  const [stream, setStream] = useState<MediaStream | null>(null);
   const [cameraStatus, setCameraStatus] = useState<
     "idle" | "starting" | "active" | "error"
   >("idle");
   const [lastScannedCode, setLastScannedCode] = useState<string>("");
 
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const scanIntervalRef = useRef(null);
-
   const setupQrScanner = () => {
-    if (!videoRef.current) return;
-
-    const scanner = new QrScanner(
-      videoRef.current,
-      (result) => {
-        // result tự động là object với properties data và cornerPoints
-        const qrData = result.data;
-
-        if (qrData && qrData !== lastScannedCode) {
-          console.log("QR Code detected:", qrData);
-          setLastScannedCode(qrData);
-
-          // Tạm dừng scanning để tránh scan liên tục
-          scanner.stop();
-
-          // Show visual feedback
-          toast.info(`QR Code detected: ${qrData.substring(0, 20)}...`);
-
-          // Verify ticket
-          handleVerifyTicket(qrData);
-
-          // Resume sau 3 giây
-          setTimeout(() => {
-            if (isScanning) {
-              scanner.start();
-            }
-          }, 3000);
-        }
-      },
-      {
-        // Không cần returnDetailedScanResult vì instance luôn trả về detailed result
-        highlightScanRegion: true,
-        highlightCodeOutline: true,
-        maxScansPerSecond: 2, // Giảm frequency để tối ưu performance
-      }
-    );
-
+    const scanner = new Html5Qrcode("qr-reader");
     setQrScanner(scanner);
     return scanner;
   };
@@ -89,57 +48,88 @@ const TicketVerification: React.FC = () => {
       setError(null);
       setCameraStatus("starting");
 
-      // Get camera stream (code giữ nguyên như cũ)
-      const constraints = {
-        video: {
-          facingMode: "environment",
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
-        },
+      const scanner = setupQrScanner();
+      if (!scanner) return;
+
+      const config = {
+        fps: 10,
+        qrbox: { width: 250, height: 250 },
+        aspectRatio: 1.777778, // 16:9
       };
 
-      let mediaStream;
+      // Try environment camera first, fallback to user camera
       try {
-        mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
+        await scanner.start(
+          { facingMode: "environment" },
+          config,
+          (decodedText: string) => {
+            if (decodedText && decodedText !== lastScannedCode) {
+              console.log("QR Code detected:", decodedText);
+              setLastScannedCode(decodedText);
+
+              // Show visual feedback
+              toast.info(
+                `QR Code detected: ${decodedText.substring(0, 20)}...`
+              );
+
+              // Verify ticket
+              handleVerifyTicket(decodedText);
+
+              // Pause scanning temporarily
+              setTimeout(() => {
+                setLastScannedCode("");
+              }, 3000);
+            }
+          },
+          (errorMessage: string) => {
+            // Error callback - can be used for debugging
+            console.warn("QR scanning error:", errorMessage);
+          }
+        );
       } catch (err: any) {
         console.log(
           "Environment camera not available, trying user camera...",
           err
         );
 
-        const fallbackConstraints = {
-          video: {
-            facingMode: "user",
-            width: { ideal: 640 },
-            height: { ideal: 480 },
-          },
-        };
-        mediaStream = await navigator.mediaDevices.getUserMedia(
-          fallbackConstraints
-        );
-      }
+        try {
+          await scanner.start(
+            { facingMode: "user" },
+            config,
+            (decodedText: string) => {
+              if (decodedText && decodedText !== lastScannedCode) {
+                console.log("QR Code detected:", decodedText);
+                setLastScannedCode(decodedText);
 
-      setStream(mediaStream);
+                // Show visual feedback
+                toast.info(
+                  `QR Code detected: ${decodedText.substring(0, 20)}...`
+                );
 
-      // Setup video
-      if (videoRef.current) {
-        const video = videoRef.current;
-        video.srcObject = mediaStream;
+                // Verify ticket
+                handleVerifyTicket(decodedText);
 
-        video.onloadedmetadata = () => {
-          setCameraStatus("active");
-          video.play().then(() => {
-            // Khởi tạo QR scanner instance
-            const scanner = setupQrScanner();
-            if (scanner) {
-              scanner.start().then(() => {
-                setIsScanning(true);
-                console.log("QR Scanner started successfully");
-              });
+                // Pause scanning temporarily
+                setTimeout(() => {
+                  setLastScannedCode("");
+                }, 3000);
+              }
+            },
+            (errorMessage: string) => {
+              // Error callback - can be used for debugging
+              console.warn("QR scanning error:", errorMessage);
             }
-          });
-        };
+          );
+        } catch (userCamErr: any) {
+          console.log("User camera also not available", userCamErr);
+
+          throw new Error("No camera available");
+        }
       }
+
+      setCameraStatus("active");
+      setIsScanning(true);
+      console.log("QR Scanner started successfully");
     } catch (err) {
       console.error("Error accessing camera:", err);
       setCameraStatus("error");
@@ -148,22 +138,18 @@ const TicketVerification: React.FC = () => {
   };
 
   // Stop camera và scanner
-  const stopCamera = () => {
+  const stopCamera = async () => {
     // Stop QR scanner
     if (qrScanner) {
-      qrScanner.stop();
-      qrScanner.destroy();
-      setQrScanner(null);
-    }
-
-    // Stop camera stream
-    if (stream) {
-      stream.getTracks().forEach((track) => track.stop());
-      setStream(null);
-    }
-
-    if (videoRef.current) {
-      videoRef.current.srcObject = null;
+      try {
+        if (qrScanner.getState() === Html5QrcodeScannerState.SCANNING) {
+          await qrScanner.stop();
+        }
+        await qrScanner.clear();
+        setQrScanner(null);
+      } catch (err) {
+        console.error("Error stopping scanner:", err);
+      }
     }
 
     setIsScanning(false);
@@ -173,121 +159,9 @@ const TicketVerification: React.FC = () => {
   // Cleanup effect
   useEffect(() => {
     return () => {
-      if (qrScanner) {
-        qrScanner.stop();
-        qrScanner.destroy();
-      }
       stopCamera();
     };
   }, []);
-
-  // 4. Add small delay in useEffect to ensure DOM is ready
-  useEffect(() => {
-    console.log("TicketVerification component mounted");
-
-    // Small delay to ensure DOM is fully ready
-    const timer = setTimeout(() => {
-      console.log("Video ref after mount:", videoRef.current);
-    }, 100);
-
-    return () => {
-      console.log("TicketVerification component unmounting");
-      clearTimeout(timer);
-      stopCamera();
-    };
-  }, []);
-
-  // Real QR Code scanning logic using qr-scanner
-  const startScanning = () => {
-    if (!videoRef.current) {
-      console.error("Video element not available for scanning");
-      return;
-    }
-
-    console.log("Starting QR code scanning...");
-
-    // Use qr-scanner to continuously scan for QR codes
-    // Reduced frequency to improve performance
-    scanIntervalRef.current = setInterval(async () => {
-      await detectQRCode();
-    }, 1000) as any;
-  };
-
-  // Real QR code detection using qr-scanner library
-  const detectQRCode = async () => {
-    if (!videoRef.current || isVerifying) {
-      return;
-    }
-
-    try {
-      const video = videoRef.current;
-
-      // Check if video is ready
-      if (video.readyState < 2) {
-        return;
-      }
-
-      // Method 1: Try direct video scanning
-      let result;
-      try {
-        result = await QrScanner.scanImage(video);
-      } catch (directScanError) {
-        // Method 2: Fallback - capture to canvas first
-        if (canvasRef.current) {
-          const canvas = canvasRef.current;
-          const ctx = canvas.getContext("2d");
-
-          if (ctx) {
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            ctx.drawImage(video, 0, 0);
-
-            // Try scanning from canvas
-            result = await QrScanner.scanImage(canvas);
-          }
-        } else {
-          throw directScanError; // Re-throw if no canvas fallback
-        }
-      }
-
-      if (result && result !== lastScannedCode) {
-        console.log("QR Code detected:", result);
-        setLastScannedCode(result);
-
-        // Stop scanning temporarily to prevent multiple scans of the same code
-        if (scanIntervalRef.current) {
-          clearInterval(scanIntervalRef.current);
-          scanIntervalRef.current = null;
-        }
-
-        // Show visual feedback
-        toast.info(`QR Code detected: ${result.substring(0, 20)}...`);
-
-        // Automatically verify the detected ticket code
-        await handleVerifyTicket(result);
-
-        // Resume scanning after 3 seconds
-        setTimeout(() => {
-          if (isScanning && !scanIntervalRef.current) {
-            startScanning();
-          }
-        }, 3000);
-      }
-    } catch (error) {
-      // This is expected when no QR code is found, so we don't log it as an error
-      // qr-scanner throws when no QR code is found - this is normal behavior
-      if (error instanceof Error) {
-        // Only log if it's a real error, not just "no QR code found"
-        if (
-          !error.message.toLowerCase().includes("no qr code") &&
-          !error.message.toLowerCase().includes("not found") &&
-          !error.message.toLowerCase().includes("no code")
-        ) {
-          console.warn("QR scan error:", error.message);
-        }
-      }
-    }
-  };
 
   // Play sound feedback
   const playSound = (isSuccess: boolean) => {
@@ -410,32 +284,18 @@ const TicketVerification: React.FC = () => {
   // Component mount and cleanup effect
   useEffect(() => {
     console.log("TicketVerification component mounted");
-    console.log("Video ref on mount:", videoRef.current);
 
-    // Check if QrScanner is supported
-    if (!QrScanner.hasCamera()) {
-      console.warn("No camera available for QR scanning");
-      setError("No camera available on this device");
+    // Check if getUserMedia is supported
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      console.warn("Camera not supported in this browser");
+      setError("Camera not supported in this browser");
     }
 
     return () => {
       console.log("TicketVerification component unmounting");
-
-      // Clean up scanning interval
-      if (scanIntervalRef.current) {
-        clearInterval(scanIntervalRef.current);
-        scanIntervalRef.current = null;
-      }
-
-      // Stop camera
       stopCamera();
     };
   }, []);
-
-  // Debug effect for videoRef changes
-  useEffect(() => {
-    console.log("Video ref changed:", videoRef.current);
-  }, [videoRef.current]);
 
   const status = getVerificationStatus();
 
@@ -474,17 +334,13 @@ const TicketVerification: React.FC = () => {
                 className="aspect-video bg-slate-900 rounded-lg overflow-hidden relative"
                 data-testid="video-container"
               >
-                {/* Always render video element but conditionally style it */}
-                <video
-                  ref={videoRef}
-                  className={`w-full h-full object-cover ${
+                {/* Html5Qrcode scanner container */}
+                <div
+                  id="qr-reader"
+                  className={`w-full h-full ${
                     cameraStatus === "active" ? "block" : "hidden"
                   }`}
-                  autoPlay
-                  playsInline
-                  muted
                 />
-                <canvas ref={canvasRef} className="hidden" />
 
                 {cameraStatus === "starting" && (
                   <div className="flex items-center justify-center h-full">
@@ -548,8 +404,8 @@ const TicketVerification: React.FC = () => {
 
               {/* Debug info */}
               <div className="mt-2 text-xs text-gray-500">
-                Status: {cameraStatus} | Stream: {stream ? "Active" : "None"} |
-                Scanning: {isScanning ? "Yes" : "No"} | Last:{" "}
+                Status: {cameraStatus} | Scanning: {isScanning ? "Yes" : "No"} |
+                Last:{" "}
                 {lastScannedCode
                   ? lastScannedCode.substring(0, 10) + "..."
                   : "None"}
