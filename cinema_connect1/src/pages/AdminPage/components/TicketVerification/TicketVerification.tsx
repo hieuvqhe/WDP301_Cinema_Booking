@@ -438,22 +438,8 @@ const TicketVerification: React.FC = () => {
                           <div className="absolute bottom-0 right-0 w-8 h-8 border-r-4 border-b-4 border-blue-400 rounded-br-lg"></div>
                         </div>
                         <ScanLine className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 h-8 w-8 text-blue-400" />
-                        {/* Scanning text */}
-                        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-blue-500 bg-opacity-90 text-white px-4 py-2 rounded-full text-sm font-medium">
-                          🔍 Scanning for QR codes...
-                        </div>
-
-                        {/* Additional instruction overlay */}
-                        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-70 text-white px-3 py-1 rounded text-xs">
-                          Position QR code within the frame
-                        </div>
                       </div>
                     )}
-
-                    {/* Camera status indicator */}
-                    <div className="absolute top-2 right-2 bg-green-500 text-white px-2 py-1 rounded text-xs z-20">
-                      Live
-                    </div>
                   </>
                 )}
 
@@ -486,9 +472,6 @@ const TicketVerification: React.FC = () => {
                   {lastScannedCode
                     ? lastScannedCode.substring(0, 15) + "..."
                     : "None"}
-                </div>
-                <div className="mt-1 text-yellow-400">
-                  💡 Tip: Hold QR code 10-30cm from camera, ensure good lighting
                 </div>
               </div>
             </div>
@@ -525,36 +508,6 @@ const TicketVerification: React.FC = () => {
                   className="px-4 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors text-sm"
                 >
                   Clear
-                </button>
-              )}
-
-              {/* Debug camera button */}
-              {cameraStatus === "active" && (
-                <button
-                  onClick={() => {
-                    const qrReaderDiv = document.getElementById("qr-reader");
-                    const video = qrReaderDiv?.querySelector("video");
-                    if (video) {
-                      toast.info(
-                        `📹 Video: ${video.videoWidth}x${
-                          video.videoHeight
-                        } | Playing: ${!video.paused}`
-                      );
-                      console.log("🔍 Camera Debug:", {
-                        videoElement: video,
-                        dimensions: `${video.videoWidth}x${video.videoHeight}`,
-                        playing: !video.paused,
-                        currentTime: video.currentTime,
-                        readyState: video.readyState,
-                      });
-                    } else {
-                      toast.error("❌ No video element found");
-                    }
-                  }}
-                  className="px-3 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors text-sm"
-                  title="Debug camera info"
-                >
-                  📹
                 </button>
               )}
             </div>
@@ -640,7 +593,7 @@ const TicketVerification: React.FC = () => {
                       <h3 className={`text-lg font-semibold ${status.color}`}>
                         {status.message}
                       </h3>
-                      <p className="text-gray-600 text-sm">
+                      <p className="text-black text-sm">
                         Verified at {formatDate(scanResult.verified_at)}
                       </p>
                     </div>
@@ -651,8 +604,8 @@ const TicketVerification: React.FC = () => {
                     <div className="flex items-center gap-3">
                       <Ticket className="h-5 w-5 text-gray-500" />
                       <div>
-                        <p className="text-sm text-gray-600">Ticket Code</p>
-                        <p className="font-mono font-medium">
+                        <p className="text-sm text-black">Ticket Code</p>
+                        <p className="font-mono text-black font-medium">
                           {scanResult.ticket_code}
                         </p>
                       </div>
@@ -662,7 +615,7 @@ const TicketVerification: React.FC = () => {
                       <User className="h-5 w-5 text-gray-500" />
                       <div>
                         <p className="text-sm text-gray-600">Booking ID</p>
-                        <p className="font-mono font-medium">
+                        <p className="font-mono text-black font-medium">
                           {scanResult.booking_id}
                         </p>
                       </div>
@@ -672,7 +625,7 @@ const TicketVerification: React.FC = () => {
                       <Clock className="h-5 w-5 text-gray-500" />
                       <div>
                         <p className="text-sm text-gray-600">Booking Time</p>
-                        <p className="font-medium">
+                        <p className="font-medium text-black">
                           {formatDate(scanResult.booking_time)}
                         </p>
                       </div>
@@ -745,7 +698,7 @@ const TicketVerification: React.FC = () => {
                 <li>• Green result = Valid ticket, allow entry</li>
                 <li>• Red result = Invalid ticket, deny entry</li>
                 <li className="text-orange-600 font-medium">
-                  📱 QR Scanning Tips:
+                  QR Scanning Tips:
                 </li>
                 <li className="ml-4">
                   - Hold QR code 10-30cm away from camera
