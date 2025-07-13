@@ -1,16 +1,24 @@
-import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Home, 
-  Users, 
-  Film, 
-  Calendar, 
-  BarChart3, 
-  Settings, 
-  Ticket, 
-  Building, 
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Home,
+  Users,
+  Film,
+  Calendar,
+  BarChart3,
+  Settings,
+  Ticket,
+  Building,
   ChevronRight,
-  FileText
-} from 'lucide-react';
+  FileText,
+  CreditCard,
+} from "lucide-react";
+import { getDashboardStats, getPaymentStats } from "../../../../apis/admin.api";
+import { useQuery } from "@tanstack/react-query";
+import type {
+  DashboardQueryParams,
+  PaymentStatsQueryParams,
+} from "../../../../types";
+import { useState } from "react";
 
 interface AdminSidebarProps {
   activeTab: string;
@@ -18,116 +26,142 @@ interface AdminSidebarProps {
   isCollapsed: boolean;
 }
 
-export const AdminSidebar = ({ activeTab, onTabChange, isCollapsed }: AdminSidebarProps) => {
+export const AdminSidebar = ({
+  activeTab,
+  onTabChange,
+  isCollapsed,
+}: AdminSidebarProps) => {
+  const [statsFilter] = useState<PaymentStatsQueryParams["period"]>("month");
+
+  const [selectedPeriod] = useState<DashboardQueryParams["period"]>("month");
+  const { data: dataDashboard } = useQuery({
+    queryKey: ["admin-dashboard-stats", selectedPeriod],
+    queryFn: () => getDashboardStats({ period: selectedPeriod }),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+  console.log("Dashboard Data:", dataDashboard);
+  const { data: statsData } = useQuery({
+    queryKey: ["admin-payment-stats", statsFilter],
+    queryFn: () => getPaymentStats({ period: statsFilter }),
+    staleTime: 2 * 60 * 1000, // 2 minutes
+  });
+
   const menuItems = [
     {
-      id: 'dashboard',
-      label: 'Dashboard',
+      id: "dashboard",
+      label: "Dashboard",
       icon: Home,
       count: null,
-      color: 'from-blue-500 to-cyan-500'
+      color: "from-blue-500 to-cyan-500",
     },
     {
-      id: 'users',
-      label: 'User Management',
+      id: "users",
+      label: "User Management",
       icon: Users,
-      count: 1247,
-      color: 'from-emerald-500 to-teal-500'
+      count: dataDashboard?.user_stats?.total_users || "0",
+      color: "from-emerald-500 to-teal-500",
     },
     {
-      id: 'staff',
-      label: 'Staff Management',
+      id: "staff",
+      label: "Staff Management",
       icon: Users,
       count: null,
-      color: 'from-indigo-500 to-purple-500'
+      color: "from-indigo-500 to-purple-500",
     },
     {
-      id: 'contracts',
-      label: 'Manager Contracts',
+      id: "contracts",
+      label: "Manager Contracts",
       icon: FileText,
       count: null,
-      color: 'from-teal-500 to-green-500'
+      color: "from-teal-500 to-green-500",
     },
     {
-      id: 'movies',
-      label: 'Movies',
+      id: "payments",
+      label: "Payment Management",
+      icon: CreditCard,
+      count: statsData?.result.overview.total_payments.toLocaleString() || 0,
+      color: "from-green-500 to-emerald-500",
+    },
+    {
+      id: "movies",
+      label: "Movies",
       icon: Film,
-      count: 156,
-      color: 'from-purple-500 to-violet-500'
+      count: dataDashboard?.content_stats?.total_movies,
+      color: "from-purple-500 to-violet-500",
     },
     {
-      id: 'bookings',
-      label: 'Bookings',
+      id: "bookings",
+      label: "Bookings",
       icon: Ticket,
-      count: 3421,
-      color: 'from-orange-500 to-red-500'
+      count: dataDashboard?.booking_stats?.total_bookings || 0,
+      color: "from-orange-500 to-red-500",
     },
     {
-      id: 'theaters',
-      label: 'Theaters',
+      id: "theaters",
+      label: "Theaters",
       icon: Building,
-      count: 28,
-      color: 'from-indigo-500 to-blue-500'
+      count: dataDashboard?.content_stats?.total_theaters || 0,
+      color: "from-indigo-500 to-blue-500",
     },
     {
-      id: 'showtimes',
-      label: 'Showtimes',
+      id: "showtimes",
+      label: "Showtimes",
       icon: Calendar,
-      count: 89,
-      color: 'from-pink-500 to-rose-500'
+      count: 183,
+      color: "from-pink-500 to-rose-500",
     },
     {
-      id: 'analytics',
-      label: 'Analytics',
+      id: "analytics",
+      label: "Analytics",
       icon: BarChart3,
       count: null,
-      color: 'from-amber-500 to-yellow-500'
-    }
+      color: "from-amber-500 to-yellow-500",
+    },
   ];
 
   const bottomMenuItems = [
     {
-      id: 'settings',
-      label: 'Settings',
+      id: "settings",
+      label: "Settings",
       icon: Settings,
-      color: 'from-gray-500 to-slate-500'
-    }
+      color: "from-gray-500 to-slate-500",
+    },
   ];
 
   // Animation variants
   const sidebarVariants = {
-    expanded: { 
+    expanded: {
       width: 280,
-      transition: { 
+      transition: {
         duration: 0.3,
-        ease: "easeInOut"
-      }
+        ease: "easeInOut",
+      },
     },
-    collapsed: { 
+    collapsed: {
       width: 80,
-      transition: { 
+      transition: {
         duration: 0.3,
-        ease: "easeInOut"
-      }
-    }
+        ease: "easeInOut",
+      },
+    },
   };
 
   const contentVariants = {
-    expanded: { 
-      opacity: 1, 
+    expanded: {
+      opacity: 1,
       x: 0,
-      transition: { 
+      transition: {
         delay: 0.1,
-        duration: 0.2
-      }
+        duration: 0.2,
+      },
     },
-    collapsed: { 
-      opacity: 0, 
+    collapsed: {
+      opacity: 0,
       x: -20,
-      transition: { 
-        duration: 0.1
-      }
-    }
+      transition: {
+        duration: 0.1,
+      },
+    },
   };
 
   const itemVariants = {
@@ -138,9 +172,9 @@ export const AdminSidebar = ({ activeTab, onTabChange, isCollapsed }: AdminSideb
       transition: {
         delay: i * 0.05,
         duration: 0.3,
-        ease: "easeOut"
-      }
-    })
+        ease: "easeOut",
+      },
+    }),
   };
 
   return (
@@ -152,18 +186,18 @@ export const AdminSidebar = ({ activeTab, onTabChange, isCollapsed }: AdminSideb
     >
       {/* Background Gradient */}
       <div className="absolute inset-0 bg-gradient-to-b from-slate-800/50 via-purple-900/20 to-slate-900/50" />
-      
+
       {/* Logo Section */}
       <motion.div className="relative p-6 border-b border-slate-700/50">
         <div className="flex items-center gap-3">
-          <motion.div 
+          <motion.div
             className="w-10 h-10 bg-gradient-to-r from-purple-500 to-cyan-500 rounded-xl flex items-center justify-center shadow-lg"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
             <Film size={24} className="text-white" />
           </motion.div>
-          
+
           <AnimatePresence>
             {!isCollapsed && (
               <motion.div
@@ -184,15 +218,11 @@ export const AdminSidebar = ({ activeTab, onTabChange, isCollapsed }: AdminSideb
 
       {/* Navigation Menu */}
       <div className="flex-1 py-4 px-3 overflow-y-auto">
-        <motion.nav 
-          className="space-y-2"
-          initial="hidden"
-          animate="visible"
-        >
+        <motion.nav className="space-y-2" initial="hidden" animate="visible">
           {menuItems.map((item, index) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
-            
+
             return (
               <motion.button
                 key={item.id}
@@ -202,9 +232,10 @@ export const AdminSidebar = ({ activeTab, onTabChange, isCollapsed }: AdminSideb
                 className={`
                   group relative w-full flex items-center gap-3 px-4 py-3 rounded-xl 
                   transition-all duration-300 text-left
-                  ${isActive 
-                    ? 'bg-gradient-to-r from-purple-500/20 to-cyan-500/20 border border-purple-500/30 shadow-lg' 
-                    : 'hover:bg-slate-800/50 hover:border-slate-600/50 border border-transparent'
+                  ${
+                    isActive
+                      ? "bg-gradient-to-r from-purple-500/20 to-cyan-500/20 border border-purple-500/30 shadow-lg"
+                      : "hover:bg-slate-800/50 hover:border-slate-600/50 border border-transparent"
                   }
                 `}
                 whileHover={{ scale: 1.02, x: 4 }}
@@ -220,19 +251,26 @@ export const AdminSidebar = ({ activeTab, onTabChange, isCollapsed }: AdminSideb
                 )}
 
                 {/* Icon */}
-                <div className={`
+                <div
+                  className={`
                   relative z-10 p-2 rounded-lg transition-all duration-300
-                  ${isActive 
-                    ? `bg-gradient-to-r ${item.color} shadow-lg` 
-                    : 'bg-slate-800/50 group-hover:bg-slate-700/50'
+                  ${
+                    isActive
+                      ? `bg-gradient-to-r ${item.color} shadow-lg`
+                      : "bg-slate-800/50 group-hover:bg-slate-700/50"
                   }
-                `}>
-                  <Icon 
-                    size={20} 
+                `}
+                >
+                  <Icon
+                    size={20}
                     className={`
                       transition-colors duration-300
-                      ${isActive ? 'text-white' : 'text-gray-400 group-hover:text-gray-300'}
-                    `} 
+                      ${
+                        isActive
+                          ? "text-white"
+                          : "text-gray-400 group-hover:text-gray-300"
+                      }
+                    `}
                   />
                 </div>
 
@@ -246,20 +284,27 @@ export const AdminSidebar = ({ activeTab, onTabChange, isCollapsed }: AdminSideb
                       animate="expanded"
                       exit="collapsed"
                     >
-                      <span className={`
+                      <span
+                        className={`
                         font-medium transition-colors duration-300
-                        ${isActive ? 'text-white' : 'text-gray-300 group-hover:text-white'}
-                      `}>
+                        ${
+                          isActive
+                            ? "text-white"
+                            : "text-gray-300 group-hover:text-white"
+                        }
+                      `}
+                      >
                         {item.label}
                       </span>
-                      
+
                       {item.count && (
-                        <motion.span 
+                        <motion.span
                           className={`
                             px-2 py-1 text-xs rounded-full font-medium transition-all duration-300
-                            ${isActive 
-                              ? 'bg-white/20 text-white' 
-                              : 'bg-slate-700/50 text-gray-400 group-hover:bg-slate-600/50 group-hover:text-gray-300'
+                            ${
+                              isActive
+                                ? "bg-white/20 text-white"
+                                : "bg-slate-700/50 text-gray-400 group-hover:bg-slate-600/50 group-hover:text-gray-300"
                             }
                           `}
                           whileHover={{ scale: 1.05 }}
@@ -269,15 +314,16 @@ export const AdminSidebar = ({ activeTab, onTabChange, isCollapsed }: AdminSideb
                       )}
 
                       {/* Arrow indicator */}
-                      <ChevronRight 
-                        size={16} 
+                      <ChevronRight
+                        size={16}
                         className={`
                           transition-all duration-300 ml-2
-                          ${isActive 
-                            ? 'text-white opacity-100' 
-                            : 'text-gray-500 opacity-0 group-hover:opacity-100 group-hover:text-gray-300'
+                          ${
+                            isActive
+                              ? "text-white opacity-100"
+                              : "text-gray-500 opacity-0 group-hover:opacity-100 group-hover:text-gray-300"
                           }
-                        `} 
+                        `}
                       />
                     </motion.div>
                   )}
@@ -293,7 +339,7 @@ export const AdminSidebar = ({ activeTab, onTabChange, isCollapsed }: AdminSideb
         {bottomMenuItems.map((item) => {
           const Icon = item.icon;
           const isActive = activeTab === item.id;
-          
+
           return (
             <motion.button
               key={item.id}
@@ -301,28 +347,36 @@ export const AdminSidebar = ({ activeTab, onTabChange, isCollapsed }: AdminSideb
               className={`
                 group w-full flex items-center gap-3 px-4 py-3 rounded-xl 
                 transition-all duration-300 text-left
-                ${isActive 
-                  ? 'bg-gradient-to-r from-gray-500/20 to-slate-500/20 border border-gray-500/30' 
-                  : 'hover:bg-slate-800/50 border border-transparent'
+                ${
+                  isActive
+                    ? "bg-gradient-to-r from-gray-500/20 to-slate-500/20 border border-gray-500/30"
+                    : "hover:bg-slate-800/50 border border-transparent"
                 }
               `}
               whileHover={{ scale: 1.02, x: 4 }}
               whileTap={{ scale: 0.98 }}
             >
               {/* Icon */}
-              <div className={`
+              <div
+                className={`
                 p-2 rounded-lg transition-all duration-300
-                ${isActive 
-                  ? `bg-gradient-to-r ${item.color}` 
-                  : 'bg-slate-800/50 group-hover:bg-slate-700/50'
+                ${
+                  isActive
+                    ? `bg-gradient-to-r ${item.color}`
+                    : "bg-slate-800/50 group-hover:bg-slate-700/50"
                 }
-              `}>
-                <Icon 
-                  size={20} 
+              `}
+              >
+                <Icon
+                  size={20}
                   className={`
                     transition-colors duration-300
-                    ${isActive ? 'text-white' : 'text-gray-400 group-hover:text-gray-300'}
-                  `} 
+                    ${
+                      isActive
+                        ? "text-white"
+                        : "text-gray-400 group-hover:text-gray-300"
+                    }
+                  `}
                 />
               </div>
 
@@ -332,7 +386,11 @@ export const AdminSidebar = ({ activeTab, onTabChange, isCollapsed }: AdminSideb
                   <motion.span
                     className={`
                       font-medium transition-colors duration-300
-                      ${isActive ? 'text-white' : 'text-gray-300 group-hover:text-white'}
+                      ${
+                        isActive
+                          ? "text-white"
+                          : "text-gray-300 group-hover:text-white"
+                      }
                     `}
                     variants={contentVariants}
                     initial="collapsed"

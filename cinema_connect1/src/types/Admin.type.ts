@@ -55,7 +55,7 @@ export interface AdminUser {
   username?: string;
   avatar?: string;
   phone?: string;
-  role: 'admin' | 'customer' | 'staff';
+  role: "admin" | "customer" | "staff";
   verify: number; // 0: not verified, 1: verified, 2: banned
   date_of_birth?: string;
   address?: {
@@ -114,7 +114,7 @@ export interface UpdateUserRequest {
 }
 
 export interface UpdateUserRoleRequest {
-  role: 'admin' | 'customer' | 'staff';
+  role: "admin" | "customer" | "staff";
 }
 
 export interface AdminResponse {
@@ -127,13 +127,134 @@ export interface UsersQueryParams {
   limit?: number;
   search?: string;
   role?: string;
-  sort_by?: 'name' | 'email' | 'created_at';
-  sort_order?: 'asc' | 'desc';
+  sort_by?: "name" | "email" | "created_at";
+  sort_order?: "asc" | "desc";
 }
 
 // Dashboard query parameters
 export interface DashboardQueryParams {
-  period?: 'today' | 'week' | 'month' | 'year' | 'all';
+  period?: "today" | "week" | "month" | "year" | "all";
   start_date?: string; // Format: YYYY-MM-DD
-  end_date?: string;   // Format: YYYY-MM-DD
+  end_date?: string; // Format: YYYY-MM-DD
+}
+export interface PaymentQueryParams {
+  page?: number;
+  limit?: number;
+  status?: string;
+  payment_method?: string;
+  sort_by?: string;
+  sort_order?: "asc" | "desc";
+  date_from?: string;
+  date_to?: string;
+  search?: string;
+}
+
+export interface PaymentStatsQueryParams {
+  period?: "today" | "week" | "month" | "year" | "all";
+  start_date?: string;
+  end_date?: string;
+}
+
+export interface UpdatePaymentStatusRequest {
+  status: "pending" | "completed" | "failed" | "refunded";
+  transaction_id?: string;
+  admin_note?: string;
+}
+
+export interface AdminPayment {
+  _id: string;
+  user_id: string;
+  booking_id: string;
+  amount: number;
+  payment_method: string;
+  status: string;
+  transaction_id: string;
+  payment_time: string;
+  admin_note?: string;
+  created_at: string;
+  updated_at: string;
+  user: {
+    _id: string;
+    name: string;
+    email: string;
+    username: string;
+  } | null;
+  booking: {
+    _id: string;
+    ticket_code: string;
+    status: string;
+    payment_status: string;
+    total_amount: number;
+    seats: number;
+  } | null;
+  movie: {
+    _id: string;
+    title: string;
+    poster_url: string;
+  } | null;
+  theater: {
+    _id: string;
+    name: string;
+    location: string;
+  } | null;
+  showtime: {
+    _id: string;
+    start_time: string;
+    end_time: string;
+  } | null;
+}
+
+export interface PaymentDetailResponse {
+  message: string;
+  result: AdminPayment & {
+    screen: {
+      _id: string;
+      name: string;
+    } | null;
+  };
+}
+
+export interface PaymentListResponse {
+  message: string;
+  result: {
+    payments: AdminPayment[];
+    total: number;
+    page: number;
+    limit: number;
+    total_pages: number;
+  };
+}
+
+export interface PaymentStats {
+  period: string;
+  overview: {
+    total_payments: number;
+    completed_payments: number;
+    pending_payments: number;
+    failed_payments: number;
+    refunded_payments: number;
+    total_revenue: number;
+  };
+  payment_methods: Array<{
+    _id: string;
+    count: number;
+    amount: number;
+  }>;
+  payment_status: Array<{
+    _id: string;
+    count: number;
+    amount: number;
+  }>;
+  payment_trends: Array<{
+    date: string;
+    total_payments: number;
+    total_amount: number;
+    completed_payments: number;
+    completed_amount: number;
+  }>;
+}
+
+export interface PaymentStatsResponse {
+  message: string;
+  result: PaymentStats;
 }
