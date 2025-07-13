@@ -23,6 +23,7 @@ interface AuthState {
   verifyOtp: (otpData: OtpRegisterType) => Promise<boolean>;
   login: (credentials: UserLoginType) => Promise<boolean>;
   logout: () => void;
+  updateUser: (user: User) => void;
   setTempEmail: (email: string) => void;
   clearError: () => void;
 }
@@ -106,6 +107,10 @@ export const useAuthStore = create<AuthState>()(
           });
           // Redirect to home page (public route)
           window.location.href = '/';
+        },
+
+        updateUser: (user: User) => {
+          set({ user });
         },
 
         setTempEmail: (email: string) => set({ tempEmail: email }),

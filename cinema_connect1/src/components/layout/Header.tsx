@@ -7,6 +7,7 @@ import { headerItems } from "../../const/index";
 import { IoIosArrowUp } from "react-icons/io";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../store/useAuthStore";
+import Avatar from "../ui/Avatar";
 
 const Header = () => {
   // Toogle the Menu open/close
@@ -33,6 +34,11 @@ const Header = () => {
   const handleLogout = () => {
     logout();
     navigate('/home');
+    setUserDropdownOpen(false);
+  };
+
+  const handleProfile = () => {
+    navigate('/profile');
     setUserDropdownOpen(false);
   };
 
@@ -137,9 +143,12 @@ const Header = () => {
                 className="flex items-center space-x-2 text-gray-300 hover:text-violet-400
                 transition-colors duration-300"
               >
-                <div className="h-fit w-fit p-2 rounded-full bg-gray-100">
-                  <FiUser className="h-5 w-5 text-gray-700" />
-                </div>
+                {/* Avatar with fallback */}
+                <Avatar 
+                  src={user?.avatar} 
+                  alt={user?.name}
+                  size="md"
+                />
                 <span className="hidden lg:block font-medium">{user?.name}</span>
                 <IoIosArrowUp className={`transition-transform duration-300 ${userDropdownOpen ? 'rotate-0' : 'rotate-180'}`} />
               </motion.button>
@@ -160,10 +169,7 @@ const Header = () => {
                         <p className="text-xs text-gray-400 capitalize">{user?.role}</p>
                       </div>
                       <button
-                        onClick={() => {
-                          // Navigate to profile page when implemented
-                          setUserDropdownOpen(false);
-                        }}
+                        onClick={handleProfile}
                         className="w-full text-left px-4 py-2 text-gray-300 hover:bg-gray-700 transition-colors"
                       >
                         Profile
@@ -273,12 +279,26 @@ const Header = () => {
           {isAuthenticated ? (
             // Mobile user menu for logged in users
             <div className="space-y-3">
-              <div className="text-gray-300">
-                <p className="font-medium">{user?.name}</p>
-                <p className="text-sm text-gray-400">{user?.email}</p>
+              <div className="flex items-center space-x-3 text-gray-300">
+                {/* Mobile Avatar */}
+                <Avatar 
+                  src={user?.avatar} 
+                  alt={user?.name}
+                  size="lg"
+                />
+                <div>
+                  <p className="font-medium">{user?.name}</p>
+                  <p className="text-sm text-gray-400">{user?.email}</p>
+                </div>
               </div>
               <div className="flex flex-col space-y-2">
-                <button className="text-left text-gray-300 py-2">
+                <button 
+                  onClick={() => {
+                    navigate('/profile');
+                    setIsOpen(false);
+                  }}
+                  className="text-left text-gray-300 py-2"
+                >
                   Profile
                 </button>
                 <button 

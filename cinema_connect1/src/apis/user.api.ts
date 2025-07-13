@@ -4,7 +4,12 @@ import type {
   RegisterResponse, 
   RegisterUserType, 
   UserLoginType,
-  OtpRegisterType
+  OtpRegisterType,
+  GetProfileResponse,
+  UpdateProfileRequest,
+  UpdateProfileResponse,
+  ChangePasswordRequest,
+  ChangePasswordResponse
 } from '../types/User.type';
 
 const BASE_URL = 'https://bookmovie-5n6n.onrender.com';
@@ -96,6 +101,79 @@ export const resendOtpCode = async (email: string) => {
       }
     }
     throw new Error('Failed to send verification code');
+  }
+};
+
+// API to get current user profile
+export const getUserProfile = async () => {
+  try {
+    const authenticatedAxios = createAuthenticatedRequest();
+    const response = await authenticatedAxios.get<GetProfileResponse>('/users/me');
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const status = error.response?.status;
+      const message = error.response?.data?.message;
+      
+      if (status === 401) {
+        throw new Error('Unauthorized. Please login again.');
+      } else if (status === 404) {
+        throw new Error('User not found.');
+      } else {
+        throw new Error(message || 'Failed to get user profile');
+      }
+    }
+    throw new Error('Failed to get user profile');
+  }
+};
+
+// API to update current user profile
+export const updateUserProfile = async (profileData: UpdateProfileRequest) => {
+  try {
+    const authenticatedAxios = createAuthenticatedRequest();
+    const response = await authenticatedAxios.patch<UpdateProfileResponse>('/users/me', profileData);
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const status = error.response?.status;
+      const message = error.response?.data?.message;
+      
+      if (status === 400) {
+        throw new Error(message || 'Invalid profile data. Please check your information.');
+      } else if (status === 401) {
+        throw new Error('Unauthorized. Please login again.');
+      } else if (status === 409) {
+        throw new Error(message || 'Username already exists. Please choose a different username.');
+      } else {
+        throw new Error(message || 'Failed to update profile');
+      }
+    }
+    throw new Error('Failed to update profile');
+  }
+};
+
+// API to change user password
+export const changeUserPassword = async (passwordData: ChangePasswordRequest) => {
+  try {
+    const authenticatedAxios = createAuthenticatedRequest();
+    const response = await authenticatedAxios.post<ChangePasswordResponse>('/users/change-password', passwordData);
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const status = error.response?.status;
+      const message = error.response?.data?.message;
+      
+      if (status === 400) {
+        throw new Error(message || 'Invalid password data. Please check your passwords.');
+      } else if (status === 401) {
+        throw new Error('Unauthorized or incorrect old password.');
+      } else if (status === 422) {
+        throw new Error(message || 'Password validation failed. Please check password requirements.');
+      } else {
+        throw new Error(message || 'Failed to change password');
+      }
+    }
+    throw new Error('Failed to change password');
   }
 };
 

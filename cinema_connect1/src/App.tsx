@@ -19,6 +19,7 @@ import PaymentPage from "./pages/PaymentPage/PaymentPage";
 import PaymentHistory from "./pages/PaymentHistory/PaymentHistory";
 import PaymentSuccess from "./pages/PaymentSuccess/PaymentSuccess";
 import PaymentFailed from "./pages/PaymentFailed/PaymentFailed";
+import ProfilePage from "./pages/ProfilePage";
 
 function App() {
   return (
@@ -127,6 +128,14 @@ function App() {
                 />
 
                 {/* Booking and user routes */}
+                <Route
+                  path="/profile"
+                  element={
+                    <ProtectedRoute>
+                      <ProfilePage />
+                    </ProtectedRoute>
+                  }
+                />
                 <Route
                   path="/my-bookings"
                   element={
