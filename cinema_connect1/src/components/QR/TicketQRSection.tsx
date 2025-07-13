@@ -52,6 +52,28 @@ const TicketQRSection: React.FC<TicketQRSectionProps> = ({
     return seats.map((seat) => `${seat.row}${seat.number}`).join(", ");
   };
 
+  // SIMPLIFIED: Chỉ sử dụng ticket_code trong QR
+  const getQRData = () => {
+    // Ưu tiên ticketCode trước
+    if (ticketCode && ticketCode.trim()) {
+      console.log("Using ticketCode for QR:", ticketCode);
+      return ticketCode.trim();
+    }
+
+    // Fallback: sử dụng qrData nếu có
+    if (qrData && qrData.trim()) {
+      console.log("Using provided qrData:", qrData);
+      return qrData.trim();
+    }
+
+    // Error case
+    console.error("No ticket code available for QR generation");
+    return null;
+  };
+
+  // Simple validation - chỉ cần kiểm tra có giá trị hay không
+  const finalQRData = getQRData();
+
   const handleDownloadQR = () => {
     const svg = document.querySelector("#ticket-qr svg") as SVGElement;
     if (svg) {
@@ -60,15 +82,24 @@ const TicketQRSection: React.FC<TicketQRSectionProps> = ({
       const ctx = canvas.getContext("2d");
       const img = new Image();
 
-      canvas.width = 200;
-      canvas.height = 200;
+      // FIX 4: Tăng size canvas để QR rõ hơn
+      canvas.width = 400;
+      canvas.height = 400;
 
       img.onload = () => {
-        ctx?.drawImage(img, 0, 0);
+        if (ctx) {
+          // Vẽ background trắng trước
+          ctx.fillStyle = "white";
+          ctx.fillRect(0, 0, 400, 400);
+
+          // Vẽ QR code
+          ctx.drawImage(img, 0, 0, 400, 400);
+        }
+
         const url = canvas.toDataURL("image/png");
         const link = document.createElement("a");
         link.href = url;
-        link.download = `ticket-${ticketCode}.png`;
+        link.download = `ticket-${ticketCode || "qr"}.png`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -81,6 +112,14 @@ const TicketQRSection: React.FC<TicketQRSectionProps> = ({
   const showtime = bookingData.showtime
     ? formatDateTime(bookingData.showtime.start_time)
     : null;
+
+  // Debug info - simplified
+  React.useEffect(() => {
+    console.log("=== QR DEBUG INFO ===");
+    console.log("ticketCode:", ticketCode);
+    console.log("finalQRData:", finalQRData);
+    console.log("QR ready:", !!finalQRData);
+  }, [ticketCode, finalQRData]);
 
   return (
     <div className="bg-white rounded-xl p-6 border border-gray-200 w-full max-w-4xl mx-auto shadow-lg">
@@ -95,7 +134,9 @@ const TicketQRSection: React.FC<TicketQRSectionProps> = ({
         {bookingData.movie?.poster_url && (
           <div className="lg:col-span-1">
             <div className="bg-gray-50 p-3 rounded-lg">
-              <p className="text-sm font-medium text-gray-700 mb-2 text-center">Poster</p>
+              <p className="text-sm font-medium text-gray-700 mb-2 text-center">
+                Poster
+              </p>
               <div className="relative group">
                 <img
                   src={bookingData.movie.poster_url}
@@ -108,16 +149,53 @@ const TicketQRSection: React.FC<TicketQRSectionProps> = ({
           </div>
         )}
 
-        {/* QR Code Section */}
-        <div className={`${bookingData.movie?.poster_url ? 'lg:col-span-1' : 'lg:col-span-1'}`}>
+        {/* QR Code Section - Simplified */}
+        <div
+          className={`${
+            bookingData.movie?.poster_url ? "lg:col-span-1" : "lg:col-span-1"
+          }`}
+        >
           <div className="bg-gray-50 p-4 rounded-lg text-center" id="ticket-qr">
-            <QRCode value={qrData} size={160} level="M" className="mx-auto" />
-            <p className="text-sm text-gray-600 mt-2 font-mono">{ticketCode}</p>
+            {finalQRData ? (
+              <>
+                <QRCode
+                  value={finalQRData}
+                  size={160}
+                  level="L" // Low error correction = dễ tạo nhất
+                  className="mx-auto"
+                  bgColor="#FFFFFF" // Background trắng
+                  fgColor="#000000" // Foreground đen
+                />
+                <p className="text-sm text-gray-600 mt-2 font-mono">
+                  {finalQRData}
+                </p>
+
+                {/* Simple debug info */}
+                <div className="mt-2 text-xs text-gray-400 border-t pt-2">
+                  <p>Ticket Code: {finalQRData}</p>
+                </div>
+              </>
+            ) : (
+              <div className="h-40 flex items-center justify-center bg-red-50 border border-red-200 rounded">
+                <div className="text-center">
+                  <p className="text-red-600 text-sm font-medium">
+                    No Ticket Code
+                  </p>
+                  <p className="text-red-500 text-xs mt-1">
+                    Không thể tạo QR code
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
         {/* Ticket Information */}
-        <div className={`${bookingData.movie?.poster_url ? 'lg:col-span-2' : 'lg:col-span-3'} space-y-4`}>
+        <div
+          className={`${
+            bookingData.movie?.poster_url ? "lg:col-span-2" : "lg:col-span-3"
+          } space-y-4`}
+        >
           {/* Movie & Theater */}
           <div className="bg-blue-50 rounded-lg p-4">
             <h4 className="font-semibold text-gray-800 mb-2">
@@ -143,12 +221,6 @@ const TicketQRSection: React.FC<TicketQRSectionProps> = ({
                 <p className="text-sm text-gray-800">{showtime.date}</p>
                 <p className="text-lg font-bold text-green-600">
                   {showtime.time}
-                </p>
-              </div>
-              <div className="bg-purple-50 rounded-lg p-3">
-                <p className="text-sm font-medium text-gray-700 mb-1">Phòng chiếu</p>
-                <p className="text-lg font-bold text-purple-600">
-                  {bookingData.screen?.name}
                 </p>
               </div>
             </div>
