@@ -38,7 +38,7 @@ const PaymentHistory: React.FC = () => {
 
   const { data: paymentsData, isLoading } = useQuery({
     queryKey: ["payments", filters],
-    queryFn: () => paymentApi.getMyPayments(filters),
+    queryFn: () => paymentApi.getMyPayments(filters as any),
     select: (response) => response.data.result,
   });
 
@@ -76,16 +76,18 @@ const PaymentHistory: React.FC = () => {
     switch (method) {
       case "vnpay":
         return "💳";
+      case "sepay":
+        return "🏦";
       case "credit_card":
         return "💳";
-
+      case "debit_card":
+        return "💳";
       case "cash":
         return "💵";
       default:
         return "💳";
     }
   };
-
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("vi-VN", {
       style: "currency",

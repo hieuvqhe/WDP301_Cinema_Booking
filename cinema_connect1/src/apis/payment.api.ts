@@ -1,8 +1,8 @@
-import axios from 'axios';
-import type { SuccessResponse } from '../types/Utils.type';
-import { getAuthToken } from './user.api';
+import axios from "axios";
+import type { SuccessResponse } from "../types/Utils.type";
+import { getAuthToken } from "./user.api";
 
-const BASE_URL = 'https://bookmovie-5n6n.onrender.com';
+const BASE_URL = "https://bookmovie-5n6n.onrender.com";
 
 const createAuthRequest = () => {
   const token = getAuthToken();
@@ -10,8 +10,8 @@ const createAuthRequest = () => {
     baseURL: BASE_URL,
     headers: {
       Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    }
+      "Content-Type": "application/json",
+    },
   });
 };
 
@@ -20,11 +20,11 @@ export interface Payment {
   booking_id: string;
   user_id: string;
   amount: number;
-  payment_method: 'vnpay' | 'credit_card' | 'debit_card' | 'cash';
+  payment_method: "vnpay" | "sepay" | "credit_card" | "debit_card" | "cash";
   transaction_id: string;
   order_id: string;
   payment_time: string;
-  status: 'pending' | 'completed' | 'failed' | 'refunded';
+  status: "pending" | "completed" | "failed" | "refunded";
   created_at: string;
   updated_at: string;
   booking?: {
@@ -53,7 +53,7 @@ export interface Payment {
 
 export interface CreatePaymentRequest {
   booking_id: string;
-  payment_method: 'vnpay' | 'credit_card' | 'debit_card' | 'cash';
+  payment_method: "vnpay" | "sepay" | "credit_card" | "debit_card" | "cash";
   transaction_id?: string;
 }
 
@@ -79,10 +79,10 @@ export interface GetPaymentsResponse {
 export interface PaymentQueryParams {
   page?: number;
   limit?: number;
-  status?: 'pending' | 'completed' | 'failed' | 'refunded';
-  payment_method?: 'vnpay' | 'credit_card' | 'debit_card' | 'cash';
-  sort_by?: 'payment_time' | 'amount' | 'created_at';
-  sort_order?: 'asc' | 'desc';
+  status?: "pending" | "completed" | "failed" | "refunded";
+  payment_method?: "vnpay" | "credit_card" | "debit_card" | "cash";
+  sort_by?: "payment_time" | "amount" | "created_at";
+  sort_order?: "asc" | "desc";
   date_from?: string;
   date_to?: string;
 }
@@ -91,26 +91,37 @@ const paymentApi = {
   // Create payment
   createPayment: (data: CreatePaymentRequest) => {
     const authRequest = createAuthRequest();
-    return authRequest.post<CreatePaymentResponse>('/cinema/payments', data);
+    return authRequest.post<CreatePaymentResponse>("/cinema/payments", data);
   },
 
   // Get my payments
   getMyPayments: (params?: PaymentQueryParams) => {
     const authRequest = createAuthRequest();
-    return authRequest.get<GetPaymentsResponse>('/cinema/payments/my-payments', { params });
+    return authRequest.get<GetPaymentsResponse>(
+      "/cinema/payments/my-payments",
+      { params }
+    );
   },
 
   // Get payment by ID
   getPaymentById: (paymentId: string) => {
     const authRequest = createAuthRequest();
-    return authRequest.get<SuccessResponse<Payment>>(`/cinema/payments/${paymentId}`);
+    return authRequest.get<SuccessResponse<Payment>>(
+      `/cinema/payments/${paymentId}`
+    );
   },
 
   // Update payment status (admin only)
-  updatePaymentStatus: (paymentId: string, data: { status: string; transaction_id?: string }) => {
+  updatePaymentStatus: (
+    paymentId: string,
+    data: { status: string; transaction_id?: string }
+  ) => {
     const authRequest = createAuthRequest();
-    return authRequest.put<SuccessResponse<{ payment_id: string }>>(`/cinema/payments/${paymentId}/status`, data);
-  }
+    return authRequest.put<SuccessResponse<{ payment_id: string }>>(
+      `/cinema/payments/${paymentId}/status`,
+      data
+    );
+  },
 };
 
 export default paymentApi;

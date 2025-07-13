@@ -1,5 +1,6 @@
 export const PAYMENT_METHODS = {
   VNPAY: "vnpay",
+  SEPAY: "sepay",
   CREDIT_CARD: "credit_card",
   DEBIT_CARD: "debit_card",
   CASH: "cash",
@@ -14,6 +15,7 @@ export const PAYMENT_STATUSES = {
 
 export const PAYMENT_METHOD_ICONS = {
   [PAYMENT_METHODS.VNPAY]: "💳",
+  [PAYMENT_METHODS.SEPAY]: "🏦",
   [PAYMENT_METHODS.CREDIT_CARD]: "💳",
   [PAYMENT_METHODS.DEBIT_CARD]: "💳",
   [PAYMENT_METHODS.CASH]: "💵",
@@ -21,6 +23,7 @@ export const PAYMENT_METHOD_ICONS = {
 
 export const PAYMENT_METHOD_LABELS = {
   [PAYMENT_METHODS.VNPAY]: "VNPay",
+  [PAYMENT_METHODS.SEPAY]: "Sepay Bank Transfer",
   [PAYMENT_METHODS.CREDIT_CARD]: "Credit Card",
   [PAYMENT_METHODS.DEBIT_CARD]: "Debit Card",
   [PAYMENT_METHODS.CASH]: "Cash",
@@ -103,6 +106,7 @@ export const TIMEOUTS = {
   FEEDBACK_DEBOUNCE: 500, // 500ms for search debounce
   AUTO_REFRESH: 30 * 1000, // 30 seconds for auto-refresh
   TOAST_DURATION: 5000, // 5 seconds for toast messages
+  SEPAY_INSTRUCTION_TIMEOUT: 60 * 1000, // 1 minute to show instructions
 } as const;
 
 // API endpoints
@@ -110,6 +114,7 @@ export const API_ENDPOINTS = {
   PAYMENTS: "/cinema/payments",
   FEEDBACK: "/feedback",
   VNPAY_CALLBACK: "/cinema/payments/vnpay-callback",
+  SEPAY_WEBHOOK: "/cinema/payments/hooks/sepay-payment",
 } as const;
 
 // Local storage keys
@@ -118,12 +123,15 @@ export const STORAGE_KEYS = {
   FEEDBACK_DRAFT: "cinema_feedback_draft",
   PAYMENT_FILTERS: "cinema_payment_filters",
   FEEDBACK_FILTERS: "cinema_feedback_filters",
+  SEPAY_INSTRUCTIONS_SEEN: "cinema_sepay_instructions_seen",
 } as const;
 
 // Success messages
 export const SUCCESS_MESSAGES = {
   PAYMENT_CREATED: "Payment initiated successfully",
   PAYMENT_COMPLETED: "Payment completed successfully!",
+  SEPAY_INSTRUCTIONS_SHOWN:
+    "Bank transfer instructions have been sent to your email",
   FEEDBACK_CREATED: "Your review has been submitted for moderation",
   FEEDBACK_UPDATED: "Review updated successfully",
   FEEDBACK_DELETED: "Review deleted successfully",
@@ -135,6 +143,8 @@ export const SUCCESS_MESSAGES = {
 export const ERROR_MESSAGES = {
   PAYMENT_FAILED: "Payment failed. Please try again.",
   PAYMENT_CANCELLED: "Payment was cancelled.",
+  SEPAY_TRANSFER_FAILED:
+    "Bank transfer verification failed. Please check your transfer details.",
   FEEDBACK_REQUIRED_FIELDS: "Please fill in all required fields",
   FEEDBACK_TITLE_LENGTH: "Title must be between 5 and 100 characters",
   FEEDBACK_CONTENT_LENGTH: "Content must be between 10 and 2000 characters",
@@ -166,6 +176,7 @@ export const FEATURES = {
   ENABLE_SPOILER_WARNINGS: true,
   ENABLE_FEEDBACK_RATINGS: true,
   ENABLE_PAYMENT_ANALYTICS: true,
+  ENABLE_SEPAY_AUTO_VERIFY: true,
 } as const;
 
 // UI Constants
@@ -174,4 +185,17 @@ export const UI_CONSTANTS = {
   CARD_HOVER_SCALE: 1.02,
   BUTTON_TAP_SCALE: 0.98,
   SKELETON_PULSE_DURATION: 1500,
+} as const;
+
+// Sepay specific constants
+export const SEPAY_CONFIG = {
+  BANK_INFO: {
+    ACCOUNT_NUMBER: "0979781768",
+    ACCOUNT_NAME: "CONG TY TNHH MOVIEBOOKING",
+    BANK_NAME: "Ngân hàng quân đội MB Bank",
+    BRANCH: "Chi nhánh Hà Nội",
+  },
+  QR_CODE_SIZE: 200,
+  TRANSFER_TIMEOUT: 15 * 60 * 1000, // 15 minutes
+  AUTO_CHECK_INTERVAL: 30 * 1000, // 30 seconds
 } as const;

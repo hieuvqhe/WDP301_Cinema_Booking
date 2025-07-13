@@ -21,8 +21,8 @@ const Navbar = () => {
       setIsScrolled(scrollTop > 50);
     };
 
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   // Navigation items based on user role
@@ -58,20 +58,22 @@ const Navbar = () => {
   const getUserQuickAccess = () => {
     const baseActions = [
       {
-        title: "Account settings",
-        link: "",
-        action: () => console.log("Account settings"),
-      },
-      {
         title: "Profile",
         link: "/profile",
-        
+      },
+      {
+        title: "My Bookings",
+        link: "/my-bookings",
+      },
+      {
+        title: "Payment History",
+        link: "/payment-history",
       },
       {
         title: "Sign out",
         link: "",
         action: () => logout(),
-      }
+      },
     ];
 
     if (user?.role === "customer") {
@@ -100,18 +102,18 @@ const Navbar = () => {
       <div
         className={`fixed top-0 left-0 z-50 w-full flex items-center justify-between px-6
           md:px-16 lg:px-36 py-5 transition-all duration-300 ${
-            isScrolled 
-              ? 'bg-gradient-to-r from-purple-600/90 via-purple-700/90 to-indigo-600/90 backdrop-blur-md border-b border-white/20 shadow-lg' 
-              : 'bg-transparent'
+            isScrolled
+              ? "bg-gradient-to-r from-purple-600/90 via-purple-700/90 to-indigo-600/90 backdrop-blur-md border-b border-white/20 shadow-lg"
+              : "bg-transparent"
           }`}
       >
         <Link to={"/"} className="max-md:flex-1">
-          <img 
-            src={"logo.png"} 
-            alt="" 
+          <img
+            src={"logo.png"}
+            alt=""
             className={`w-14 h-14 transition-all duration-300 ${
-              isScrolled ? 'border-2 border-white/30 rounded-full p-1' : ''
-            }`} 
+              isScrolled ? "border-2 border-white/30 rounded-full p-1" : ""
+            }`}
           />
         </Link>
 
@@ -122,15 +124,18 @@ const Navbar = () => {
                 max-md:justify-center gap-8 min-md:px-8 py-3 max-md:h-screen 
                 min-md:rounded-full backdrop-blur overflow-hidden transition-all duration-300
                 ${isOpen ? "max-md:w-full" : "max-md:w-0"}
-                ${isScrolled 
-                  ? 'bg-black/80 md:bg-white/15 md:border border-white/30' 
-                  : 'bg-black/70 md:bg-white/10 md:border border-gray-300/20'
+                ${
+                  isScrolled
+                    ? "bg-black/80 md:bg-white/15 md:border border-white/30"
+                    : "bg-black/70 md:bg-white/10 md:border border-gray-300/20"
                 }`}
         >
           <FaTimes
             onClick={() => setIsOpen(!isOpen)}
             className={`md:hidden absolute top-6 right-6 w-6 h-6 cursor-pointer transition-colors duration-300 ${
-              isScrolled ? 'text-white hover:text-gray-200' : 'text-white hover:text-gray-300'
+              isScrolled
+                ? "text-white hover:text-gray-200"
+                : "text-white hover:text-gray-300"
             }`}
           />
           {navigationItems.map((item, index) => (
@@ -146,54 +151,62 @@ const Navbar = () => {
         </div>
 
         <div className="flex items-center gap-8">
-          <IoIosSearch className={`max-md:hidden w-6 h-6 cursor-pointer transition-colors duration-300 ${
-            isScrolled ? 'text-white hover:text-gray-200' : 'text-white hover:text-gray-300'
-          }`} />
+          <IoIosSearch
+            className={`max-md:hidden w-6 h-6 cursor-pointer transition-colors duration-300 ${
+              isScrolled
+                ? "text-white hover:text-gray-200"
+                : "text-white hover:text-gray-300"
+            }`}
+          />
 
           {user ? (
             <div>
               <Popover as="div" className="relative inline-block text-left">
-                <PopoverButton className={`p-1 rounded-full transition-all duration-300 ${
-                  isScrolled 
-                    ? 'bg-white/20 hover:bg-white/30 shadow-lg border border-white/30' 
-                    : 'bg-primary hover:bg-primary/80'
-                }`}>
-                  <Avatar 
-                    src={user.avatar} 
-                    alt={user.name} 
+                <PopoverButton
+                  className={`p-1 rounded-full transition-all duration-300 ${
+                    isScrolled
+                      ? "bg-white/20 hover:bg-white/30 shadow-lg border border-white/30"
+                      : "bg-primary hover:bg-primary/80"
+                  }`}
+                >
+                  <Avatar
+                    src={user.avatar}
+                    alt={user.name}
                     size="md"
                     className={`transition-all duration-300 ${
-                      isScrolled 
-                        ? 'border-2 border-white/40' 
-                        : 'border-2 border-white/20'
+                      isScrolled
+                        ? "border-2 border-white/40"
+                        : "border-2 border-white/20"
                     }`}
                   />
                 </PopoverButton>
 
                 <PopoverPanel
                   className={`absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-lg shadow-lg ring-1 ring-black/5 transition-all duration-300 ${
-                    isScrolled 
-                      ? 'bg-gradient-to-br from-purple-600/95 to-indigo-600/95 backdrop-blur-md border border-white/20' 
-                      : 'bg-primary/40 border border-primary/20'
+                    isScrolled
+                      ? "bg-gradient-to-br from-purple-600/95 to-indigo-600/95 backdrop-blur-md border border-white/20"
+                      : "bg-primary/40 border border-primary/20"
                   }`}
                 >
-                  <div className={`text-sm py-2 px-4 text-center border-b transition-colors duration-300 ${
-                    isScrolled 
-                      ? 'border-white/20 text-white' 
-                      : 'border-slate-50 border-b text-white'
-                  }`}>
+                  <div
+                    className={`text-sm py-2 px-4 text-center border-b transition-colors duration-300 ${
+                      isScrolled
+                        ? "border-white/20 text-white"
+                        : "border-slate-50 border-b text-white"
+                    }`}
+                  >
                     <p>Hello {user.name}</p>
                   </div>
                   <div className="py-1">
-                    {userQuickAccess.map((item, index) => (
+                    {userQuickAccess.map((item, index) =>
                       item.link ? (
                         <Link
                           key={index}
                           to={item.link}
                           className={`block px-4 py-2 text-sm transition-all duration-200 ${
-                            isScrolled 
-                              ? 'text-white hover:text-gray-200 hover:bg-white/10' 
-                              : 'text-gray-200 hover:underline'
+                            isScrolled
+                              ? "text-white hover:text-gray-200 hover:bg-white/10"
+                              : "text-gray-200 hover:underline"
                           }`}
                         >
                           {item.title}
@@ -203,16 +216,16 @@ const Navbar = () => {
                           key={index}
                           href="#"
                           className={`block px-4 py-2 text-sm transition-all duration-200 ${
-                            isScrolled 
-                              ? 'text-white hover:text-gray-200 hover:bg-white/10' 
-                              : 'text-gray-200 hover:underline'
+                            isScrolled
+                              ? "text-white hover:text-gray-200 hover:bg-white/10"
+                              : "text-gray-200 hover:underline"
                           }`}
                           onClick={item.action}
                         >
                           {item.title}
                         </a>
                       )
-                    ))}
+                    )}
                   </div>
                 </PopoverPanel>
               </Popover>
@@ -230,7 +243,9 @@ const Navbar = () => {
 
         <IoMenu
           className={`max-md:ml-4 md:hidden w-8 h-8 cursor-pointer transition-colors duration-300 ${
-            isScrolled ? 'text-white hover:text-gray-200' : 'text-white hover:text-gray-300'
+            isScrolled
+              ? "text-white hover:text-gray-200"
+              : "text-white hover:text-gray-300"
           }`}
           onClick={() => setIsOpen(!isOpen)}
         />

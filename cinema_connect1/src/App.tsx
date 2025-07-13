@@ -20,6 +20,7 @@ import PaymentHistory from "./pages/PaymentHistory/PaymentHistory";
 import PaymentSuccess from "./pages/PaymentSuccess/PaymentSuccess";
 import PaymentFailed from "./pages/PaymentFailed/PaymentFailed";
 import ProfilePage from "./pages/ProfilePage";
+import SepayInstructions from "./components/sepay/SepayInstructions";
 
 function App() {
   return (
@@ -99,6 +100,14 @@ function App() {
                   element={
                     <ProtectedRoute>
                       <PaymentPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/payment/sepay-instructions"
+                  element={
+                    <ProtectedRoute>
+                      <SepayInstructions />
                     </ProtectedRoute>
                   }
                 />

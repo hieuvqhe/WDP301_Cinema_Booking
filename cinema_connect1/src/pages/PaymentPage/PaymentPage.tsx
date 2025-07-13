@@ -12,6 +12,7 @@ import {
   AlertCircle,
   ArrowLeft,
   Star,
+  Building2,
 } from "lucide-react";
 import { toast } from "sonner";
 import paymentApi from "../../apis/payment.api";
@@ -104,6 +105,13 @@ const PaymentPage: React.FC = () => {
       description: "Pay with VNPay gateway",
       icon: Smartphone,
       color: "from-blue-500 to-blue-600",
+    },
+    {
+      id: "sepay" as PaymentMethod,
+      name: "Sepay Bank Transfer",
+      description: "Instant bank transfer with auto-verification",
+      icon: Building2,
+      color: "from-emerald-500 to-emerald-600",
     },
     {
       id: "credit_card" as PaymentMethod,

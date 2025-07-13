@@ -5,17 +5,26 @@ import { toast } from "sonner";
 import paymentApi from "../apis/payment.api";
 import type {
   CreatePaymentRequest,
-  PaymentQueryParams,
   UpdatePaymentStatusRequest,
 } from "../types/Payment.type";
+import type { PaymentQueryParams } from "../apis/payment.api";
 
 export const useCreatePayment = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (data: CreatePaymentRequest) => paymentApi.createPayment(data),
-    onSuccess: () => {
-      toast.success("Payment initiated successfully");
+    onSuccess: (_, variables) => {
+      // Only show success toast for non-Sepay payments
+      if (variables.payment_method !== "sepay") {
+        toast.success("Payment initiated successfully");
+      } else {
+        // For Sepay, show different message
+        toast.info(
+          "Transfer instructions prepared. Please complete the bank transfer."
+        );
+      }
+
       // Invalidate and refetch payment queries
       queryClient.invalidateQueries({ queryKey: ["payments"] });
       queryClient.invalidateQueries({ queryKey: ["my-bookings"] });

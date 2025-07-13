@@ -39,7 +39,12 @@ export interface Payment {
   };
 }
 
-export type PaymentMethod = "vnpay" | "credit_card" | "debit_card" | "cash";
+export type PaymentMethod =
+  | "vnpay"
+  | "sepay"
+  | "credit_card"
+  | "debit_card"
+  | "cash";
 
 export type PaymentStatus = "pending" | "completed" | "failed" | "refunded";
 
@@ -121,4 +126,25 @@ export interface VNPayCallbackParams {
   vnp_SecureHashType: string;
   vnp_SecureHash: string;
   booking_id: string;
+}
+
+// Sepay specific types
+export interface SepayResponse {
+  payment_id: string;
+  bank_info: {
+    account_number: string;
+    account_name: string;
+    bank_name: string;
+    branch: string;
+  };
+  transfer_content: string;
+  amount: number;
+  qr_code?: string;
+}
+
+export interface SepayPaymentInstructions {
+  step1: string;
+  step2: string;
+  step3: string;
+  important_notes: string[];
 }

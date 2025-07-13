@@ -9,6 +9,8 @@ import {
   Shield,
   ArrowRight,
   CheckCircle,
+  Building2,
+  AlertCircle,
 } from "lucide-react";
 import { useCreatePayment } from "../../hooks/usePayment";
 import type { PaymentMethod } from "../../types/Payment.type";
@@ -45,6 +47,14 @@ const CheckoutPaymentStep: React.FC<CheckoutPaymentStepProps> = ({
       popular: true,
     },
     {
+      id: "sepay" as PaymentMethod,
+      name: "Sepay Bank Transfer",
+      description: "Instant bank transfer with automatic verification",
+      icon: Building2,
+      color: "from-emerald-500 to-emerald-600",
+      new: true,
+    },
+    {
       id: "credit_card" as PaymentMethod,
       name: "Credit Card",
       description: "Visa, Mastercard, JCB",
@@ -77,6 +87,12 @@ const CheckoutPaymentStep: React.FC<CheckoutPaymentStepProps> = ({
       if (selectedPaymentMethod === "vnpay" && response.data.payment_url) {
         // Redirect to VNPay
         window.location.href = response.data.payment_url;
+      } else if (selectedPaymentMethod === "sepay") {
+        // Navigate to Sepay instruction page
+        // Don't call onPaymentSuccess here - payment is still pending
+        navigate(
+          `/payment/sepay-instructions?bookingId=${bookingId}&paymentId=${response.data.payment_id}`
+        );
       } else {
         // For other payment methods, simulate success
         onPaymentSuccess?.();
@@ -124,6 +140,15 @@ const CheckoutPaymentStep: React.FC<CheckoutPaymentStepProps> = ({
                   </span>
                 )}
 
+                {method.new && (
+                  <span
+                    className="absolute -top-2 left-4 px-2 py-1 bg-gradient-to-r from-emerald-500 to-emerald-600 
+                                 text-white text-xs font-semibold rounded-full"
+                  >
+                    NEW
+                  </span>
+                )}
+
                 <div className="flex items-center gap-4">
                   <div
                     className={`p-3 rounded-lg bg-gradient-to-r ${method.color}`}
@@ -134,15 +159,23 @@ const CheckoutPaymentStep: React.FC<CheckoutPaymentStepProps> = ({
                   <div className="flex-1">
                     <h4 className="font-semibold text-white flex items-center gap-2">
                       {method.name}
-                      {method.id === "vnpay" && (
-                        <span className="text-lg">
-                          {PAYMENT_METHOD_ICONS[method.id]}
-                        </span>
-                      )}
+                      <span className="text-lg">
+                        {PAYMENT_METHOD_ICONS[method.id]}
+                      </span>
                     </h4>
                     <p className="text-gray-300 text-sm">
                       {method.description}
                     </p>
+
+                    {/* Special note for Sepay */}
+                    {method.id === "sepay" && (
+                      <div className="flex items-center gap-1 mt-1">
+                        <AlertCircle className="h-3 w-3 text-emerald-400" />
+                        <span className="text-emerald-400 text-xs">
+                          Auto-verified within seconds
+                        </span>
+                      </div>
+                    )}
                   </div>
 
                   {selectedPaymentMethod === method.id && (
@@ -154,6 +187,29 @@ const CheckoutPaymentStep: React.FC<CheckoutPaymentStepProps> = ({
           })}
         </div>
       </div>
+
+      {/* Sepay Special Instructions */}
+      {selectedPaymentMethod === "sepay" && (
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: "auto" }}
+          exit={{ opacity: 0, height: 0 }}
+          className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-4"
+        >
+          <h4 className="text-emerald-300 font-semibold mb-2 flex items-center gap-2">
+            <Building2 className="h-4 w-4" />
+            How Sepay Bank Transfer Works
+          </h4>
+          <div className="space-y-2 text-sm text-emerald-200/90">
+            <p>
+              • You'll receive bank account details and transfer instructions
+            </p>
+            <p>• Transfer money using your mobile banking app</p>
+            <p>• Payment is automatically verified within 30 seconds</p>
+            <p>• Your booking will be confirmed instantly after verification</p>
+          </div>
+        </motion.div>
+      )}
 
       {/* Payment Summary */}
       <div className="bg-gradient-to-r from-purple-500/10 to-blue-500/10 backdrop-blur-lg rounded-xl p-6 border border-white/20">
@@ -193,7 +249,9 @@ const CheckoutPaymentStep: React.FC<CheckoutPaymentStepProps> = ({
           <div>
             <p className="text-green-300 font-medium">Secure Payment</p>
             <p className="text-green-400/80 text-sm">
-              Your payment information is encrypted and processed securely
+              {selectedPaymentMethod === "sepay"
+                ? "Bank transfers are processed through secure banking networks"
+                : "Your payment information is encrypted and processed securely"}
             </p>
           </div>
         </div>
@@ -216,7 +274,11 @@ const CheckoutPaymentStep: React.FC<CheckoutPaymentStepProps> = ({
           </>
         ) : (
           <>
-            <span>Pay {formatCurrency(totalAmount)}</span>
+            <span>
+              {selectedPaymentMethod === "sepay"
+                ? `Get Transfer Details`
+                : `Pay ${formatCurrency(totalAmount)}`}
+            </span>
             <ArrowRight className="h-5 w-5" />
           </>
         )}
