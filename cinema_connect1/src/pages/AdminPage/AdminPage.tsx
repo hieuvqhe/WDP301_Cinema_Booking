@@ -9,6 +9,7 @@ import {
   UserManagement,
   StaffManagement,
   ContractManagement,
+  TicketVerification,
 } from "./components";
 import { PaymentManagement } from "../../components/admin/PaymentManagement";
 
@@ -39,6 +40,8 @@ const AdminPage = () => {
         return <ContractManagement />;
       case "payments":
         return <PaymentManagement />;
+      case "ticket-verification":
+        return <TicketVerification />;
       default:
         return <Dashboard />;
     }

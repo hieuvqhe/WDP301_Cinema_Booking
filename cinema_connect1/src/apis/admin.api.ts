@@ -689,3 +689,27 @@ export const exportPaymentData = async (
     throw handleAdminError(error);
   }
 };
+export const verifyTicketCode = async (
+  ticketCode: string
+): Promise<{
+  message: string;
+  result: {
+    booking_id: string;
+    ticket_code: string;
+    status: string;
+    payment_status: string;
+
+    booking_time: string;
+    verified_at: string;
+  };
+}> => {
+  try {
+    const adminApi = createAdminRequest();
+    const response = await adminApi.post(`/admin/verify-ticket`, {
+      ticket_code: ticketCode,
+    });
+    return response.data;
+  } catch (error) {
+    throw handleAdminError(error);
+  }
+};

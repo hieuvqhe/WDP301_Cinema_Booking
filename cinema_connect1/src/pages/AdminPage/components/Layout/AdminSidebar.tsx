@@ -11,6 +11,7 @@ import {
   ChevronRight,
   FileText,
   CreditCard,
+  ScanLine,
 } from "lucide-react";
 import { getDashboardStats, getPaymentStats } from "../../../../apis/admin.api";
 import { useQuery } from "@tanstack/react-query";
@@ -39,7 +40,6 @@ export const AdminSidebar = ({
     queryFn: () => getDashboardStats({ period: selectedPeriod }),
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
-  console.log("Dashboard Data:", dataDashboard);
   const { data: statsData } = useQuery({
     queryKey: ["admin-payment-stats", statsFilter],
     queryFn: () => getPaymentStats({ period: statsFilter }),
@@ -65,14 +65,14 @@ export const AdminSidebar = ({
       id: "staff",
       label: "Staff Management",
       icon: Users,
-      count: null,
+      count: dataDashboard?.hr_stats?.total_staff || 0,
       color: "from-indigo-500 to-purple-500",
     },
     {
       id: "contracts",
       label: "Manager Contracts",
       icon: FileText,
-      count: null,
+      count: dataDashboard?.hr_stats?.total_contracts || 0,
       color: "from-teal-500 to-green-500",
     },
     {
@@ -81,6 +81,13 @@ export const AdminSidebar = ({
       icon: CreditCard,
       count: statsData?.result.overview.total_payments.toLocaleString() || 0,
       color: "from-green-500 to-emerald-500",
+    },
+    {
+      id: "ticket-verification",
+      label: "Ticket Verification",
+      icon: ScanLine,
+      count: null,
+      color: "from-cyan-500 to-blue-500",
     },
     {
       id: "movies",

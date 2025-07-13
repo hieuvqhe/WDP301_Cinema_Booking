@@ -29,7 +29,7 @@ import {
   formatDateTime,
   formatSeats,
 } from "../../utils/format";
-import QRSection from "../../components/QR/QRSection";
+import TicketQRSection from "../../components/QR/TicketQRSection";
 
 const MyBooking: React.FC = () => {
   const [filters, setFilters] = useState<BookingQueryParams>({
@@ -106,7 +106,14 @@ const MyBooking: React.FC = () => {
     setFilters((prev) => ({
       ...prev,
       [key]: value,
-      page: 1,
+      page: 1, // Reset to page 1 when filters change
+    }));
+  };
+
+  const handlePageChange = (page: number) => {
+    setFilters((prev) => ({
+      ...prev,
+      page,
     }));
   };
 
@@ -406,17 +413,18 @@ const MyBooking: React.FC = () => {
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              className="bg-white rounded-2xl p-6 max-w-[500px] w-full"
+              className="bg-white rounded-2xl p-6 max-w-5xl w-full mx-4"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="text-center">
-                <h3 className="text-xl font-bold text-gray-900 mb-4">
+              <div>
+                <h3 className="text-xl font-bold text-gray-900 mb-4 text-center">
                   Your Ticket
                 </h3>
-                <div className="bg-gray-100 rounded-lg p-4 mb-4">
-                  <QRSection
-                    content={selectedTicket}
-                    amount={bookingData?.total_amount}
+                <div className="mb-4">
+                  <TicketQRSection
+                    qrData={qrData.qr_code}
+                    ticketCode={selectedTicket}
+                    bookingData={bookingData}
                   />
                 </div>
 
@@ -448,7 +456,7 @@ const MyBooking: React.FC = () => {
               ).map((page) => (
                 <button
                   key={page}
-                  onClick={() => handleFilterChange("page", page)}
+                  onClick={() => handlePageChange(page)}
                   className={`px-4 py-2 rounded-lg transition-colors ${
                     page === filters.page
                       ? "bg-purple-600 text-white"
