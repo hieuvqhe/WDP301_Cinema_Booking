@@ -360,6 +360,44 @@ export const getMyMovies = async (
   }
 };
 
+// Check if a movie title already exists for current staff
+export const checkMovieTitleExists = async (title: string): Promise<boolean> => {
+  try {
+    const staffApi = createStaffRequest();
+    
+    // Search for exact title match
+    const response = await staffApi.get('/staff/movies', { 
+      params: { 
+        search: title,
+        limit: 100 // Get enough results to check thoroughly
+      } 
+    });
+    
+    // Normalize function to remove accents, convert to lowercase, and remove special characters
+    const normalizeTitle = (str: string): string => {
+      return str
+        .toLowerCase()
+        .normalize('NFD') // Decompose accented characters
+        .replace(/[\u0300-\u036f]/g, '') // Remove accent marks
+        .replace(/[^a-z0-9\s]/g, '') // Keep only letters, numbers, and spaces
+        .replace(/\s+/g, ' ') // Replace multiple spaces with single space
+        .trim();
+    };
+    
+    // Check if any movie has exact same title (normalized comparison)
+    const existingMovies = response.data.result.movies;
+    const normalizedSearchTitle = normalizeTitle(title);
+    
+    return existingMovies.some((movie: Movie) => {
+      const normalizedMovieTitle = normalizeTitle(movie.title);
+      return normalizedMovieTitle === normalizedSearchTitle;
+    });
+  } catch (error) {
+    console.error('Error checking movie title:', error);
+    return false; // If error occurs, allow creation (don't block user)
+  }
+};
+
 // Create a new movie with ownership
 export const createMovie = async (movieData: MovieCreateRequest): Promise<MovieCreateResponse> => {
   try {

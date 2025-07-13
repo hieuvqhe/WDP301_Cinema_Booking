@@ -7,11 +7,17 @@ export interface MovieCast {
   profile_image: string;
   gender: number;
 }
+
+export interface Genre {
+  id: number;
+  name: string;
+}
+
 export interface Movie {
   _id: string;
   title: string;
   description: string;
-  genre: string[];
+  genre: string[] | Genre[];
   director: string;
   cast: CastMember[];
   duration: number; // in minutes

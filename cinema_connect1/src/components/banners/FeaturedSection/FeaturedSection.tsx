@@ -60,9 +60,11 @@ const FeaturedSection = () => {
         </button>
       </div>
 
-      <div className="grid grid-cols-2 md:grid md:grid-cols-4 max-sm:justify-center gap-8 mt-8">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 lg:gap-8 mt-8 justify-items-center">
         {getShowingMovies?.map((movie) => (
-          <MovieCard key={movie._id} movie={movie} />
+          <div key={movie._id} className="w-full max-w-[280px]">
+            <MovieCard movie={movie} />
+          </div>
         ))}
       </div>
 

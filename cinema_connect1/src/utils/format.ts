@@ -1,3 +1,16 @@
+import type { Genre } from "../types";
+
+/**
+ * Format genre array to string
+ */
+export const formatGenres = (genre: string[] | Genre[]): string => {
+  if (!Array.isArray(genre)) return String(genre);
+  
+  return genre
+    .map(g => typeof g === 'string' ? g : g.name)
+    .join(" - ");
+};
+
 /**
  * Format currency in Vietnamese Dong
  */

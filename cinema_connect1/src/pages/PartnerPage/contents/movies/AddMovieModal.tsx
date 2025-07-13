@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion';
+import { useState, useEffect } from 'react';
 import { 
   AlertCircle, 
   Save, 
@@ -8,12 +9,14 @@ import {
   Image,
   Video,
   User,
-  Trash2
+  Trash2,
+  AlertTriangle
 } from 'lucide-react';
 import { 
   type MovieCreateRequest,
   type MovieCast,
-  createMovie
+  createMovie,
+  checkMovieTitleExists
 } from '../../../../apis/staff.api';
 import mediasApi from '../../../../apis/medias.api';
 import { toast } from 'sonner';
@@ -57,11 +60,70 @@ const AddMovieModal: React.FC<AddMovieModalProps> = ({
   trailerPreview,
   setTrailerPreview
 }) => {
+  // Title checking states
+  const [titleCheckTimer, setTitleCheckTimer] = useState<number | null>(null);
+  const [titleExists, setTitleExists] = useState(false);
+  const [checkingTitle, setCheckingTitle] = useState(false);
+
+  // Check if title exists with debouncing
+  const checkTitleExists = async (title: string) => {
+    if (!title.trim()) {
+      setTitleExists(false);
+      return;
+    }
+
+    try {
+      setCheckingTitle(true);
+      const exists = await checkMovieTitleExists(title);
+      setTitleExists(exists);
+    } catch (error) {
+      console.error('Error checking title:', error);
+      setTitleExists(false);
+    } finally {
+      setCheckingTitle(false);
+    }
+  };
+
+  // Debounced title checking
+  useEffect(() => {
+    if (titleCheckTimer) {
+      clearTimeout(titleCheckTimer);
+    }
+
+    const timer = setTimeout(() => {
+      if (formData.title.trim()) {
+        checkTitleExists(formData.title);
+      } else {
+        setTitleExists(false);
+        setCheckingTitle(false);
+      }
+    }, 800); // Wait 800ms after user stops typing
+
+    setTitleCheckTimer(timer);
+
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [formData.title]);
+
+  // Reset title checking states when modal opens/closes
+  useEffect(() => {
+    if (!isOpen) {
+      setTitleExists(false);
+      setCheckingTitle(false);
+      if (titleCheckTimer) {
+        clearTimeout(titleCheckTimer);
+        setTitleCheckTimer(null);
+      }
+    }
+  }, [isOpen, titleCheckTimer]);
+
   // Form validation
   const validateForm = (): string[] => {
     const errors: string[] = [];
     
     if (!formData.title.trim()) errors.push('Title is required');
+    if (titleExists) errors.push('This movie title already exists in your collection');
     if (!formData.description.trim()) errors.push('Description is required');
     if (formData.duration <= 0) errors.push('Duration must be greater than 0');
     if (formData.genre.length === 0) errors.push('At least one genre is required');
@@ -177,8 +239,6 @@ const AddMovieModal: React.FC<AddMovieModalProps> = ({
       // Upload to server
       const response = await mediasApi.uploadImages(file);
       
-      console.log('Upload response:', response.data); // Debug log
-      
       // Check if response is successful and has the expected structure
       // API response: { message: "Upload success", result: [{ url: "...", type: 0 }] }
       if (response?.data?.result?.[0]?.url) {
@@ -229,8 +289,6 @@ const AddMovieModal: React.FC<AddMovieModalProps> = ({
 
       // Upload to server
       const response = await mediasApi.uploadVideo(file);
-      
-      console.log('Upload response:', response.data); // Debug log
       
       // Check if response is successful and has the expected structure
       // API response: { message: "Upload success", result: [{ url: "...", type: 0 }] }
@@ -359,14 +417,36 @@ const AddMovieModal: React.FC<AddMovieModalProps> = ({
                 <label className="block text-slate-300 text-sm font-medium mb-2">
                   Title <span className="text-red-400">*</span>
                 </label>
-                <input
-                  type="text"
-                  value={formData.title}
-                  onChange={(e) => handleFormChange('title', e.target.value)}
-                  className="w-full bg-slate-700/50 border border-slate-600 rounded-lg px-4 py-2 text-white placeholder-slate-400 focus:border-orange-500 focus:outline-none"
-                  placeholder="Enter movie title"
-                  disabled={isSubmitting}
-                />
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={formData.title}
+                    onChange={(e) => handleFormChange('title', e.target.value)}
+                    className={`w-full bg-slate-700/50 border rounded-lg px-4 py-2 pr-10 text-white placeholder-slate-400 focus:outline-none ${
+                      titleExists 
+                        ? 'border-red-500 focus:border-red-500' 
+                        : 'border-slate-600 focus:border-orange-500'
+                    }`}
+                    placeholder="Enter movie title"
+                    disabled={isSubmitting}
+                  />
+                  {checkingTitle && (
+                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                      <Loader size={16} className="text-slate-400 animate-spin" />
+                    </div>
+                  )}
+                  {titleExists && !checkingTitle && (
+                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                      <AlertTriangle size={16} className="text-red-400" />
+                    </div>
+                  )}
+                </div>
+                {titleExists && !checkingTitle && (
+                  <p className="text-red-400 text-sm mt-1 flex items-center">
+                    <AlertTriangle size={14} className="mr-1" />
+                    This movie title already exists in your collection
+                  </p>
+                )}
               </div>
 
               <div>
@@ -759,13 +839,27 @@ const AddMovieModal: React.FC<AddMovieModalProps> = ({
             </button>
             <button
               type="submit"
-              className="flex-1 bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center justify-center"
-              disabled={isSubmitting}
+              className={`flex-1 px-6 py-3 rounded-lg font-medium transition-colors flex items-center justify-center ${
+                isSubmitting || titleExists || checkingTitle
+                  ? 'bg-slate-600 cursor-not-allowed' 
+                  : 'bg-orange-500 hover:bg-orange-600'
+              } text-white`}
+              disabled={isSubmitting || titleExists || checkingTitle}
             >
               {isSubmitting ? (
                 <>
                   <Loader size={18} className="animate-spin mr-2" />
                   Creating...
+                </>
+              ) : checkingTitle ? (
+                <>
+                  <Loader size={18} className="animate-spin mr-2" />
+                  Checking title...
+                </>
+              ) : titleExists ? (
+                <>
+                  <AlertTriangle size={18} className="mr-2" />
+                  Title already exists
                 </>
               ) : (
                 <>

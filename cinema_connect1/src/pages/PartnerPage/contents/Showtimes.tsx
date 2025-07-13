@@ -40,20 +40,68 @@ import {
 } from '../../../apis/staff.api';
 
 import { 
-  getMyMovies,
-  type Movie 
-} from '../../../apis/staff.api';
+  searchAvailableMovies,
+  getPopularMovies,
+  getMovieById,
+  formatMovieDuration,
+  getMovieStatusDisplay,
+  getMovieStatusColor,
+  isMovieAvailableForShowtime,
+  type StaffMovie,
+  type MovieSearchParams
+} from '../../../apis/movie_staff.api';
 
 import { 
   getTheaterScreens,
   type Screen 
 } from '../../../apis/staff_screen.api';
 
+// Movie Select Item Component
+interface MovieSelectItemProps {
+  movie: StaffMovie;
+  isSelected: boolean;
+  onSelect: (movie: StaffMovie) => void;
+}
+
+const MovieSelectItem = ({ movie, isSelected, onSelect }: MovieSelectItemProps) => (
+  <div
+    onClick={() => onSelect(movie)}
+    className={`p-3 cursor-pointer border-b border-slate-600/50 last:border-b-0 transition-colors ${
+      isSelected 
+        ? 'bg-orange-500/20 border-orange-500/30' 
+        : 'hover:bg-slate-600/30'
+    }`}
+  >
+    <div className="flex items-center">
+      <img 
+        src={movie.poster_url} 
+        alt={movie.title}
+        className="w-12 h-16 object-cover rounded mr-3"
+        onError={(e) => {
+          e.currentTarget.src = '/placeholder-movie.jpg';
+        }}
+      />
+      <div className="flex-1">
+        <h4 className="text-white font-medium">{movie.title}</h4>
+        <p className="text-slate-400 text-sm">{formatMovieDuration(movie.duration)}</p>
+        <p className="text-slate-400 text-xs">{movie.genre.join(', ')}</p>
+        <div className="flex items-center gap-2 mt-1">
+          <span className={`px-2 py-1 rounded text-xs ${getMovieStatusColor(movie.status)}`}>
+            {getMovieStatusDisplay(movie.status)}
+          </span>
+          <span className="text-slate-400 text-xs">
+            ⭐ {movie.average_rating.toFixed(1)} ({movie.ratings_count})
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
 const Showtimes = () => {
   // State management
   const [showtimes, setShowtimes] = useState<Showtime[]>([]);
   const [theater, setTheater] = useState<TheaterResponse | null>(null);
-  const [movies, setMovies] = useState<Movie[]>([]);
   const [screens, setScreens] = useState<Screen[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -62,6 +110,12 @@ const Showtimes = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
   const limit = 10;
+
+  // Movie search states
+  const [movieSearchTerm, setMovieSearchTerm] = useState("");
+  const [movieLoading, setMovieLoading] = useState(false);
+  const [popularMovies, setPopularMovies] = useState<StaffMovie[]>([]);
+  const [searchResults, setSearchResults] = useState<StaffMovie[]>([]);
 
   // Modal states
   const [showAddModal, setShowAddModal] = useState(false);
@@ -85,7 +139,7 @@ const Showtimes = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Form states for create/edit
-  const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
+  const [selectedMovie, setSelectedMovie] = useState<StaffMovie | null>(null);
   const [selectedScreen, setSelectedScreen] = useState<Screen | null>(null);
   const [showDate, setShowDate] = useState('');
   const [showTime, setShowTime] = useState('');
@@ -102,14 +156,14 @@ const Showtimes = () => {
       setTheater(theaterResponse);
       
       if (theaterResponse.result?._id) {
-        // Get movies, screens, and showtimes in parallel
-        const [moviesResponse, screensResponse, showtimesResponse] = await Promise.all([
-          getMyMovies(1, 100), // Get all movies
+        // Get popular movies, screens, and showtimes in parallel
+        const [popularMoviesResponse, screensResponse, showtimesResponse] = await Promise.all([
+          getPopularMovies(20), // Get popular movies for quick selection
           getTheaterScreens(theaterResponse.result._id, 1, 100), // Get all screens
           getMyShowtimes(page, limit, undefined, undefined, undefined, undefined)
         ]);
         
-        setMovies(moviesResponse.result.movies);
+        setPopularMovies(popularMoviesResponse.result.movies);
         setScreens(screensResponse.result.screens);
         setShowtimes(showtimesResponse.result.showtimes);
         setTotalPages(showtimesResponse.result.total_pages);
@@ -121,6 +175,31 @@ const Showtimes = () => {
       console.error('Error fetching data:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Search movies function
+  const searchMovies = async (searchTerm: string) => {
+    if (!searchTerm.trim()) {
+      setSearchResults([]);
+      return;
+    }
+
+    try {
+      setMovieLoading(true);
+      const params: MovieSearchParams = {
+        search: searchTerm,
+        limit: 10,
+        status: 'now_showing' // Only show movies that are currently showing or coming soon
+      };
+      
+      const response = await searchAvailableMovies(params);
+      setSearchResults(response.result.movies.filter(isMovieAvailableForShowtime));
+    } catch (err) {
+      console.error('Error searching movies:', err);
+      toast.error('Failed to search movies');
+    } finally {
+      setMovieLoading(false);
     }
   };
 
@@ -138,7 +217,7 @@ const Showtimes = () => {
   };
 
   // Handle movie selection
-  const handleMovieSelect = (movie: Movie) => {
+  const handleMovieSelect = (movie: StaffMovie) => {
     setSelectedMovie(movie);
     handleFormChange('movie_id', movie._id);
     
@@ -242,20 +321,28 @@ const Showtimes = () => {
       available_seats: showtime.available_seats
     });
     
-    // Set selected movie and screen
-    const movie = movies.find(m => m._id === showtime.movie_id);
-    const screen = screens.find(s => s._id === showtime.screen_id);
-    setSelectedMovie(movie || null);
-    setSelectedScreen(screen || null);
-    
-    // Set date and time from start_time
-    const startDate = new Date(showtime.start_time);
-    setShowDate(startDate.toISOString().split('T')[0]);
-    setShowTime(startDate.toTimeString().substring(0, 5));
-    
-    setFormErrors([]);
-    setIsSubmitting(false);
-    setShowEditModal(true);
+    try {
+      // Fetch movie details and find screen
+      const [movieResponse] = await Promise.all([
+        getMovieById(showtime.movie_id)
+      ]);
+      
+      const screen = screens.find(s => s._id === showtime.screen_id);
+      setSelectedMovie(movieResponse.result);
+      setSelectedScreen(screen || null);
+      
+      // Set date and time from start_time
+      const startDate = new Date(showtime.start_time);
+      setShowDate(startDate.toISOString().split('T')[0]);
+      setShowTime(startDate.toTimeString().substring(0, 5));
+      
+      setFormErrors([]);
+      setIsSubmitting(false);
+      setShowEditModal(true);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch movie details';
+      toast.error(errorMessage);
+    }
   };
 
   const handleViewDetails = async (showtime: Showtime) => {
@@ -756,31 +843,75 @@ const Showtimes = () => {
                     <label className="block text-slate-300 text-sm font-medium mb-2">
                       Select Movie <span className="text-red-400">*</span>
                     </label>
+                    
+                    {/* Movie Search */}
+                    <div className="mb-4">
+                      <div className="relative">
+                        <Search size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
+                        <input
+                          type="text"
+                          placeholder="Search movies..."
+                          value={movieSearchTerm}
+                          onChange={(e) => {
+                            setMovieSearchTerm(e.target.value);
+                            searchMovies(e.target.value);
+                          }}
+                          className="w-full bg-slate-700/30 border border-slate-600 rounded-lg pl-10 pr-4 py-2 text-white placeholder-slate-400 focus:border-orange-500 focus:outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Movie Selection */}
                     <div className="max-h-48 overflow-y-auto bg-slate-700/30 rounded-lg border border-slate-600">
-                      {movies.map((movie) => (
-                        <div
-                          key={movie._id}
-                          onClick={() => handleMovieSelect(movie)}
-                          className={`p-3 cursor-pointer border-b border-slate-600/50 last:border-b-0 transition-colors ${
-                            selectedMovie?._id === movie._id 
-                              ? 'bg-orange-500/20 border-orange-500/30' 
-                              : 'hover:bg-slate-600/30'
-                          }`}
-                        >
-                          <div className="flex items-center">
-                            <img 
-                              src={movie.poster_url} 
-                              alt={movie.title}
-                              className="w-12 h-16 object-cover rounded mr-3"
-                            />
-                            <div className="flex-1">
-                              <h4 className="text-white font-medium">{movie.title}</h4>
-                              <p className="text-slate-400 text-sm">{movie.duration} minutes</p>
-                              <p className="text-slate-400 text-xs">{movie.genre.join(', ')}</p>
-                            </div>
-                          </div>
+                      {movieLoading ? (
+                        <div className="p-4 text-center text-slate-400">
+                          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-orange-400 mx-auto"></div>
+                          <p className="mt-2">Searching movies...</p>
                         </div>
-                      ))}
+                      ) : (
+                        <>
+                          {/* Search Results */}
+                          {movieSearchTerm && searchResults.length > 0 && (
+                            <div>
+                              <div className="px-3 py-2 bg-slate-600/50 text-slate-300 text-xs font-medium">
+                                Search Results
+                              </div>
+                              {searchResults.map((movie) => (
+                                <MovieSelectItem 
+                                  key={movie._id} 
+                                  movie={movie} 
+                                  isSelected={selectedMovie?._id === movie._id}
+                                  onSelect={handleMovieSelect}
+                                />
+                              ))}
+                            </div>
+                          )}
+                          
+                          {/* Popular Movies */}
+                          {(!movieSearchTerm || searchResults.length === 0) && (
+                            <div>
+                              <div className="px-3 py-2 bg-slate-600/50 text-slate-300 text-xs font-medium">
+                                Popular Movies
+                              </div>
+                              {popularMovies.map((movie) => (
+                                <MovieSelectItem 
+                                  key={movie._id} 
+                                  movie={movie} 
+                                  isSelected={selectedMovie?._id === movie._id}
+                                  onSelect={handleMovieSelect}
+                                />
+                              ))}
+                            </div>
+                          )}
+                          
+                          {/* No Results */}
+                          {movieSearchTerm && searchResults.length === 0 && !movieLoading && (
+                            <div className="p-4 text-center text-slate-400">
+                              <p>No movies found matching "{movieSearchTerm}"</p>
+                            </div>
+                          )}
+                        </>
+                      )}
                     </div>
                   </div>
 
@@ -1060,37 +1191,40 @@ const Showtimes = () => {
               )}
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {/* Movie Selection */}
+                {/* Movie Selection - Read Only in Edit Mode */}
                 <div className="space-y-4">
                   <div>
                     <label className="block text-slate-300 text-sm font-medium mb-2">
-                      Select Movie <span className="text-red-400">*</span>
+                      Selected Movie <span className="text-slate-400">(Cannot be changed)</span>
                     </label>
-                    <div className="max-h-48 overflow-y-auto bg-slate-700/30 rounded-lg border border-slate-600">
-                      {movies.map((movie) => (
-                        <div
-                          key={movie._id}
-                          onClick={() => handleMovieSelect(movie)}
-                          className={`p-3 cursor-pointer border-b border-slate-600/50 last:border-b-0 transition-colors ${
-                            selectedMovie?._id === movie._id 
-                              ? 'bg-orange-500/20 border-orange-500/30' 
-                              : 'hover:bg-slate-600/30'
-                          }`}
-                        >
-                          <div className="flex items-center">
-                            <img 
-                              src={movie.poster_url} 
-                              alt={movie.title}
-                              className="w-12 h-16 object-cover rounded mr-3"
-                            />
-                            <div className="flex-1">
-                              <h4 className="text-white font-medium">{movie.title}</h4>
-                              <p className="text-slate-400 text-sm">{movie.duration} minutes</p>
-                              <p className="text-slate-400 text-xs">{movie.genre.join(', ')}</p>
+                    <div className="bg-slate-700/30 rounded-lg border border-slate-600 p-4">
+                      {selectedMovie ? (
+                        <div className="flex items-center">
+                          <img 
+                            src={selectedMovie.poster_url} 
+                            alt={selectedMovie.title}
+                            className="w-12 h-16 object-cover rounded mr-3"
+                            onError={(e) => {
+                              e.currentTarget.src = '/placeholder-movie.jpg';
+                            }}
+                          />
+                          <div className="flex-1">
+                            <h4 className="text-white font-medium">{selectedMovie.title}</h4>
+                            <p className="text-slate-400 text-sm">{formatMovieDuration(selectedMovie.duration)}</p>
+                            <p className="text-slate-400 text-xs">{selectedMovie.genre.join(', ')}</p>
+                            <div className="flex items-center gap-2 mt-1">
+                              <span className={`px-2 py-1 rounded text-xs ${getMovieStatusColor(selectedMovie.status)}`}>
+                                {getMovieStatusDisplay(selectedMovie.status)}
+                              </span>
+                              <span className="text-slate-400 text-xs">
+                                ⭐ {selectedMovie.average_rating.toFixed(1)} ({selectedMovie.ratings_count})
+                              </span>
                             </div>
                           </div>
                         </div>
-                      ))}
+                      ) : (
+                        <p className="text-slate-400">Loading movie information...</p>
+                      )}
                     </div>
                   </div>
 
