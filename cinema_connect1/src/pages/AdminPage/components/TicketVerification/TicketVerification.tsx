@@ -28,6 +28,8 @@ interface VerificationResult {
 const TicketVerification: React.FC = () => {
   const [isScanning, setIsScanning] = useState(false);
   const [scanResult, setScanResult] = useState<VerificationResult | null>(null);
+  const [qrScanner, setQrScanner] = useState<QrScanner | null>(null);
+
   const [error, setError] = useState<string | null>(null);
   const [isVerifying, setIsVerifying] = useState(false);
   const [manualInput, setManualInput] = useState("");
@@ -41,75 +43,56 @@ const TicketVerification: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const scanIntervalRef = useRef(null);
 
-  const setupVideoStream = async (mediaStream: MediaStream) => {
-    if (!videoRef.current) {
-      throw new Error("Video element not available");
-    }
+  const setupQrScanner = () => {
+    if (!videoRef.current) return;
 
-    console.log("Setting up video stream with element:", videoRef.current);
+    const scanner = new QrScanner(
+      videoRef.current,
+      (result) => {
+        // result tự động là object với properties data và cornerPoints
+        const qrData = result.data;
 
-    const video = videoRef.current;
-    video.srcObject = mediaStream;
+        if (qrData && qrData !== lastScannedCode) {
+          console.log("QR Code detected:", qrData);
+          setLastScannedCode(qrData);
 
-    // Setup event listeners with proper cleanup
-    const handleLoadedMetadata = () => {
-      console.log("Video metadata loaded");
-      setCameraStatus("active");
-    };
+          // Tạm dừng scanning để tránh scan liên tục
+          scanner.stop();
 
-    const handleCanPlay = () => {
-      console.log("Video can start playing");
-      setIsScanning(true);
-      startScanning();
-    };
+          // Show visual feedback
+          toast.info(`QR Code detected: ${qrData.substring(0, 20)}...`);
 
-    const handleError = (e: Event) => {
-      console.error("Video error:", e);
-      setCameraStatus("error");
-      setError("Error playing video stream");
-    };
+          // Verify ticket
+          handleVerifyTicket(qrData);
 
-    video.addEventListener("loadedmetadata", handleLoadedMetadata);
-    video.addEventListener("canplay", handleCanPlay);
-    video.addEventListener("error", handleError);
+          // Resume sau 3 giây
+          setTimeout(() => {
+            if (isScanning) {
+              scanner.start();
+            }
+          }, 3000);
+        }
+      },
+      {
+        // Không cần returnDetailedScanResult vì instance luôn trả về detailed result
+        highlightScanRegion: true,
+        highlightCodeOutline: true,
+        maxScansPerSecond: 2, // Giảm frequency để tối ưu performance
+      }
+    );
 
-    // Auto-play
-    try {
-      await video.play();
-      console.log("Video started playing successfully");
-    } catch (playError) {
-      console.log(
-        "Auto-play failed, user interaction may be required:",
-        playError
-      );
-    }
-
-    // Return cleanup function
-    return () => {
-      video.removeEventListener("loadedmetadata", handleLoadedMetadata);
-      video.removeEventListener("canplay", handleCanPlay);
-      video.removeEventListener("error", handleError);
-    };
+    setQrScanner(scanner);
+    return scanner;
   };
-
-  // 3. Simplified startCamera function
   const startCamera = async () => {
     try {
       setError(null);
       setCameraStatus("starting");
-      console.log("Starting camera...");
 
-      // Check if video element is available
-      if (!videoRef.current) {
-        throw new Error(
-          "Video element not found. Component may not be fully mounted."
-        );
-      }
-
-      // Camera constraints with fallback
-      let constraints = {
+      // Get camera stream (code giữ nguyên như cũ)
+      const constraints = {
         video: {
-          facingMode: "environment", // Back camera on mobile
+          facingMode: "environment",
           width: { ideal: 1280 },
           height: { ideal: 720 },
         },
@@ -118,33 +101,85 @@ const TicketVerification: React.FC = () => {
       let mediaStream;
       try {
         mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
-      } catch (err) {
-        console.log("Failed with environment camera, trying user camera:", err);
-        // Fallback to front camera
-        constraints = {
+      } catch (err: any) {
+        console.log(
+          "Environment camera not available, trying user camera...",
+          err
+        );
+
+        const fallbackConstraints = {
           video: {
             facingMode: "user",
             width: { ideal: 640 },
             height: { ideal: 480 },
           },
         };
-        mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
+        mediaStream = await navigator.mediaDevices.getUserMedia(
+          fallbackConstraints
+        );
       }
 
-      console.log("Camera stream obtained:", mediaStream);
       setStream(mediaStream);
 
-      // Setup video stream
-      await setupVideoStream(mediaStream);
+      // Setup video
+      if (videoRef.current) {
+        const video = videoRef.current;
+        video.srcObject = mediaStream;
+
+        video.onloadedmetadata = () => {
+          setCameraStatus("active");
+          video.play().then(() => {
+            // Khởi tạo QR scanner instance
+            const scanner = setupQrScanner();
+            if (scanner) {
+              scanner.start().then(() => {
+                setIsScanning(true);
+                console.log("QR Scanner started successfully");
+              });
+            }
+          });
+        };
+      }
     } catch (err) {
       console.error("Error accessing camera:", err);
       setCameraStatus("error");
-      setError(
-        "Could not access camera. Please check permissions and try again."
-      );
-      toast.error("Camera access failed");
+      setError("Could not access camera");
     }
   };
+
+  // Stop camera và scanner
+  const stopCamera = () => {
+    // Stop QR scanner
+    if (qrScanner) {
+      qrScanner.stop();
+      qrScanner.destroy();
+      setQrScanner(null);
+    }
+
+    // Stop camera stream
+    if (stream) {
+      stream.getTracks().forEach((track) => track.stop());
+      setStream(null);
+    }
+
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+
+    setIsScanning(false);
+    setCameraStatus("idle");
+  };
+
+  // Cleanup effect
+  useEffect(() => {
+    return () => {
+      if (qrScanner) {
+        qrScanner.stop();
+        qrScanner.destroy();
+      }
+      stopCamera();
+    };
+  }, []);
 
   // 4. Add small delay in useEffect to ensure DOM is ready
   useEffect(() => {
@@ -162,41 +197,6 @@ const TicketVerification: React.FC = () => {
     };
   }, []);
 
-  // Stop camera
-  const stopCamera = () => {
-    console.log("Stopping camera...");
-
-    if (stream) {
-      stream.getTracks().forEach((track) => {
-        track.stop();
-        console.log("Stopped track:", track);
-      });
-      setStream(null);
-    }
-
-    if (videoRef.current) {
-      const video = videoRef.current;
-
-      // Remove all event listeners
-      video.removeEventListener("loadedmetadata", () => {});
-      video.removeEventListener("canplay", () => {});
-      video.removeEventListener("error", () => {});
-
-      // Clear video source
-      video.srcObject = null;
-      video.pause();
-    }
-
-    if (scanIntervalRef.current) {
-      clearInterval(scanIntervalRef.current);
-      scanIntervalRef.current = null;
-    }
-
-    setIsScanning(false);
-    setCameraStatus("idle");
-    console.log("Camera stopped");
-  };
-
   // Real QR Code scanning logic using qr-scanner
   const startScanning = () => {
     if (!videoRef.current) {
@@ -205,7 +205,7 @@ const TicketVerification: React.FC = () => {
     }
 
     console.log("Starting QR code scanning...");
-    
+
     // Use qr-scanner to continuously scan for QR codes
     // Reduced frequency to improve performance
     scanIntervalRef.current = setInterval(async () => {
@@ -221,7 +221,7 @@ const TicketVerification: React.FC = () => {
 
     try {
       const video = videoRef.current;
-      
+
       // Check if video is ready
       if (video.readyState < 2) {
         return;
@@ -235,13 +235,13 @@ const TicketVerification: React.FC = () => {
         // Method 2: Fallback - capture to canvas first
         if (canvasRef.current) {
           const canvas = canvasRef.current;
-          const ctx = canvas.getContext('2d');
-          
+          const ctx = canvas.getContext("2d");
+
           if (ctx) {
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
             ctx.drawImage(video, 0, 0);
-            
+
             // Try scanning from canvas
             result = await QrScanner.scanImage(canvas);
           }
@@ -253,19 +253,19 @@ const TicketVerification: React.FC = () => {
       if (result && result !== lastScannedCode) {
         console.log("QR Code detected:", result);
         setLastScannedCode(result);
-        
+
         // Stop scanning temporarily to prevent multiple scans of the same code
         if (scanIntervalRef.current) {
           clearInterval(scanIntervalRef.current);
           scanIntervalRef.current = null;
         }
-        
+
         // Show visual feedback
         toast.info(`QR Code detected: ${result.substring(0, 20)}...`);
-        
+
         // Automatically verify the detected ticket code
         await handleVerifyTicket(result);
-        
+
         // Resume scanning after 3 seconds
         setTimeout(() => {
           if (isScanning && !scanIntervalRef.current) {
@@ -278,9 +278,11 @@ const TicketVerification: React.FC = () => {
       // qr-scanner throws when no QR code is found - this is normal behavior
       if (error instanceof Error) {
         // Only log if it's a real error, not just "no QR code found"
-        if (!error.message.toLowerCase().includes("no qr code") && 
-            !error.message.toLowerCase().includes("not found") &&
-            !error.message.toLowerCase().includes("no code")) {
+        if (
+          !error.message.toLowerCase().includes("no qr code") &&
+          !error.message.toLowerCase().includes("not found") &&
+          !error.message.toLowerCase().includes("no code")
+        ) {
           console.warn("QR scan error:", error.message);
         }
       }
@@ -290,27 +292,40 @@ const TicketVerification: React.FC = () => {
   // Play sound feedback
   const playSound = (isSuccess: boolean) => {
     try {
-      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const audioContext = new (window.AudioContext ||
+        (window as any).webkitAudioContext)();
       const oscillator = audioContext.createOscillator();
       const gainNode = audioContext.createGain();
-      
+
       oscillator.connect(gainNode);
       gainNode.connect(audioContext.destination);
-      
+
       if (isSuccess) {
         // Success sound: Higher pitch, longer duration
         oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
-        oscillator.frequency.setValueAtTime(1000, audioContext.currentTime + 0.1);
+        oscillator.frequency.setValueAtTime(
+          1000,
+          audioContext.currentTime + 0.1
+        );
         gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+        gainNode.gain.exponentialRampToValueAtTime(
+          0.01,
+          audioContext.currentTime + 0.3
+        );
         oscillator.start(audioContext.currentTime);
         oscillator.stop(audioContext.currentTime + 0.3);
       } else {
         // Error sound: Lower pitch, shorter duration
         oscillator.frequency.setValueAtTime(300, audioContext.currentTime);
-        oscillator.frequency.setValueAtTime(200, audioContext.currentTime + 0.1);
+        oscillator.frequency.setValueAtTime(
+          200,
+          audioContext.currentTime + 0.1
+        );
         gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+        gainNode.gain.exponentialRampToValueAtTime(
+          0.01,
+          audioContext.currentTime + 0.2
+        );
         oscillator.start(audioContext.currentTime);
         oscillator.stop(audioContext.currentTime + 0.2);
       }
@@ -333,11 +348,13 @@ const TicketVerification: React.FC = () => {
     try {
       const result = await verifyTicketCode(ticketCode.trim());
       setScanResult(result.result);
+      console.log("Ticket verification result:", result);
 
       // Check if ticket is valid (confirmed status and completed payment)
-      const isValid = result.result.status === "confirmed" && 
-                     result.result.payment_status === "completed";
-      
+      const isValid =
+        result.result.status === "confirmed" &&
+        result.result.payment_status === "completed";
+
       if (isValid) {
         toast.success("✅ Valid Ticket - Allow Entry!");
         playSound(true);
@@ -352,13 +369,12 @@ const TicketVerification: React.FC = () => {
         setError(null);
         setLastScannedCode(""); // Allow rescanning the same code
       }, 10000);
-
     } catch (err: any) {
       const errorMessage = err.message || "Failed to verify ticket";
       setError(errorMessage);
       toast.error(`❌ ${errorMessage}`);
       playSound(false);
-      
+
       // Auto-clear error after 5 seconds
       setTimeout(() => {
         setError(null);
@@ -404,13 +420,13 @@ const TicketVerification: React.FC = () => {
 
     return () => {
       console.log("TicketVerification component unmounting");
-      
+
       // Clean up scanning interval
       if (scanIntervalRef.current) {
         clearInterval(scanIntervalRef.current);
         scanIntervalRef.current = null;
       }
-      
+
       // Stop camera
       stopCamera();
     };
@@ -533,7 +549,10 @@ const TicketVerification: React.FC = () => {
               {/* Debug info */}
               <div className="mt-2 text-xs text-gray-500">
                 Status: {cameraStatus} | Stream: {stream ? "Active" : "None"} |
-                Scanning: {isScanning ? "Yes" : "No"} | Last: {lastScannedCode ? lastScannedCode.substring(0, 10) + "..." : "None"}
+                Scanning: {isScanning ? "Yes" : "No"} | Last:{" "}
+                {lastScannedCode
+                  ? lastScannedCode.substring(0, 10) + "..."
+                  : "None"}
               </div>
             </div>
             {/* Camera Controls */}
@@ -557,26 +576,6 @@ const TicketVerification: React.FC = () => {
                 </button>
               )}
 
-              {/* Retry button - show when stream exists but video element is null */}
-              {stream && !videoRef.current && (
-                <button
-                  onClick={async () => {
-                    console.log("Manual retry video setup...");
-                    try {
-                      await setupVideoStream(stream);
-                    } catch (error) {
-                      console.error("Retry failed:", error);
-                      toast.error(
-                        "Retry failed - try stopping and starting camera again"
-                      );
-                    }
-                  }}
-                  className="px-4 py-3 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg transition-colors text-sm"
-                >
-                  Retry Video
-                </button>
-              )}
-
               {/* Clear results button */}
               {(scanResult || error) && (
                 <button
@@ -591,60 +590,6 @@ const TicketVerification: React.FC = () => {
                   Clear
                 </button>
               )}
-              
-              {/* Debug button */}
-              <button
-                onClick={() => {
-                  console.log("=== CAMERA DEBUG INFO ===");
-                  console.log("Camera Status:", cameraStatus);
-                  console.log("Stream:", stream);
-                  console.log("Video Element:", videoRef.current);
-                  console.log("Is Scanning:", isScanning);
-                  console.log("Last Scanned Code:", lastScannedCode);
-                  console.log(
-                    "Video Element in DOM:",
-                    document.querySelector("video")
-                  );
-                  console.log(
-                    "Component mounted:",
-                    !!document.querySelector('[data-testid="video-container"]')
-                  );
-
-                  if (videoRef.current) {
-                    console.log("Video srcObject:", videoRef.current.srcObject);
-                    console.log(
-                      "Video readyState:",
-                      videoRef.current.readyState
-                    );
-                    console.log("Video paused:", videoRef.current.paused);
-                    console.log(
-                      "Video width/height:",
-                      videoRef.current.videoWidth,
-                      videoRef.current.videoHeight
-                    );
-                    console.log(
-                      "Video currentTime:",
-                      videoRef.current.currentTime
-                    );
-                  }
-
-                  // Try to force video element refresh
-                  if (stream && !videoRef.current) {
-                    console.log("Attempting to retry video setup...");
-                    setTimeout(() => {
-                      if (videoRef.current && stream) {
-                        console.log(
-                          "Retrying video setup with existing stream"
-                        );
-                        setupVideoStream(stream);
-                      }
-                    }, 100);
-                  }
-                }}
-                className="px-4 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors text-sm"
-              >
-                Debug
-              </button>
             </div>
 
             {/* Manual Input */}
