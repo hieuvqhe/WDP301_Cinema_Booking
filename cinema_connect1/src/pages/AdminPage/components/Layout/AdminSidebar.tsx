@@ -11,6 +11,7 @@ import {
   ChevronRight,
   FileText,
   CreditCard,
+  ScanLine,
 } from "lucide-react";
 import { getDashboardStats, getPaymentStats } from "../../../../apis/admin.api";
 import { useQuery } from "@tanstack/react-query";
@@ -80,6 +81,13 @@ export const AdminSidebar = ({
       icon: CreditCard,
       count: statsData?.result.overview.total_payments.toLocaleString() || 0,
       color: "from-green-500 to-emerald-500",
+    },
+    {
+      id: "ticket-verification",
+      label: "Ticket Verification",
+      icon: ScanLine,
+      count: null,
+      color: "from-cyan-500 to-blue-500",
     },
     {
       id: "movies",

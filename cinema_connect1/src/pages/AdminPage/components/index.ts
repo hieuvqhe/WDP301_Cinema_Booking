@@ -28,3 +28,6 @@ export { ContractManagement } from "./ContractManagement/ContractManagement";
 
 // Payment Management Components
 export { PaymentManagement } from "../../../components/admin/PaymentManagement";
+
+// Ticket Verification Components
+export { TicketVerification } from "./TicketVerification";
