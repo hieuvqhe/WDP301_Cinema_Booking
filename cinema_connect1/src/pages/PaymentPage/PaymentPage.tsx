@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useMutation } from "@tanstack/react-query";
 import { motion } from "framer-motion";
@@ -21,7 +21,7 @@ import type {
   PaymentMethod,
 } from "../../types/Payment.type";
 
-// Mock booking data - replace with real data from your booking context/store
+// Real booking data from localStorage
 interface BookingData {
   _id: string;
   movie: {
@@ -46,6 +46,29 @@ interface BookingData {
   total_amount: number;
 }
 
+// Interface for localStorage data
+interface StoredMovieInfo {
+  movieId: string;
+  movieTitle: string;
+  moviePoster: string;
+  movieDuration: number;
+  theaterId: string;
+  theaterName: string;
+  theaterLocation: string;
+  showtimeId: string;
+  showDate: string;
+  startTime: string;
+  endTime: string;
+  seats: string[];
+  totalAmount: number;
+  price: {
+    regular: number;
+    premium: number;
+    recliner: number;
+    couple: number;
+  };
+}
+
 const PaymentPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -55,28 +78,84 @@ const PaymentPage: React.FC = () => {
     useState<PaymentMethod>("vnpay");
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // Mock booking data - replace with actual API call
-  const [bookingData] = useState<BookingData>({
-    _id: bookingId || "",
-    movie: {
-      title: "Guardian of the Galaxy Vol. 3",
-      poster_url: "/api/placeholder/300/400",
-      duration: 150,
-    },
-    theater: {
-      name: "Galaxy Cinema Central",
-      location: "Quận 1, TP.HCM",
-    },
-    showtime: {
-      start_time: "2024-12-20T19:30:00Z",
-      end_time: "2024-12-20T22:00:00Z",
-    },
-    seats: [
-      { row: "H", number: 7, type: "regular", price: 80000 },
-      { row: "H", number: 8, type: "regular", price: 80000 },
-    ],
-    total_amount: 160000,
-  });
+  // Get real booking data from localStorage
+  const [bookingData, setBookingData] = useState<BookingData | null>(null);
+  const [hasValidSeats, setHasValidSeats] = useState(false);
+
+  useEffect(() => {
+    const storedData = localStorage.getItem("selected-movie-info");
+    if (storedData) {
+      try {
+        const parsed: StoredMovieInfo = JSON.parse(storedData);
+        
+        // Check if seats are selected
+        if (!parsed.seats || parsed.seats.length === 0) {
+          setHasValidSeats(false);
+          toast.error("Please select at least one seat before proceeding to payment");
+          return;
+        }
+
+        setHasValidSeats(true);
+
+        // Convert seat strings to detailed seat objects
+        const seatDetails = parsed.seats.map(seatKey => {
+          const row = seatKey.charAt(0);
+          const number = parseInt(seatKey.slice(1));
+          
+          // Determine seat type and price based on row or other logic
+          let type = "regular";
+          let price = parsed.price?.regular || 80000;
+          
+          // You can add logic here to determine seat type based on row
+          if (row >= 'A' && row <= 'C') {
+            type = "premium";
+            price = parsed.price?.premium || 120000;
+          } else if (row >= 'D' && row <= 'F') {
+            type = "recliner";
+            price = parsed.price?.recliner || 150000;
+          } else if (row === 'Z') {
+            type = "couple";
+            price = parsed.price?.couple || 200000;
+          }
+
+          return {
+            row,
+            number,
+            type,
+            price
+          };
+        });
+
+        const formattedBookingData: BookingData = {
+          _id: bookingId || parsed.showtimeId || "",
+          movie: {
+            title: parsed.movieTitle || "Unknown Movie",
+            poster_url: parsed.moviePoster || "/api/placeholder/300/400",
+            duration: parsed.movieDuration || 120,
+          },
+          theater: {
+            name: parsed.theaterName || "Unknown Theater",
+            location: parsed.theaterLocation || "Unknown Location",
+          },
+          showtime: {
+            start_time: parsed.startTime || new Date().toISOString(),
+            end_time: parsed.endTime || new Date().toISOString(),
+          },
+          seats: seatDetails,
+          total_amount: parsed.totalAmount || 0,
+        };
+
+        setBookingData(formattedBookingData);
+      } catch (error) {
+        console.error("Error parsing stored movie info:", error);
+        setHasValidSeats(false);
+        toast.error("Invalid booking data. Please select seats again.");
+      }
+    } else {
+      setHasValidSeats(false);
+      toast.error("No booking information found. Please select seats first.");
+    }
+  }, [bookingId]);
 
   const createPaymentMutation = useMutation({
     mutationFn: (data: CreatePaymentRequest) => paymentApi.createPayment(data),
@@ -130,15 +209,37 @@ const PaymentPage: React.FC = () => {
   ];
 
   const handlePayment = async () => {
-    if (!bookingId) {
+    if (!bookingData) {
+      toast.error("No booking data available");
+      return;
+    }
+
+    if (!hasValidSeats) {
+      toast.error("Please select at least one seat before proceeding");
+      navigate(-1); // Go back to seat selection
+      return;
+    }
+
+    if (!bookingId && !bookingData._id) {
       toast.error("Booking ID is required");
+      return;
+    }
+
+    if (bookingData.seats.length === 0) {
+      toast.error("No seats selected. Please go back and select seats.");
+      navigate(-1);
+      return;
+    }
+
+    if (bookingData.total_amount <= 0) {
+      toast.error("Invalid total amount. Please check your booking.");
       return;
     }
 
     setIsProcessing(true);
 
     const paymentData: CreatePaymentRequest = {
-      booking_id: bookingId,
+      booking_id: bookingId || bookingData._id,
       payment_method: selectedPaymentMethod,
     };
 
@@ -163,21 +264,34 @@ const PaymentPage: React.FC = () => {
     });
   };
 
-  if (!bookingId) {
+  if (!hasValidSeats || !bookingData) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
         <div className="text-center">
           <AlertCircle className="h-16 w-16 text-red-400 mx-auto mb-4" />
           <h2 className="text-2xl font-bold text-white mb-2">
-            Invalid Booking
+            {!bookingData ? "No Booking Data" : "No Seats Selected"}
           </h2>
-          <p className="text-gray-300 mb-4">No booking ID provided</p>
-          <button
-            onClick={() => navigate("/my-bookings")}
-            className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-          >
-            Go to My Bookings
-          </button>
+          <p className="text-gray-300 mb-4">
+            {!bookingData 
+              ? "Please select seats and try again" 
+              : "You need to select at least one seat to proceed with payment"
+            }
+          </p>
+          <div className="flex gap-4 justify-center">
+            <button
+              onClick={() => navigate(-1)}
+              className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+            >
+              Go Back
+            </button>
+            <button
+              onClick={() => navigate("/")}
+              className="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+            >
+              Home
+            </button>
+          </div>
         </div>
       </div>
     );
