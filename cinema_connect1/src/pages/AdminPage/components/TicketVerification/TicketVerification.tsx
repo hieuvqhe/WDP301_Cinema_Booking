@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -8,10 +9,8 @@ import {
   AlertTriangle,
   RefreshCw,
   User,
-  MapPin,
   Clock,
   Ticket,
-  CreditCard,
 } from "lucide-react";
 import { verifyTicketCode } from "../../../../apis/admin.api";
 import { toast } from "sonner";
@@ -32,10 +31,10 @@ const TicketVerification: React.FC = () => {
   const [isVerifying, setIsVerifying] = useState(false);
   const [manualInput, setManualInput] = useState("");
   const [stream, setStream] = useState<MediaStream | null>(null);
-  
+
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const scanIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const scanIntervalRef = useRef(null);
 
   // Start camera
   const startCamera = async () => {
@@ -48,7 +47,7 @@ const TicketVerification: React.FC = () => {
           height: { ideal: 720 },
         },
       });
-      
+
       setStream(mediaStream);
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
@@ -66,7 +65,7 @@ const TicketVerification: React.FC = () => {
   // Stop camera
   const stopCamera = () => {
     if (stream) {
-      stream.getTracks().forEach(track => track.stop());
+      stream.getTracks().forEach((track) => track.stop());
       setStream(null);
     }
     if (scanIntervalRef.current) {
@@ -78,17 +77,17 @@ const TicketVerification: React.FC = () => {
 
   // QR Code scanning logic (simplified - in production you'd use a proper QR scanner library)
   const startScanning = () => {
-    scanIntervalRef.current = setInterval(() => {
+    (scanIntervalRef as any).current = setInterval(() => {
       if (videoRef.current && canvasRef.current && !isVerifying) {
         const video = videoRef.current;
         const canvas = canvasRef.current;
-        const ctx = canvas.getContext('2d');
-        
+        const ctx = canvas.getContext("2d");
+
         if (ctx && video.readyState === video.HAVE_ENOUGH_DATA) {
           canvas.width = video.videoWidth;
           canvas.height = video.videoHeight;
           ctx.drawImage(video, 0, 0);
-          
+
           // In a real implementation, you would use a QR code detection library here
           // For demo purposes, we'll simulate detection
           detectQRCode();
@@ -103,7 +102,6 @@ const TicketVerification: React.FC = () => {
     // - qr-scanner
     // - jsqr
     // - qrcode-reader
-    
     // For now, we'll just show the manual input option
   };
 
@@ -121,9 +119,12 @@ const TicketVerification: React.FC = () => {
     try {
       const result = await verifyTicketCode(ticketCode.trim());
       setScanResult(result.result);
-      
+
       // Check if ticket is valid (confirmed status and completed payment)
-      if (result.result.status === "confirmed" && result.result.payment_status === "completed") {
+      if (
+        result.result.status === "confirmed" &&
+        result.result.payment_status === "completed"
+      ) {
         toast.success("Ticket verified successfully!");
       } else {
         toast.error("Invalid ticket - status or payment not confirmed");
@@ -140,15 +141,17 @@ const TicketVerification: React.FC = () => {
   // Get verification status
   const getVerificationStatus = () => {
     if (!scanResult) return null;
-    
-    const isValid = scanResult.status === "confirmed" && scanResult.payment_status === "completed";
+
+    const isValid =
+      scanResult.status === "confirmed" &&
+      scanResult.payment_status === "completed";
     return {
       isValid,
       icon: isValid ? CheckCircle : XCircle,
       color: isValid ? "text-green-500" : "text-red-500",
       bgColor: isValid ? "bg-green-50" : "bg-red-50",
       borderColor: isValid ? "border-green-200" : "border-red-200",
-      message: isValid ? "Valid Ticket" : "Invalid Ticket"
+      message: isValid ? "Valid Ticket" : "Invalid Ticket",
     };
   };
 
@@ -175,8 +178,12 @@ const TicketVerification: React.FC = () => {
           animate={{ opacity: 1, y: 0 }}
           className="mb-8"
         >
-          <h1 className="text-3xl font-bold text-white mb-2">Ticket Verification</h1>
-          <p className="text-gray-400">Scan or enter ticket codes to verify customer entries</p>
+          <h1 className="text-3xl font-bold text-white mb-2">
+            Ticket Verification
+          </h1>
+          <p className="text-gray-400">
+            Scan or enter ticket codes to verify customer entries
+          </p>
         </motion.div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -203,10 +210,7 @@ const TicketVerification: React.FC = () => {
                       playsInline
                       muted
                     />
-                    <canvas
-                      ref={canvasRef}
-                      className="hidden"
-                    />
+                    <canvas ref={canvasRef} className="hidden" />
                     {/* Scanning overlay */}
                     <div className="absolute inset-0 pointer-events-none">
                       <div className="absolute inset-4 border-2 border-blue-400 rounded-lg">
@@ -253,7 +257,9 @@ const TicketVerification: React.FC = () => {
 
             {/* Manual Input */}
             <div className="mt-6 pt-6 border-t border-slate-700">
-              <h3 className="text-lg font-medium text-white mb-4">Manual Input</h3>
+              <h3 className="text-lg font-medium text-white mb-4">
+                Manual Input
+              </h3>
               <div className="flex gap-3">
                 <input
                   type="text"
@@ -262,7 +268,7 @@ const TicketVerification: React.FC = () => {
                   placeholder="Enter ticket code manually"
                   className="flex-1 px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   onKeyPress={(e) => {
-                    if (e.key === 'Enter') {
+                    if (e.key === "Enter") {
                       handleVerifyTicket(manualInput);
                     }
                   }}
@@ -291,7 +297,9 @@ const TicketVerification: React.FC = () => {
           >
             <div className="flex items-center gap-3 mb-6">
               <Ticket className="h-6 w-6 text-purple-400" />
-              <h2 className="text-xl font-semibold text-white">Verification Result</h2>
+              <h2 className="text-xl font-semibold text-white">
+                Verification Result
+              </h2>
             </div>
 
             <AnimatePresence mode="wait">
@@ -305,7 +313,9 @@ const TicketVerification: React.FC = () => {
                   <div className="flex items-center gap-3">
                     <AlertTriangle className="h-6 w-6 text-red-500" />
                     <div>
-                      <h3 className="font-medium text-red-800">Verification Failed</h3>
+                      <h3 className="font-medium text-red-800">
+                        Verification Failed
+                      </h3>
                       <p className="text-red-600 text-sm">{error}</p>
                     </div>
                   </div>
@@ -338,7 +348,9 @@ const TicketVerification: React.FC = () => {
                       <Ticket className="h-5 w-5 text-gray-500" />
                       <div>
                         <p className="text-sm text-gray-600">Ticket Code</p>
-                        <p className="font-mono font-medium">{scanResult.ticket_code}</p>
+                        <p className="font-mono font-medium">
+                          {scanResult.ticket_code}
+                        </p>
                       </div>
                     </div>
 
@@ -346,7 +358,9 @@ const TicketVerification: React.FC = () => {
                       <User className="h-5 w-5 text-gray-500" />
                       <div>
                         <p className="text-sm text-gray-600">Booking ID</p>
-                        <p className="font-mono font-medium">{scanResult.booking_id}</p>
+                        <p className="font-mono font-medium">
+                          {scanResult.booking_id}
+                        </p>
                       </div>
                     </div>
 
@@ -354,24 +368,34 @@ const TicketVerification: React.FC = () => {
                       <Clock className="h-5 w-5 text-gray-500" />
                       <div>
                         <p className="text-sm text-gray-600">Booking Time</p>
-                        <p className="font-medium">{formatDate(scanResult.booking_time)}</p>
+                        <p className="font-medium">
+                          {formatDate(scanResult.booking_time)}
+                        </p>
                       </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-200">
                       <div>
                         <p className="text-sm text-gray-600">Status</p>
-                        <p className={`font-medium capitalize ${
-                          scanResult.status === 'confirmed' ? 'text-green-600' : 'text-red-600'
-                        }`}>
+                        <p
+                          className={`font-medium capitalize ${
+                            scanResult.status === "confirmed"
+                              ? "text-green-600"
+                              : "text-red-600"
+                          }`}
+                        >
                           {scanResult.status}
                         </p>
                       </div>
                       <div>
                         <p className="text-sm text-gray-600">Payment</p>
-                        <p className={`font-medium capitalize ${
-                          scanResult.payment_status === 'completed' ? 'text-green-600' : 'text-red-600'
-                        }`}>
+                        <p
+                          className={`font-medium capitalize ${
+                            scanResult.payment_status === "completed"
+                              ? "text-green-600"
+                              : "text-red-600"
+                          }`}
+                        >
                           {scanResult.payment_status}
                         </p>
                       </div>
@@ -402,10 +426,18 @@ const TicketVerification: React.FC = () => {
           <div className="flex items-start gap-3">
             <AlertTriangle className="h-6 w-6 text-blue-500 mt-1" />
             <div>
-              <h3 className="font-medium text-blue-800 mb-2">Verification Instructions</h3>
+              <h3 className="font-medium text-blue-800 mb-2">
+                Verification Instructions
+              </h3>
               <ul className="text-blue-700 text-sm space-y-1">
-                <li>• Only tickets with "confirmed" status and "completed" payment are valid</li>
-                <li>• Use the camera scanner for QR codes or enter ticket codes manually</li>
+                <li>
+                  • Only tickets with "confirmed" status and "completed" payment
+                  are valid
+                </li>
+                <li>
+                  • Use the camera scanner for QR codes or enter ticket codes
+                  manually
+                </li>
                 <li>• Green result = Valid ticket, allow entry</li>
                 <li>• Red result = Invalid ticket, deny entry</li>
               </ul>
