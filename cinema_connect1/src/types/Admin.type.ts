@@ -1,9 +1,14 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // Admin related types
 export interface DashboardStats {
   period: string;
   user_stats: {
     total_users: number;
     new_users: number;
+  };
+  hr_stats: {
+    total_contracts: number;
+    total_staff: number;
   };
   booking_stats: {
     total_bookings: number;

@@ -39,7 +39,6 @@ export const AdminSidebar = ({
     queryFn: () => getDashboardStats({ period: selectedPeriod }),
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
-  console.log("Dashboard Data:", dataDashboard);
   const { data: statsData } = useQuery({
     queryKey: ["admin-payment-stats", statsFilter],
     queryFn: () => getPaymentStats({ period: statsFilter }),
@@ -65,14 +64,14 @@ export const AdminSidebar = ({
       id: "staff",
       label: "Staff Management",
       icon: Users,
-      count: null,
+      count: dataDashboard?.hr_stats?.total_staff || 0,
       color: "from-indigo-500 to-purple-500",
     },
     {
       id: "contracts",
       label: "Manager Contracts",
       icon: FileText,
-      count: null,
+      count: dataDashboard?.hr_stats?.total_contracts || 0,
       color: "from-teal-500 to-green-500",
     },
     {
