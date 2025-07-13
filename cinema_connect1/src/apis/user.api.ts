@@ -127,6 +127,33 @@ export const getUserProfile = async () => {
   }
 };
 
+// API to get user profile by ID
+// This endpoint allows fetching any user's profile information by their ID
+// Requires authentication and appropriate permissions
+export const getUserProfileById = async (userId: string) => {
+  try {
+    const authenticatedAxios = createAuthenticatedRequest();
+    const response = await authenticatedAxios.get(`/users/profile/${userId}`);
+    return response.data; // Return the user data directly since it's not wrapped in result
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const status = error.response?.status;
+      const message = error.response?.data?.message;
+      
+      if (status === 401) {
+        throw new Error('Unauthorized. Please login again.');
+      } else if (status === 404) {
+        throw new Error('User not found.');
+      } else if (status === 403) {
+        throw new Error('Access denied. Insufficient privileges.');
+      } else {
+        throw new Error(message || 'Failed to get user profile');
+      }
+    }
+    throw new Error('Failed to get user profile');
+  }
+};
+
 // API to update current user profile
 export const updateUserProfile = async (profileData: UpdateProfileRequest) => {
   try {
