@@ -150,8 +150,8 @@ const FeedbackList: React.FC<FeedbackListProps> = ({
               onClick={onAddFeedback}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white 
-                       font-medium rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all"
+              className="px-4 py-2 bg-primary text-white 
+                       font-medium rounded-lg hover:from-black hover:to-primary/15 transition-all"
             >
               Write Review
             </motion.button>
@@ -174,7 +174,7 @@ const FeedbackList: React.FC<FeedbackListProps> = ({
                 className={`px-3 py-1 rounded-lg text-sm transition-colors ${
                   filters.sort_by === option.value &&
                   filters.sort_order === option.order
-                    ? "bg-purple-600 text-white"
+                    ? "bg-primary text-white"
                     : "bg-white/10 text-gray-300 hover:bg-white/20"
                 }`}
               >
@@ -199,7 +199,7 @@ const FeedbackList: React.FC<FeedbackListProps> = ({
             {showAddFeedbackButton && user && (
               <button
                 onClick={onAddFeedback}
-                className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/60 transition-colors"
               >
                 Write First Review
               </button>

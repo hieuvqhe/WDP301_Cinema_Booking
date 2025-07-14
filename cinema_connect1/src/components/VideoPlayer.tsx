@@ -61,9 +61,6 @@ const VideoPlayer = ({ src, classNames, autoPlay = true, showGlow = true }: Vide
 
   return (
     <motion.div 
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.5, ease: "easeOut" }}
       className={`relative overflow-hidden rounded-2xl ${classNames}`}
     >
       {/* Animated Border Gradient */}

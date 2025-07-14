@@ -8,7 +8,7 @@ export default function FeedbackSection({
   handleSubmitFeedback,
 }: any) {
   return (
-    <div className="mt-10 bg-[#1E1E1E] text-gray-300 rounded-3xl p-6">
+    <div className="mt-10 bg-[#1E1E1E] text-gray-300 rounded-3xl p-6 mb-2">
       <h2 className="text-2xl font-bold mb-4">Đánh giá phim</h2>
       {userId && (
         <div className="mb-6">

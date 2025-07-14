@@ -157,7 +157,7 @@ export default function MovieDetailsPage() {
   };
 
   return (
-    <div className="relative min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-gray-300 overflow-x-hidden">
+    <div className="relative min-h-screen bg-gradient-to-br from-slate-900 via-primary/40 to-slate-900 text-gray-300 overflow-x-hidden">
       {/* Background Elements - matching your design theme */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-20 left-10 w-72 h-72 bg-purple-500/10 rounded-full blur-3xl" />
@@ -171,7 +171,8 @@ export default function MovieDetailsPage() {
           variants={container}
           initial="hidden"
           animate="visible"
-          className="grid md:grid-cols-3 gap-6 bg-white/10 backdrop-blur-lg p-6 rounded-3xl shadow-xl border border-white/20 mb-10"
+          className="grid md:grid-cols-3 gap-6 bg-white/10 backdrop-blur-lg p-6 rounded-3xl 
+          shadow-xl border border-white/20 mb-10 mt-10"
         >
           <motion.div variants={fadeUp} className="flex flex-col items-center">
             <img
