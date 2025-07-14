@@ -3,13 +3,13 @@ import { useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import {
   Building2,
-  Users,
   Calendar,
   BarChart3,
   Settings,
   Film,
   Clock,
   FileText,
+  MonitorPlay
 } from "lucide-react";
 
 interface SidebarProps {
@@ -26,7 +26,7 @@ const Sidebar = ({ activeTab, setActiveTab }: SidebarProps) => {
     { id: "showtimes", label: "Showtimes", icon: Clock },
     { id: "bookings", label: "Bookings", icon: Calendar },
     { id: "contract", label: "My Contract", icon: FileText },
-    { id: "staff", label: "Staff", icon: Users },
+    { id: "screen", label: "Screen", icon: MonitorPlay },
     { id: "settings", label: "Settings", icon: Settings },
   ];
   return (

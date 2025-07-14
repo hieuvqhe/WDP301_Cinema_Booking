@@ -7,7 +7,8 @@ import {
   Plus,
   Trash2,
   Image,
-  Video
+  Video,
+  User
 } from 'lucide-react';
 import { 
   type Movie,
@@ -255,6 +256,66 @@ const EditMovieModal: React.FC<EditMovieModalProps> = ({
     } finally {
       setIsUploadingTrailer(false);
     }
+  };
+
+  // Handle cast profile image upload
+  const handleCastImageUpload = async (index: number, event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select a valid image file');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image size should be less than 5MB');
+      return;
+    }
+
+    try {
+      // Create preview first
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const updatedCast = formData.cast.map((member, i) => 
+          i === index ? { ...member, profileImagePreview: e.target?.result as string } : member
+        );
+        handleFormChange('cast', updatedCast);
+      };
+      reader.readAsDataURL(file);
+
+      // Upload to server
+      const response = await mediasApi.uploadImages(file);
+      
+      if (response?.data?.result?.[0]?.url) {
+        const uploadedUrl = response.data.result[0].url;
+        const updatedCast = formData.cast.map((member, i) => 
+          i === index ? { ...member, profile_image: uploadedUrl } : member
+        );
+        handleFormChange('cast', updatedCast);
+        toast.success('Cast member image uploaded successfully');
+      } else {
+        throw new Error('Invalid response from upload service');
+      }
+    } catch (error) {
+      console.error('Error uploading cast image:', error);
+      toast.error('Failed to upload cast image');
+      // Remove preview on error
+      const updatedCast = formData.cast.map((member, i) => 
+        i === index ? { ...member, profileImagePreview: undefined } : member
+      );
+      handleFormChange('cast', updatedCast);
+    }
+  };
+
+  // Handle removing cast profile image
+  const handleRemoveCastImage = (index: number) => {
+    const updatedCast = formData.cast.map((member, i) => 
+      i === index ? { ...member, profile_image: '', profileImagePreview: undefined } : member
+    );
+    handleFormChange('cast', updatedCast);
   };
 
   if (!isOpen || !selectedMovie) return null;
@@ -561,43 +622,131 @@ const EditMovieModal: React.FC<EditMovieModalProps> = ({
               </button>
             </div>
             
-            <div className="space-y-3">
+            <div className="space-y-4">
               {formData.cast.map((castMember, index) => (
-                <div key={index} className="flex gap-3 items-end">
-                  <div className="flex-1">
-                    <label className="block text-slate-300 text-sm font-medium mb-1">
-                      Actor Name
-                    </label>
-                    <input
-                      type="text"
-                      value={castMember.name}
-                      onChange={(e) => handleCastChange(index, 'name', e.target.value)}
-                      className="w-full bg-slate-700/50 border border-slate-600 rounded-lg px-3 py-2 text-white placeholder-slate-400 focus:border-orange-500 focus:outline-none"
-                      placeholder="Enter actor name"
+                <div key={index} className="bg-slate-700/30 p-4 rounded-lg">
+                  <div className="flex justify-between items-start mb-4">
+                    <span className="text-slate-300 font-medium">Cast Member {index + 1}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveCastMember(index)}
+                      className="bg-red-500/20 hover:bg-red-500/30 text-red-400 p-2 rounded-lg transition-colors"
                       disabled={isSubmitting}
-                    />
+                    >
+                      <Trash2 size={16} />
+                    </button>
                   </div>
-                  <div className="flex-1">
-                    <label className="block text-slate-300 text-sm font-medium mb-1">
-                      Character
-                    </label>
-                    <input
-                      type="text"
-                      value={castMember.character}
-                      onChange={(e) => handleCastChange(index, 'character', e.target.value)}
-                      className="w-full bg-slate-700/50 border border-slate-600 rounded-lg px-3 py-2 text-white placeholder-slate-400 focus:border-orange-500 focus:outline-none"
-                      placeholder="Enter character name"
-                      disabled={isSubmitting}
-                    />
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {/* Profile Image */}
+                    <div className="md:col-span-1">
+                      <label className="block text-slate-300 text-sm font-medium mb-2">
+                        Profile Image
+                      </label>
+                      <div className="space-y-2">
+                        <div
+                          className="border-2 border-dashed border-slate-600 hover:border-orange-500 rounded-lg p-4 text-center cursor-pointer transition-colors bg-slate-600/20 hover:bg-orange-500/5"
+                          onClick={() => document.getElementById(`cast-image-edit-${index}`)?.click()}
+                        >
+                          <input
+                            id={`cast-image-edit-${index}`}
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => handleCastImageUpload(index, e)}
+                            className="hidden"
+                            disabled={isSubmitting}
+                          />
+                          <div className="flex flex-col items-center space-y-2">
+                            <User size={24} className="text-slate-400" />
+                            <p className="text-slate-400 text-xs">Click to upload</p>
+                            <p className="text-slate-500 text-xs">JPG, PNG up to 5MB</p>
+                          </div>
+                        </div>
+                        
+                        {((castMember as any).profileImagePreview || castMember.profile_image) && (
+                          <div className="relative">
+                            <img
+                              src={(castMember as any).profileImagePreview || castMember.profile_image}
+                              alt="Profile preview"
+                              className="w-full h-24 object-cover rounded-lg"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveCastImage(index)}
+                              className="absolute top-1 right-1 bg-red-500 hover:bg-red-600 rounded-full p-1 transition-colors"
+                              disabled={isSubmitting}
+                            >
+                              <X size={12} className="text-white" />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {/* Cast Information */}
+                    <div className="md:col-span-2 space-y-3">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-slate-300 text-sm font-medium mb-1">
+                            Actor Name <span className="text-red-400">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            value={castMember.name}
+                            onChange={(e) => handleCastChange(index, 'name', e.target.value)}
+                            className="w-full bg-slate-600/50 border border-slate-500 rounded-lg px-3 py-2 text-white placeholder-slate-400 focus:border-orange-500 focus:outline-none"
+                            placeholder="Enter actor name"
+                            disabled={isSubmitting}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-slate-300 text-sm font-medium mb-1">
+                            Character <span className="text-red-400">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            value={castMember.character}
+                            onChange={(e) => handleCastChange(index, 'character', e.target.value)}
+                            className="w-full bg-slate-600/50 border border-slate-500 rounded-lg px-3 py-2 text-white placeholder-slate-400 focus:border-orange-500 focus:outline-none"
+                            placeholder="Enter character name"
+                            disabled={isSubmitting}
+                          />
+                        </div>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-slate-300 text-sm font-medium mb-1">
+                            Order
+                          </label>
+                          <input
+                            type="number"
+                            value={castMember.order}
+                            onChange={(e) => handleCastChange(index, 'order', parseInt(e.target.value) || 0)}
+                            placeholder="0"
+                            min="0"
+                            className="w-full bg-slate-600/50 border border-slate-500 rounded-lg px-3 py-2 text-white placeholder-slate-400 focus:border-orange-500 focus:outline-none"
+                            disabled={isSubmitting}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-slate-300 text-sm font-medium mb-1">
+                            Gender
+                          </label>
+                          <select
+                            value={castMember.gender}
+                            onChange={(e) => handleCastChange(index, 'gender', parseInt(e.target.value))}
+                            className="w-full bg-slate-600/50 border border-slate-500 rounded-lg px-3 py-2 text-white focus:border-orange-500 focus:outline-none"
+                            disabled={isSubmitting}
+                          >
+                            <option value={0}>Male</option>
+                            <option value={1}>Female</option>
+                            <option value={2}>Other</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveCastMember(index)}
-                    className="bg-red-500/20 hover:bg-red-500/30 text-red-400 p-2 rounded-lg transition-colors"
-                    disabled={isSubmitting}
-                  >
-                    <Trash2 size={16} />
-                  </button>
                 </div>
               ))}
             </div>

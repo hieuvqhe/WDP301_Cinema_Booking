@@ -6,7 +6,7 @@ interface DateSelect {
   id: string;
 }
 
-const DateSelect = ({ dateTime, id }: DateSelect) => {
+const DateSelect = ({ dateTime }: DateSelect) => {
   return (
     <div id={"dateSelect"} className="pt-30">
       <div

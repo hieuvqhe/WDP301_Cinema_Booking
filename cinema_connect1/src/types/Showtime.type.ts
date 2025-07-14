@@ -18,7 +18,7 @@ export type Movie = {
   duration: number;
 };
 
-export type ShowtimeStatus = 'booking_open' | 'booking_closed' | 'completed';
+export type ShowtimeStatus = "booking_open" | "booking_closed" | "completed";
 
 export interface Showtime {
   _id: string;
@@ -33,6 +33,7 @@ export interface Showtime {
     recliner: number;
     couple: number;
   };
+  booked_seats: LockedSeat[];
   available_seats: number;
   status: ShowtimeStatus;
   movie: Movie | null;
@@ -58,7 +59,7 @@ export interface CreateShowtimeRequest {
   status: ShowtimeStatus;
 }
 
-export interface UpdateShowtimeRequest extends Partial<CreateShowtimeRequest> {}
+export type UpdateShowtimeRequest = Partial<CreateShowtimeRequest>;
 
 export interface ShowtimeQueryParams {
   page?: number;
@@ -67,13 +68,14 @@ export interface ShowtimeQueryParams {
   theater_id?: string;
   status?: ShowtimeStatus;
   date?: string;
-  sortBy?: 'start_time' | 'available_seats' | 'price.regular' | 'created_at';
-  sortOrder?: 'asc' | 'desc';
+  sortBy?: "start_time" | "available_seats" | "price.regular" | "created_at";
+  sortOrder?: "asc" | "desc";
 }
 
 export interface LockedSeat {
   row: string;
-  seat_number: number;
-  type: 'regular' | 'vip' | 'recliner' | 'couple';
-  status: 'locked' | 'booked';
+  number: number;
+  expires_at: string;
+  user_id: string;
+  showtime_id: string;
 }

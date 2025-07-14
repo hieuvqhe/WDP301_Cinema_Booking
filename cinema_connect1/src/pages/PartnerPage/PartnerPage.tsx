@@ -6,7 +6,7 @@ import Overview from "./contents/Overview";
 import TheaterInfo from "./contents/TheaterInfo";
 import Showtimes from "./contents/Showtimes";
 import Bookings from "./contents/Bookings";
-import Staffs from "./contents/Staffs";
+import Screen from "./contents/Screen";
 import Movies from "./contents/Movies";
 import ContractDetails from "./contents/ContractDetails";
 
@@ -33,8 +33,8 @@ const PartnerPage = () => {
       case "contract":
         return <ContractDetails />;
 
-      case "staff":
-        return <Staffs />;
+      case "screen":
+        return <Screen />;
 
       default:
         return (

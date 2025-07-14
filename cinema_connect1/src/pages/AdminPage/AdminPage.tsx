@@ -1,18 +1,27 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useAuthStore } from '../../store/useAuthStore';
-import { AdminHeader, AdminSidebar, Dashboard, UserManagement, StaffManagement, ContractManagement } from './components';
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
+import { useAuthStore } from "../../store/useAuthStore";
+import {
+  AdminHeader,
+  AdminSidebar,
+  Dashboard,
+  UserManagement,
+  StaffManagement,
+  ContractManagement,
+  TicketVerification,
+} from "./components";
+import { PaymentManagement } from "../../components/admin/PaymentManagement";
 
 const AdminPage = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState("dashboard");
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   const handleLogout = () => {
     logout();
-    navigate('/home');
+    navigate("/home");
   };
 
   const handleToggleSidebar = () => {
@@ -21,41 +30,44 @@ const AdminPage = () => {
 
   const renderContent = () => {
     switch (activeTab) {
-      case 'dashboard':
+      case "dashboard":
         return <Dashboard />;
-      case 'users':
+      case "users":
         return <UserManagement />;
-      case 'staff':
+      case "staff":
         return <StaffManagement />;
-      case 'contracts':
+      case "contracts":
         return <ContractManagement />;
+      case "payments":
+        return <PaymentManagement />;
+      case "ticket-verification":
+        return <TicketVerification />;
       default:
         return <Dashboard />;
     }
   };
 
-  // Simplified animation variants for better performance
   const contentVariants = {
     hidden: { opacity: 0 },
-    visible: { 
+    visible: {
       opacity: 1,
       transition: {
-        duration: 0.2
-      }
+        duration: 0.2,
+      },
     },
-    exit: { 
+    exit: {
       opacity: 0,
       transition: {
-        duration: 0.15
-      }
-    }
+        duration: 0.15,
+      },
+    },
   };
 
   return (
     <div className="min-h-screen bg-slate-900 flex">
       {/* Sidebar */}
-      <AdminSidebar 
-        activeTab={activeTab} 
+      <AdminSidebar
+        activeTab={activeTab}
         onTabChange={setActiveTab}
         isCollapsed={isSidebarCollapsed}
       />
@@ -63,8 +75,8 @@ const AdminPage = () => {
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
         {/* Header */}
-        <AdminHeader 
-          user={user} 
+        <AdminHeader
+          user={user}
           onLogout={handleLogout}
           isSidebarCollapsed={isSidebarCollapsed}
           onToggleSidebar={handleToggleSidebar}

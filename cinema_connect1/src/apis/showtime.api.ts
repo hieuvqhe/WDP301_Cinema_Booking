@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import axios from "axios";
 import type {
   Showtime,
@@ -17,7 +18,7 @@ const showtimeApi = axios.create({
 // Utility function để lọc suất chiếu chỉ lấy những suất chiếu trong tương lai
 const filterFutureShowtimes = (showtimes: Showtime[]): Showtime[] => {
   const now = new Date();
-  return showtimes.filter(showtime => {
+  return showtimes.filter((showtime) => {
     // Tạo DateTime từ start_time
     const showtimeDate = new Date(showtime.start_time);
     return showtimeDate > now;
@@ -54,11 +55,11 @@ export const getShowtimes = async (): Promise<Showtime[]> => {
       showtimes?: Showtime[];
       result?: { showtimes: Showtime[] };
     }>("");
-    
+
     let showtimes: Showtime[] = [];
     if (res.data.showtimes) showtimes = res.data.showtimes;
     else if (res.data.result?.showtimes) showtimes = res.data.result.showtimes;
-    
+
     // Lọc chỉ lấy suất chiếu tương lai
     return filterFutureShowtimes(showtimes);
   } catch (error) {
@@ -89,7 +90,18 @@ export const getShowtimeById = async (
     throw handleShowtimeError(error);
   }
 };
-
+export const getShowtimeByIdLockedSeats = async (
+  showtime_id: string
+): Promise<LockedSeat[]> => {
+  try {
+    const res = await showtimeApi.get<{ result: LockedSeat[] }>(
+      `/${showtime_id}/locked-seats`
+    );
+    return res.data.result;
+  } catch (error) {
+    throw handleShowtimeError(error);
+  }
+};
 // Lấy theo movie ID (chỉ suất chiếu tương lai)
 export const getShowtimeByMovieId = async (
   movie_id: string
@@ -99,11 +111,11 @@ export const getShowtimeByMovieId = async (
       params: { movie_id },
     });
     console.log("Showtime by movie_id response:", res.data);
-    
+
     let showtimes: Showtime[] = [];
     if (res.data.showtimes) showtimes = res.data.showtimes;
     else if (res.data.result?.showtimes) showtimes = res.data.result.showtimes;
-    
+
     // Lọc chỉ lấy suất chiếu tương lai
     return filterFutureShowtimes(showtimes);
   } catch (error) {
@@ -120,11 +132,11 @@ export const getShowtimeByMovieIdAndTheaterId = async (
     const res = await showtimeApi.get<any>("", {
       params: { movie_id, theater_id },
     });
-    
+
     let showtimes: Showtime[] = [];
     if (res.data.showtimes) showtimes = res.data.showtimes;
     else if (res.data.result?.showtimes) showtimes = res.data.result.showtimes;
-    
+
     // Lọc chỉ lấy suất chiếu tương lai
     return filterFutureShowtimes(showtimes);
   } catch (error) {
@@ -186,7 +198,7 @@ export const getAllShowtimes = async (): Promise<Showtime[]> => {
       showtimes?: Showtime[];
       result?: { showtimes: Showtime[] };
     }>("");
-    
+
     if (res.data.showtimes) return res.data.showtimes;
     if (res.data.result?.showtimes) return res.data.result.showtimes;
     return [];
@@ -203,7 +215,7 @@ export const getAllShowtimeByMovieId = async (
     const res = await showtimeApi.get<any>("", {
       params: { movie_id },
     });
-    
+
     if (res.data.showtimes) return res.data.showtimes;
     if (res.data.result?.showtimes) return res.data.result.showtimes;
     return [];
@@ -221,7 +233,7 @@ export const getAllShowtimeByMovieIdAndTheaterId = async (
     const res = await showtimeApi.get<any>("", {
       params: { movie_id, theater_id },
     });
-    
+
     if (res.data.showtimes) return res.data.showtimes;
     if (res.data.result?.showtimes) return res.data.result.showtimes;
     return [];

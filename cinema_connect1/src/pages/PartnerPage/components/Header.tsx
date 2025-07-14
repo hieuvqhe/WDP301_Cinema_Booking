@@ -1,12 +1,10 @@
 import { motion } from "framer-motion";
-import { LogOut, Menu, X } from "lucide-react";
-import { useState } from "react";
+import { LogOut } from "lucide-react";
 import { useAuthStore } from "../../../store/useAuthStore";
 import { Button } from "../../../components/ui/button";
 import { useNavigate } from "react-router-dom";
 
 const Header = () => {
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
 

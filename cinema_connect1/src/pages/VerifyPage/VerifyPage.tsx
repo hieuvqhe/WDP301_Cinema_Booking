@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useAuthStore } from '../../store/useAuthStore';
 import { resendOtpCode } from '../../apis/user.api';
-import { Mail, RefreshCw, Ticket } from 'lucide-react';
+import { Mail, Ticket } from 'lucide-react';
 import RegisterModal from '../../components/user/RegisterModal';
 
 const VerifyPage = () => {
