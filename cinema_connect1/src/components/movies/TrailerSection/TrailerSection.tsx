@@ -29,7 +29,7 @@ const TrailerSection = () => {
         const movies = await getPopularMovies(10, 1);
         setGetShowingMovies(movies);
         if (movies.length > 0) {
-          setCurrentTrailer(movies[0].trailer_url);
+          setCurrentTrailer(movies[3].trailer_url);
           setSelectedMovieId(movies[0]._id);
         }
       } catch (error) {
@@ -60,9 +60,6 @@ const TrailerSection = () => {
       </motion.p>
 
       <motion.div 
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.8, delay: 0.2 }}
         className="relative mt-6"
       >
         <BlurCircle top="-100px" right="-100px" />
@@ -80,7 +77,7 @@ const TrailerSection = () => {
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, delay: 0.4 }}
-        className="mt-8 max-w-3xl mx-auto"
+        className="mt-10 max-w-3xl mx-auto"
       >
         <Slider {...settings}>
           {getShowingMovies.map((trailer, index) => {
@@ -89,9 +86,6 @@ const TrailerSection = () => {
             return (
               <motion.div
                 key={trailer._id}
-                initial={{ opacity: 0, y: 50 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.6 + index * 0.1 }}
                 className="px-2"
               >
                 <motion.div
@@ -101,19 +95,6 @@ const TrailerSection = () => {
                       : 'hover:ring-2 hover:ring-white/30 hover:ring-offset-2 hover:ring-offset-gray-900'
                   }`}
                   onClick={() => handleClickTrailer(trailer.trailer_url, trailer._id)}
-                  whileHover={{ 
-                    scale: 1.05,
-                    y: -8
-                  }}
-                  whileTap={{ scale: 0.98 }}
-                  animate={isSelected ? {
-                    scale: [1, 1.02, 1],
-                    transition: {
-                      duration: 2,
-                      repeat: Infinity,
-                      ease: "easeInOut"
-                    }
-                  } : {}}
                 >
                   {/* Selected Glow Effect */}
                   {isSelected && (

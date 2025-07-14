@@ -2,35 +2,52 @@ import { Link } from "react-router-dom";
 import { IoMenu } from "react-icons/io5";
 import { IoIosSearch } from "react-icons/io";
 import { FaTimes } from "react-icons/fa";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import LoginModal from "../user/LoginModal";
 import { useAuthStore } from "../../store/useAuthStore";
 import { Popover, PopoverButton, PopoverPanel } from "@headlessui/react";
 import Avatar from "../ui/Avatar";
+import { useWindowScroll } from "react-use";
+import gsap from "gsap";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoginForm, setIsLoginForm] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false);
   const { user, logout } = useAuthStore();
 
-  // Handle scroll effect
-  useEffect(() => {
-    const handleScroll = () => {
-      const scrollTop = window.scrollY;
-      setIsScrolled(scrollTop > 50);
-    };
+  const [lastScrollY, setLastScrollY] = useState(0);
+  const [isNavVisible, setIsNavVisible] = useState(false);
 
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  const navContainerRef = useRef<HTMLDivElement>(null);
+
+  const { y: currentSrollY } = useWindowScroll();
+
+  useEffect(() => {
+    if (currentSrollY === 0) {
+      setIsNavVisible(true);
+      navContainerRef.current?.classList.remove("floating-nav");
+    } else if (currentSrollY > lastScrollY) {
+      setIsNavVisible(true);
+      navContainerRef.current?.classList.add("floating-nav");
+    }
+
+    setLastScrollY(currentSrollY);
+  }, [currentSrollY, lastScrollY]);
+
+  useEffect(() => {
+    gsap.to(navContainerRef.current, {
+      y: isNavVisible ? 1 : -100,
+      opacity: isNavVisible ? 1 : 0,
+      duration: 0.2,
+    });
+  }, [isNavVisible]);
 
   // Navigation items based on user role
   const getNavigationItems = () => {
     const baseItems = [
       { title: "Home", link: "/" },
       { title: "Movies", link: "/movies" },
-      { title: "Theater", link: "/my-bookings" },
+      { title: "My Bookings", link: "/my-bookings" },
       { title: "Favourites", link: "/favourite" },
     ];
 
@@ -47,8 +64,6 @@ const Navbar = () => {
       default:
         return [
           ...baseItems,
-          // { title: "My Bookings", link: "/my-bookings" },
-          // { title: "Favourites", link: "/favourite" },
         ];
     }
   };
@@ -100,43 +115,22 @@ const Navbar = () => {
   return (
     <>
       <div
-        className={`fixed top-0 left-0 z-50 w-full flex items-center justify-between px-6
-          md:px-16 lg:px-36 py-5 transition-all duration-300 ${
-            isScrolled
-              ? "bg-gradient-to-r from-purple-600/90 via-purple-700/90 to-indigo-600/90 backdrop-blur-md border-b border-white/20 shadow-lg"
-              : "bg-transparent"
-          }`}
+        ref={navContainerRef}
+        className={`fixed inset-x-0 top-4 z-50 h-16 border-none transition-all duration-700
+      sm:inset-x-6 flex items-center justify-between px-4`}
       >
         <Link to={"/"} className="max-md:flex-1">
           <img
             src={"logo.png"}
             alt=""
-            className={`w-14 h-14 transition-all duration-300 ${
-              isScrolled ? "border-2 border-white/30 rounded-full p-1" : ""
-            }`}
+            className={`w-14 h-14 transition-all duration-300`}
           />
         </Link>
 
-        <div
-          className={`
-                max-md:absolute max-md:top-0 max-md:left-0 max-md:font-medium 
-                max-md:text-lg z-50 flex flex-col md:flex-row md:px-5 md:rounded-full items-center 
-                max-md:justify-center gap-8 min-md:px-8 py-3 max-md:h-screen 
-                min-md:rounded-full backdrop-blur overflow-hidden transition-all duration-300
-                ${isOpen ? "max-md:w-full" : "max-md:w-0"}
-                ${
-                  isScrolled
-                    ? "bg-black/80 md:bg-white/15 md:border border-white/30"
-                    : "bg-black/70 md:bg-white/10 md:border border-gray-300/20"
-                }`}
-        >
+        <div>
           <FaTimes
             onClick={() => setIsOpen(!isOpen)}
-            className={`md:hidden absolute top-6 right-6 w-6 h-6 cursor-pointer transition-colors duration-300 ${
-              isScrolled
-                ? "text-white hover:text-gray-200"
-                : "text-white hover:text-gray-300"
-            }`}
+            className={`md:hidden absolute top-6 right-6 w-6 h-6 cursor-pointer transition-colors duration-300`}
           />
           {navigationItems.map((item, index) => (
             <Link
@@ -152,48 +146,29 @@ const Navbar = () => {
 
         <div className="flex items-center gap-8">
           <IoIosSearch
-            className={`max-md:hidden w-6 h-6 cursor-pointer transition-colors duration-300 ${
-              isScrolled
-                ? "text-white hover:text-gray-200"
-                : "text-white hover:text-gray-300"
-            }`}
+            className={`max-md:hidden w-6 h-6 cursor-pointer transition-colors duration-300 `}
           />
 
           {user ? (
             <div>
               <Popover as="div" className="relative inline-block text-left">
                 <PopoverButton
-                  className={`p-1 rounded-full transition-all duration-300 ${
-                    isScrolled
-                      ? "bg-white/20 hover:bg-white/30 shadow-lg border border-white/30"
-                      : "bg-primary hover:bg-primary/80"
-                  }`}
+                  className={`p-1 rounded-full transition-all duration-300 `}
                 >
                   <Avatar
                     src={user.avatar}
                     alt={user.name}
                     size="md"
-                    className={`transition-all duration-300 ${
-                      isScrolled
-                        ? "border-2 border-white/40"
-                        : "border-2 border-white/20"
-                    }`}
+                    className={`transition-all duration-300 `}
                   />
                 </PopoverButton>
 
                 <PopoverPanel
-                  className={`absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-lg shadow-lg ring-1 ring-black/5 transition-all duration-300 ${
-                    isScrolled
-                      ? "bg-gradient-to-br from-purple-600/95 to-indigo-600/95 backdrop-blur-md border border-white/20"
-                      : "bg-primary/40 border border-primary/20"
-                  }`}
+                  className={`absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-lg shadow-lg ring-1 
+                    ring-black/5 transition-all duration-300 bg-primary-dull`}
                 >
                   <div
-                    className={`text-sm py-2 px-4 text-center border-b transition-colors duration-300 ${
-                      isScrolled
-                        ? "border-white/20 text-white"
-                        : "border-slate-50 border-b text-white"
-                    }`}
+                    className={`text-sm py-2 px-4 text-center border-b transition-colors duration-300 `}
                   >
                     <p>Hello {user.name}</p>
                   </div>
@@ -203,11 +178,7 @@ const Navbar = () => {
                         <Link
                           key={index}
                           to={item.link}
-                          className={`block px-4 py-2 text-sm transition-all duration-200 ${
-                            isScrolled
-                              ? "text-white hover:text-gray-200 hover:bg-white/10"
-                              : "text-gray-200 hover:underline"
-                          }`}
+                          className={`block px-4 py-2 text-sm transition-all duration-200 `}
                         >
                           {item.title}
                         </Link>
@@ -215,11 +186,7 @@ const Navbar = () => {
                         <a
                           key={index}
                           href="#"
-                          className={`block px-4 py-2 text-sm transition-all duration-200 ${
-                            isScrolled
-                              ? "text-white hover:text-gray-200 hover:bg-white/10"
-                              : "text-gray-200 hover:underline"
-                          }`}
+                          className={`block px-4 py-2 text-sm transition-all duration-200 `}
                           onClick={item.action}
                         >
                           {item.title}
@@ -242,11 +209,7 @@ const Navbar = () => {
         </div>
 
         <IoMenu
-          className={`max-md:ml-4 md:hidden w-8 h-8 cursor-pointer transition-colors duration-300 ${
-            isScrolled
-              ? "text-white hover:text-gray-200"
-              : "text-white hover:text-gray-300"
-          }`}
+          className={`max-md:ml-4 md:hidden w-8 h-8 cursor-pointer transition-colors duration-300 `}
           onClick={() => setIsOpen(!isOpen)}
         />
       </div>

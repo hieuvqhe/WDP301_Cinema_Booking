@@ -38,7 +38,7 @@ body {
     dark:after:bg-white cursor-pointer;
   }
 
-  .no-scrollbar{
+  .no-scrollbar {
     scrollbar-width: none;
   }
 
@@ -49,10 +49,20 @@ body {
     overflow: hidden;
   }
 
+  .floating-nav {
+    @apply bg-pink-950 rounded-lg border;
+  }
 }
 
 .slick-slide > div {
   margin: 0 10px;
-}  
+}
 
-
+.slick-track > div {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  margin: 0;
+  padding: 0px;
+  padding-top: 19px;
+}

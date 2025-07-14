@@ -132,7 +132,7 @@ const MyBooking: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-primary/40 to-slate-900 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-400 mx-auto mb-4" />
           <p className="text-gray-300">Loading your bookings...</p>
@@ -142,7 +142,7 @@ const MyBooking: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-primary/40 to-slate-900 py-8">
       {/* Background Elements */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-20 left-10 w-72 h-72 bg-purple-500/10 rounded-full blur-3xl" />
@@ -151,21 +151,21 @@ const MyBooking: React.FC = () => {
 
       <div className="relative z-10 container mx-auto px-4 max-w-6xl">
         {/* Header */}
-        <motion.div
+        {/* <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           className="mb-8"
         >
           <h1 className="text-3xl font-bold text-white mb-2">My Bookings</h1>
           <p className="text-gray-300">Track and manage your movie tickets</p>
-        </motion.div>
+        </motion.div> */}
 
         {/* Search and Filters */}
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20 mb-6"
+          className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20 mb-6 mt-16"
         >
           <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
             {/* Search */}
@@ -304,7 +304,7 @@ const MyBooking: React.FC = () => {
                 className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20 hover:border-white/40 
                          transition-all"
               >
-                <div className="flex flex-col lg:flex-row gap-6">
+                <div className="flex flex-col lg:flex-row gap-6  justify-between ">
                   {/* Movie Poster and Info */}
                   <div className="flex items-start gap-4">
                     {booking.movie?.poster_url && (
