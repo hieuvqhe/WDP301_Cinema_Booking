@@ -253,14 +253,6 @@ const Showtimes = () => {
     }
   };
 
-  // Update end time based on movie duration
-  const updateEndTime = (movieDuration: number) => {
-    if (showDate && showTime && movieDuration) {
-      const startDateTime = new Date(`${showDate}T${showTime}:00.000Z`);
-      const endDateTime = new Date(startDateTime.getTime() + (movieDuration * 60 * 1000)); // duration in minutes
-      handleFormChange('end_time', endDateTime.toISOString());
-    }
-  };
 
   // Check if showtime has any bookings
   const hasBookings = (showtime: Showtime): boolean => {
