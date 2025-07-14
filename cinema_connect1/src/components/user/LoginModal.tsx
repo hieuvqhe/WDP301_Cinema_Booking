@@ -236,10 +236,10 @@ const LoginModal = ({ isFormOpen }: LoginModalProps) => {
               {isSubmitting ? "Signing in..." : "Sign in"}
             </button>
 
-            <p className="text-center">
+            <p className="text-center text-sm text-gray-300">
               Don't have account?{" "}
               <span 
-                className="cursor-pointer hover:text-primary transition" 
+                className="cursor-pointer text-red-400 hover:text-red-300 hover:underline transition" 
                 onClick={() => setShowRegisterModal(true)}
               >
                 Register
