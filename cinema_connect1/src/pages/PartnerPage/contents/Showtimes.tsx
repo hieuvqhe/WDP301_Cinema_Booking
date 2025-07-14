@@ -31,7 +31,9 @@ import {
   validateShowtimeData,
   generateTimeSlots,
   type Showtime,
-  type ShowtimeCreateRequest
+  type ShowtimeCreateRequest,
+  type ShowtimeStatus,
+  ShowtimeStatusValues
 } from '../../../apis/showtime_staff.api';
 
 import { 
@@ -133,7 +135,8 @@ const Showtimes = () => {
     start_time: '',
     end_time: '',
     price: { regular: 50000, premium: 70000 },
-    available_seats: 0
+    available_seats: 0,
+    status: ShowtimeStatusValues.SCHEDULED
   });
   const [formErrors, setFormErrors] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -203,6 +206,22 @@ const Showtimes = () => {
     }
   };
 
+  // Helper function to format date for input fields
+  const formatDateForInput = (dateString: string): { date: string; time: string } => {
+    const date = new Date(dateString);
+    const formattedDate = date.getFullYear() + '-' + 
+                         String(date.getMonth() + 1).padStart(2, '0') + '-' + 
+                         String(date.getDate()).padStart(2, '0');
+    const formattedTime = String(date.getHours()).padStart(2, '0') + ':' + 
+                         String(date.getMinutes()).padStart(2, '0');
+    return { date: formattedDate, time: formattedTime };
+  };
+
+  // Helper function to create date from local date and time strings
+  const createLocalDateTime = (date: string, time: string): Date => {
+    return new Date(`${date}T${time}:00`);
+  };
+
   // Handle form field changes
   const handleFormChange = (field: keyof ShowtimeCreateRequest, value: any) => {
     setFormData(prev => ({
@@ -223,7 +242,7 @@ const Showtimes = () => {
     
     // Auto-calculate end time when movie and start time are selected
     if (showDate && showTime && movie.duration) {
-      const startDateTime = new Date(`${showDate}T${showTime}:00.000Z`);
+      const startDateTime = createLocalDateTime(showDate, showTime);
       const endDateTime = new Date(startDateTime.getTime() + (movie.duration * 60 * 1000));
       handleFormChange('end_time', endDateTime.toISOString());
     }
@@ -242,12 +261,18 @@ const Showtimes = () => {
     setShowTime(time);
     
     if (date && time) {
-      const startDateTime = new Date(`${date}T${time}:00.000Z`);
+      // Create date without timezone offset to maintain local time
+      const startDateTime = createLocalDateTime(date, time);
+      console.log('Selected date/time:', date, time);
+      console.log('Created startDateTime:', startDateTime);
+      console.log('ISO string:', startDateTime.toISOString());
+      
       handleFormChange('start_time', startDateTime.toISOString());
       
       // Calculate end time if we have movie duration
       if (selectedMovie && selectedMovie.duration) {
         const endDateTime = new Date(startDateTime.getTime() + (selectedMovie.duration * 60 * 1000));
+        console.log('Calculated endDateTime:', endDateTime);
         handleFormChange('end_time', endDateTime.toISOString());
       }
     }
@@ -282,7 +307,8 @@ const Showtimes = () => {
     if (showtimeStart <= now) return false;
     
     // Cannot modify if status is completed or cancelled
-    if (showtime.status === 'completed' || showtime.status === 'cancelled') return false;
+    if (showtime.status === ShowtimeStatusValues.COMPLETED || 
+        showtime.status === ShowtimeStatusValues.CANCELLED) return false;
     
     return true;
   };
@@ -348,7 +374,8 @@ const Showtimes = () => {
       start_time: '',
       end_time: '',
       price: { regular: 50000, premium: 70000 },
-      available_seats: 0
+      available_seats: 0,
+      status: ShowtimeStatusValues.SCHEDULED
     });
     setSelectedMovie(null);
     setSelectedScreen(null);
@@ -385,7 +412,8 @@ const Showtimes = () => {
         start_time: latestShowtime.start_time,
         end_time: latestShowtime.end_time,
         price: latestShowtime.price,
-        available_seats: latestShowtime.available_seats
+        available_seats: latestShowtime.available_seats,
+        status: latestShowtime.status
       });
       
       // Fetch movie details and find screen
@@ -397,10 +425,10 @@ const Showtimes = () => {
       setSelectedMovie(movieResponse.result);
       setSelectedScreen(screen || null);
       
-      // Set date and time from start_time
-      const startDate = new Date(latestShowtime.start_time);
-      setShowDate(startDate.toISOString().split('T')[0]);
-      setShowTime(startDate.toTimeString().substring(0, 5));
+      // Set date and time from start_time - use local timezone
+      const { date, time } = formatDateForInput(latestShowtime.start_time);
+      setShowDate(date);
+      setShowTime(time);
       
       setFormErrors([]);
       setIsSubmitting(false);
@@ -474,7 +502,7 @@ const Showtimes = () => {
     
     // Ensure end_time is calculated before validation
     if (selectedMovie && showDate && showTime && selectedMovie.duration) {
-      const startDateTime = new Date(`${showDate}T${showTime}:00.000Z`);
+      const startDateTime = createLocalDateTime(showDate, showTime);
       const endDateTime = new Date(startDateTime.getTime() + (selectedMovie.duration * 60 * 1000));
       handleFormChange('end_time', endDateTime.toISOString());
       
@@ -528,7 +556,7 @@ const Showtimes = () => {
     
     // Ensure end_time is calculated before validation for update
     if (selectedMovie && showDate && showTime && selectedMovie.duration) {
-      const startDateTime = new Date(`${showDate}T${showTime}:00.000Z`);
+      const startDateTime = createLocalDateTime(showDate, showTime);
       const endDateTime = new Date(startDateTime.getTime() + (selectedMovie.duration * 60 * 1000));
       handleFormChange('end_time', endDateTime.toISOString());
       
@@ -558,7 +586,8 @@ const Showtimes = () => {
         start_time: formData.start_time,
         end_time: formData.end_time,
         price: formData.price,
-        available_seats: formData.available_seats
+        available_seats: formData.available_seats,
+        status: formData.status
       };
 
       // Debug log to check if end_time is included in update
@@ -1204,6 +1233,40 @@ const Showtimes = () => {
                 </div>
               </div>
 
+              {/* Status Selection */}
+              <div className="px-6 pb-4">
+                <div>
+                  <label className="block text-slate-300 text-sm font-medium mb-2">
+                    Showtime Status <span className="text-red-400">*</span>
+                  </label>
+                  <select
+                    value={formData.status || ShowtimeStatusValues.SCHEDULED}
+                    onChange={(e) => handleFormChange('status', e.target.value as ShowtimeStatus)}
+                    className="w-full bg-slate-700/50 border border-slate-600 rounded-lg px-4 py-2 text-white focus:border-orange-500 focus:outline-none"
+                    disabled={isSubmitting}
+                  >
+                    <option value={ShowtimeStatusValues.SCHEDULED}>
+                      {getShowtimeStatusDisplay(ShowtimeStatusValues.SCHEDULED)}
+                    </option>
+                    <option value={ShowtimeStatusValues.BOOKING_OPEN}>
+                      {getShowtimeStatusDisplay(ShowtimeStatusValues.BOOKING_OPEN)}
+                    </option>
+                    <option value={ShowtimeStatusValues.BOOKING_CLOSED}>
+                      {getShowtimeStatusDisplay(ShowtimeStatusValues.BOOKING_CLOSED)}
+                    </option>
+                    <option value={ShowtimeStatusValues.CANCELLED}>
+                      {getShowtimeStatusDisplay(ShowtimeStatusValues.CANCELLED)}
+                    </option>
+                    <option value={ShowtimeStatusValues.COMPLETED}>
+                      {getShowtimeStatusDisplay(ShowtimeStatusValues.COMPLETED)}
+                    </option>
+                  </select>
+                  <p className="text-slate-400 text-xs mt-1">
+                    Set the initial status for this showtime
+                  </p>
+                </div>
+              </div>
+
               {/* Form Actions */}
               <div className="flex gap-4 pt-4 border-t border-slate-700">
                 <button
@@ -1514,6 +1577,40 @@ const Showtimes = () => {
                       </div>
                     </div>
                   )}
+                </div>
+              </div>
+
+              {/* Status Selection */}
+              <div className="px-6 pb-4">
+                <div>
+                  <label className="block text-slate-300 text-sm font-medium mb-2">
+                    Showtime Status <span className="text-red-400">*</span>
+                  </label>
+                  <select
+                    value={formData.status || ShowtimeStatusValues.SCHEDULED}
+                    onChange={(e) => handleFormChange('status', e.target.value as ShowtimeStatus)}
+                    className="w-full bg-slate-700/50 border border-slate-600 rounded-lg px-4 py-2 text-white focus:border-orange-500 focus:outline-none"
+                    disabled={isSubmitting}
+                  >
+                    <option value={ShowtimeStatusValues.SCHEDULED}>
+                      {getShowtimeStatusDisplay(ShowtimeStatusValues.SCHEDULED)}
+                    </option>
+                    <option value={ShowtimeStatusValues.BOOKING_OPEN}>
+                      {getShowtimeStatusDisplay(ShowtimeStatusValues.BOOKING_OPEN)}
+                    </option>
+                    <option value={ShowtimeStatusValues.BOOKING_CLOSED}>
+                      {getShowtimeStatusDisplay(ShowtimeStatusValues.BOOKING_CLOSED)}
+                    </option>
+                    <option value={ShowtimeStatusValues.CANCELLED}>
+                      {getShowtimeStatusDisplay(ShowtimeStatusValues.CANCELLED)}
+                    </option>
+                    <option value={ShowtimeStatusValues.COMPLETED}>
+                      {getShowtimeStatusDisplay(ShowtimeStatusValues.COMPLETED)}
+                    </option>
+                  </select>
+                  <p className="text-slate-400 text-xs mt-1">
+                    Update the status of this showtime
+                  </p>
                 </div>
               </div>
 

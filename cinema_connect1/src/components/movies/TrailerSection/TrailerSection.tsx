@@ -77,7 +77,7 @@ const TrailerSection = () => {
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, delay: 0.4 }}
-        className="mt-10 max-w-3xl mx-auto"
+        className="mt-10 max-w-3xl mx-auto overflow-hidden px-4"
       >
         <Slider {...settings}>
           {getShowingMovies.map((trailer, index) => {
@@ -86,23 +86,23 @@ const TrailerSection = () => {
             return (
               <motion.div
                 key={trailer._id}
-                className="px-2"
+                className="px-1"
               >
                 <motion.div
                   className={`relative group cursor-pointer overflow-hidden rounded-xl transition-all duration-500 ${
                     isSelected 
-                      ? 'ring-4 ring-purple-500/60 ring-offset-2 ring-offset-gray-900 shadow-2xl shadow-purple-500/30' 
-                      : 'hover:ring-2 hover:ring-white/30 hover:ring-offset-2 hover:ring-offset-gray-900'
+                      ? 'ring-2 ring-purple-500/60 ring-offset-1 ring-offset-gray-900 shadow-xl shadow-purple-500/20' 
+                      : 'hover:ring-1 hover:ring-white/30 hover:ring-offset-1 hover:ring-offset-gray-900'
                   }`}
                   onClick={() => handleClickTrailer(trailer.trailer_url, trailer._id)}
                 >
                   {/* Selected Glow Effect */}
                   {isSelected && (
                     <motion.div
-                      className="absolute -inset-2 bg-gradient-to-r from-purple-500/30 via-pink-500/30 to-purple-500/30 rounded-xl blur-lg"
+                      className="absolute -inset-1 bg-gradient-to-r from-purple-500/20 via-pink-500/20 to-purple-500/20 rounded-xl blur-md"
                       animate={{
-                        opacity: [0.3, 0.7, 0.3],
-                        scale: [1, 1.1, 1]
+                        opacity: [0.2, 0.5, 0.2],
+                        scale: [1, 1.05, 1]
                       }}
                       transition={{
                         duration: 2,
