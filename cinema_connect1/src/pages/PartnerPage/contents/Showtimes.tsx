@@ -222,8 +222,10 @@ const Showtimes = () => {
     handleFormChange('movie_id', movie._id);
     
     // Auto-calculate end time when movie and start time are selected
-    if (showDate && showTime) {
-      updateEndTime(movie.duration);
+    if (showDate && showTime && movie.duration) {
+      const startDateTime = new Date(`${showDate}T${showTime}:00.000Z`);
+      const endDateTime = new Date(startDateTime.getTime() + (movie.duration * 60 * 1000));
+      handleFormChange('end_time', endDateTime.toISOString());
     }
   };
 
@@ -243,15 +245,17 @@ const Showtimes = () => {
       const startDateTime = new Date(`${date}T${time}:00.000Z`);
       handleFormChange('start_time', startDateTime.toISOString());
       
-      if (selectedMovie) {
-        updateEndTime(selectedMovie.duration);
+      // Calculate end time if we have movie duration
+      if (selectedMovie && selectedMovie.duration) {
+        const endDateTime = new Date(startDateTime.getTime() + (selectedMovie.duration * 60 * 1000));
+        handleFormChange('end_time', endDateTime.toISOString());
       }
     }
   };
 
   // Update end time based on movie duration
   const updateEndTime = (movieDuration: number) => {
-    if (showDate && showTime) {
+    if (showDate && showTime && movieDuration) {
       const startDateTime = new Date(`${showDate}T${showTime}:00.000Z`);
       const endDateTime = new Date(startDateTime.getTime() + (movieDuration * 60 * 1000)); // duration in minutes
       handleFormChange('end_time', endDateTime.toISOString());
@@ -449,6 +453,7 @@ const Showtimes = () => {
     if (!selectedScreen) errors.push('Please select a screen');
     if (!showDate) errors.push('Please select a date');
     if (!showTime) errors.push('Please select a time');
+    if (!formData.end_time) errors.push('End time is required');
     
     // Check if start time is in the future
     if (formData.start_time) {
@@ -458,6 +463,15 @@ const Showtimes = () => {
         errors.push('Start time must be in the future');
       }
     }
+
+    // Check if end time is after start time
+    if (formData.start_time && formData.end_time) {
+      const startTime = new Date(formData.start_time);
+      const endTime = new Date(formData.end_time);
+      if (endTime <= startTime) {
+        errors.push('End time must be after start time');
+      }
+    }
     
     return errors;
   };
@@ -465,6 +479,19 @@ const Showtimes = () => {
   // Handle form submission for creating showtime
   const handleCreateShowtime = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Ensure end_time is calculated before validation
+    if (selectedMovie && showDate && showTime && selectedMovie.duration) {
+      const startDateTime = new Date(`${showDate}T${showTime}:00.000Z`);
+      const endDateTime = new Date(startDateTime.getTime() + (selectedMovie.duration * 60 * 1000));
+      handleFormChange('end_time', endDateTime.toISOString());
+      
+      // Update formData with latest end_time
+      setFormData(prev => ({
+        ...prev,
+        end_time: endDateTime.toISOString()
+      }));
+    }
     
     const errors = validateForm();
     if (errors.length > 0) {
@@ -476,7 +503,21 @@ const Showtimes = () => {
       setIsSubmitting(true);
       setFormErrors([]);
       
-      await createShowtime(formData);
+      // Prepare the final data to ensure all fields are included
+      const showtimeData: ShowtimeCreateRequest = {
+        movie_id: formData.movie_id,
+        screen_id: formData.screen_id,
+        theater_id: formData.theater_id,
+        start_time: formData.start_time,
+        end_time: formData.end_time,
+        price: formData.price,
+        available_seats: formData.available_seats
+      };
+
+      // Debug log to check if end_time is included
+      console.log('Showtime data being sent:', showtimeData);
+      
+      await createShowtime(showtimeData);
       toast.success('Showtime created successfully');
       closeModals();
       await fetchData(); // Refresh the list
@@ -492,6 +533,19 @@ const Showtimes = () => {
   // Handle form submission for updating showtime
   const handleUpdateShowtime = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Ensure end_time is calculated before validation for update
+    if (selectedMovie && showDate && showTime && selectedMovie.duration) {
+      const startDateTime = new Date(`${showDate}T${showTime}:00.000Z`);
+      const endDateTime = new Date(startDateTime.getTime() + (selectedMovie.duration * 60 * 1000));
+      handleFormChange('end_time', endDateTime.toISOString());
+      
+      // Update formData with latest end_time
+      setFormData(prev => ({
+        ...prev,
+        end_time: endDateTime.toISOString()
+      }));
+    }
     
     const errors = validateForm();
     if (errors.length > 0) {
@@ -514,6 +568,9 @@ const Showtimes = () => {
         price: formData.price,
         available_seats: formData.available_seats
       };
+
+      // Debug log to check if end_time is included in update
+      console.log('Showtime update data being sent:', updateData);
       
       await updateShowtime(selectedShowtime._id, updateData);
       toast.success('Showtime updated successfully');
