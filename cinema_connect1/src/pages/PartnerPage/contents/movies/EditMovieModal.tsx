@@ -232,17 +232,17 @@ const EditMovieModal: React.FC<EditMovieModalProps> = ({
       };
       reader.readAsDataURL(file);
 
-      // Upload to server
-      const response = await mediasApi.uploadVideo(file);
+      // Upload to server using HLS
+      const response = await mediasApi.uploadVideoHLS(file);
       
       console.log('Upload response:', response.data); // Debug log
       
       // Check if response is successful and has the expected structure
-      // API response: { message: "Upload success", result: [{ url: "...", type: 0 }] }
+      // API response: { message: "Upload success", result: [{ url: "...", type: 2 }] }
       if (response?.data?.result?.[0]?.url) {
         const uploadedUrl = response.data.result[0].url;
         handleFormChange('trailer_url', uploadedUrl);
-        toast.success('Trailer uploaded successfully');
+        toast.success('Trailer uploaded successfully as HLS');
       } else {
         console.error('Unexpected response structure:', response.data);
         throw new Error('Invalid response from upload service');
