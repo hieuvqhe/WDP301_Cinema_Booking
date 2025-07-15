@@ -66,8 +66,11 @@ export default function SeatSelection({
 
     onSuccess: () => {
       toast.success("Đã hủy giữ ghế thành công!");
-      // Refresh seat data after unlocking
-      fetchSeatData();
+      
+      // Delay refresh to allow server to process the unlock
+      setTimeout(() => {
+        fetchSeatData();
+      }, 500);
     },
     onError: (error: any) => {
       const message = error.response?.data?.message || "Không thể hủy giữ ghế";
@@ -177,8 +180,16 @@ export default function SeatSelection({
     );
     const isUserLocked = lockedSeat && user && lockedSeat.user_id === user._id;
 
+    // If deselecting a locked seat, call API to unlock it and update UI immediately
     if (isAlreadySelected && isUserLocked && seatData) {
-      // If deselecting a locked seat, call API to unlock it
+      // Remove from selected seats immediately
+      setSelectedSeats((prev) => {
+        const newSelection = prev.filter((s) => s !== key);
+        updateSeats(newSelection);
+        return newSelection;
+      });
+
+      // Call API to unlock the seat
       deletedLockedSeatsMutation.mutate({
         showtime: seatData.showtimeId,
         body: {
@@ -190,8 +201,11 @@ export default function SeatSelection({
           ],
         },
       });
+      
+      return; // Exit early to prevent duplicate state updates
     }
 
+    // Regular seat selection logic
     setSelectedSeats((prev) => {
       const newSelection = isAlreadySelected
         ? prev.filter((s) => s !== key)
