@@ -72,7 +72,10 @@ export const getHomeSliderBanners = async (): Promise<Banner[]> => {
     console.log('Banner API response:', response.data);
     
     // API trả về { message: string, result: Banner[] } - không phải result.banners
-    return response.data.result || [];
+    const banners = response.data.result || [];
+    
+    // Sort banners by position in ascending order
+    return banners.sort((a: Banner, b: Banner) => a.position - b.position);
   } catch (error) {
     console.error('Banner API error:', error);
     throw handleBannerError(error);

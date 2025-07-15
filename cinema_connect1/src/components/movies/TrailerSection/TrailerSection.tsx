@@ -1,13 +1,34 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import VideoPlayer from "../../VideoPlayer";
-import { BiPlayCircle } from "react-icons/bi";
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import type { Movie } from "../../../types";
 import { getPopularMovies } from "../../../apis/movie.api";
 import BlurCircle from "../../layout/BlurCircle";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+
+// Custom Arrow Components
+const CustomPrevArrow = ({ onClick }: { onClick?: () => void }) => (
+  <button
+    onClick={onClick}
+    className="absolute left-[-50px] top-1/2 transform -translate-y-1/2 z-10 bg-purple-600/80 hover:bg-purple-600 text-white rounded-full p-3 transition-all duration-300 hover:scale-110 shadow-lg backdrop-blur-sm"
+    aria-label="Previous"
+  >
+    <ChevronLeft className="w-6 h-6" />
+  </button>
+);
+
+const CustomNextArrow = ({ onClick }: { onClick?: () => void }) => (
+  <button
+    onClick={onClick}
+    className="absolute right-[-50px] top-1/2 transform -translate-y-1/2 z-10 bg-purple-600/80 hover:bg-purple-600 text-white rounded-full p-3 transition-all duration-300 hover:scale-110 shadow-lg backdrop-blur-sm"
+    aria-label="Next"
+  >
+    <ChevronRight className="w-6 h-6" />
+  </button>
+);
 
 const TrailerSection = () => {
   const settings = {
@@ -16,22 +37,45 @@ const TrailerSection = () => {
     speed: 500,
     slidesToShow: 4,
     slidesToScroll: 2,
+    prevArrow: <CustomPrevArrow />,
+    nextArrow: <CustomNextArrow />,
+    responsive: [
+      {
+        breakpoint: 1024,
+        settings: {
+          slidesToShow: 3,
+          slidesToScroll: 1,
+        }
+      },
+      {
+        breakpoint: 768,
+        settings: {
+          slidesToShow: 2,
+          slidesToScroll: 1,
+        }
+      },
+      {
+        breakpoint: 480,
+        settings: {
+          slidesToShow: 1,
+          slidesToScroll: 1,
+        }
+      }
+    ]
   };
   const [getShowingMovies, setGetShowingMovies] = useState<Movie[]>([]);
   const [currentTrailer, setCurrentTrailer] = useState<string | undefined>(
     undefined
   );
   const [selectedMovieId, setSelectedMovieId] = useState<string | null>(null);
+  const [showVideoPlayer, setShowVideoPlayer] = useState<boolean>(false);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const movies = await getPopularMovies(10, 1);
         setGetShowingMovies(movies);
-        if (movies.length > 0) {
-          setCurrentTrailer(movies[3].trailer_url);
-          setSelectedMovieId(movies[0]._id);
-        }
+        // Removed auto-selection of trailer and movie
       } catch (error) {
         console.error("Failed to fetch popular movies:", error);
       }
@@ -43,66 +87,95 @@ const TrailerSection = () => {
   const handleClickTrailer = (trailerUrl: string | undefined, movieId: string) => {
     setCurrentTrailer(trailerUrl);
     setSelectedMovieId(movieId);
+    setShowVideoPlayer(true);
 
-    const trailerElement = document.getElementById("trailer-main");
-    trailerElement?.scrollIntoView({ behavior: "smooth", block: "start" });
+    // Scroll to video player after a short delay to ensure it's rendered
+    setTimeout(() => {
+      const trailerElement = document.getElementById("trailer-player");
+      trailerElement?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 100);
   };
 
   return (
     <div id="trailer-main" className="px-6 md:px-16 lg:px-24 xl:px-44 py-20 overflow-hidden">
-      <motion.p 
+      <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="text-gray-300 font-medium text-lg max-w-[960px] mx-auto"
+        className="text-center mb-12"
       >
-        Coming Soon Trailers
-      </motion.p>
+        <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+          Movie Trailers
+        </h2>
+        <p className="text-gray-300 font-medium text-lg max-w-[960px] mx-auto">
+          Click on any movie below to watch its trailer
+        </p>
+      </motion.div>
 
-      <motion.div 
-        className="relative mt-6"
-      >
-        <BlurCircle top="-100px" right="-100px" />
-        <div className="mx-auto max-w-[960px] h-[540px]">
-          {currentTrailer && (
+      {/* Video Player - Only show when a trailer is selected */}
+      {showVideoPlayer && currentTrailer && (
+        <motion.div 
+          id="trailer-player"
+          className="relative mt-6 mb-12"
+          initial={{ opacity: 0, scale: 0.9, y: 30 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+        >
+          <BlurCircle top="-100px" right="-100px" />
+          <div className="mx-auto max-w-[960px] h-[540px] relative">
             <VideoPlayer 
               src={currentTrailer} 
-              classNames="w-full h-full"
+              classNames="w-full h-full rounded-lg shadow-2xl"
               showGlow={true}
             />
-          )}
-        </div>
-      </motion.div>
+            {/* Close button */}
+            <button
+              onClick={() => setShowVideoPlayer(false)}
+              className="absolute top-4 right-4 bg-black/50 hover:bg-black/70 text-white rounded-full p-2 transition-colors duration-200 z-10"
+              aria-label="Close video"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </motion.div>
+      )}
       <motion.div 
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, delay: 0.4 }}
-        className="mt-10 max-w-3xl mx-auto overflow-hidden px-4"
+        className="mt-10 max-w-6xl mx-auto overflow-visible px-4 relative"
       >
-        <Slider {...settings}>
+        <div className="relative px-16">
+          <Slider {...settings}>
           {getShowingMovies.map((trailer, index) => {
             const isSelected = selectedMovieId === trailer._id;
             
             return (
               <motion.div
                 key={trailer._id}
-                className="px-1"
+                className="px-2"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1, duration: 0.5 }}
               >
                 <motion.div
-                  className={`relative group cursor-pointer overflow-hidden rounded-xl transition-all duration-500 ${
+                  className={`relative group cursor-pointer overflow-hidden rounded-lg transition-all duration-300 ${
                     isSelected 
-                      ? 'ring-2 ring-purple-500/60 ring-offset-1 ring-offset-gray-900 shadow-xl shadow-purple-500/20' 
-                      : 'hover:ring-1 hover:ring-white/30 hover:ring-offset-1 hover:ring-offset-gray-900'
+                      ? 'ring-2 ring-purple-500/80 shadow-lg shadow-purple-500/25 scale-105' 
+                      : 'hover:ring-1 hover:ring-purple-400/50 hover:shadow-lg hover:shadow-purple-500/10 hover:scale-102'
                   }`}
                   onClick={() => handleClickTrailer(trailer.trailer_url, trailer._id)}
+                  whileHover={{ y: -5 }}
+                  whileTap={{ scale: 0.98 }}
                 >
                   {/* Selected Glow Effect */}
                   {isSelected && (
                     <motion.div
-                      className="absolute -inset-1 bg-gradient-to-r from-purple-500/20 via-pink-500/20 to-purple-500/20 rounded-xl blur-md"
+                      className="absolute -inset-1 bg-gradient-to-r from-purple-500/30 via-pink-500/30 to-purple-500/30 rounded-lg blur-sm"
                       animate={{
-                        opacity: [0.2, 0.5, 0.2],
-                        scale: [1, 1.05, 1]
+                        opacity: [0.3, 0.6, 0.3],
                       }}
                       transition={{
                         duration: 2,
@@ -113,93 +186,54 @@ const TrailerSection = () => {
                   )}
 
                   {/* Image Container */}
-                  <div className="relative overflow-hidden rounded-lg h-60 md:max-h-60">
+                  <div className="relative overflow-hidden rounded-lg h-64 md:h-72">
                     <motion.img
                       src={trailer.poster_url}
                       alt={trailer.title}
-                      className={`w-full h-full object-cover transition-all duration-500 ${
+                      className={`w-full h-full object-cover transition-all duration-300 ${
                         isSelected 
-                          ? 'brightness-100 saturate-110' 
-                          : 'brightness-75 group-hover:brightness-90 group-hover:saturate-110'
+                          ? 'brightness-110 saturate-110' 
+                          : 'brightness-90 group-hover:brightness-100 group-hover:saturate-110'
                       }`}
-                      whileHover={{ scale: 1.1 }}
-                      transition={{ duration: 0.6 }}
                     />
 
                     {/* Gradient Overlay */}
-                    <div className={`absolute inset-0 transition-all duration-500 ${
+                    <div className={`absolute inset-0 transition-all duration-300 ${
                       isSelected 
-                        ? 'bg-gradient-to-t from-purple-900/50 via-transparent to-transparent' 
-                        : 'bg-gradient-to-t from-black/60 via-transparent to-transparent group-hover:from-purple-900/40'
+                        ? 'bg-gradient-to-t from-purple-900/40 via-transparent to-transparent' 
+                        : 'bg-gradient-to-t from-black/50 via-transparent to-transparent group-hover:from-purple-900/30'
                     }`} />
-
-                    {/* Play Icon */}
-                    <motion.div
-                      className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
-                      initial={{ scale: 0, opacity: 0 }}
-                      animate={{ 
-                        scale: isSelected ? 1 : 0, 
-                        opacity: isSelected ? 1 : 0 
-                      }}
-                      whileHover={{ scale: 1.2 }}
-                      transition={{ duration: 0.3 }}
-                    >
-                      <BiPlayCircle className="w-12 h-12 text-white drop-shadow-lg" />
-                    </motion.div>
-
-                    {/* Hover Play Icon */}
-                    <motion.div
-                      className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                      whileHover={{ scale: 1.2 }}
-                    >
-                      {!isSelected && (
-                        <BiPlayCircle className="w-8 h-8 md:w-10 md:h-10 text-white drop-shadow-lg" />
-                      )}
-                    </motion.div>
 
                     {/* Selected Badge */}
                     {isSelected && (
                       <motion.div
                         initial={{ scale: 0, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
-                        className="absolute top-2 right-2 bg-purple-500 text-white text-xs px-2 py-1 rounded-full font-semibold shadow-lg"
+                        className="absolute top-3 right-3 bg-purple-600 text-white text-xs px-3 py-1 rounded-full font-semibold shadow-lg"
                       >
-                        Now Playing
+                        Playing
                       </motion.div>
                     )}
 
-                    {/* Border Animation */}
-                    <motion.div
-                      className="absolute inset-0 border-2 border-transparent rounded-lg"
-                      animate={isSelected ? {
-                        borderColor: ["rgba(168, 85, 247, 0.8)", "rgba(236, 72, 153, 0.8)", "rgba(168, 85, 247, 0.8)"],
-                        transition: {
-                          duration: 2,
-                          repeat: Infinity,
-                          ease: "easeInOut"
-                        }
-                      } : {}}
-                    />
                   </div>
 
                   {/* Movie Title */}
-                  <motion.div
-                    className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/80 to-transparent"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.8 + index * 0.1 }}
-                  >
-                    <h3 className={`text-sm font-medium transition-colors duration-300 ${
+                  <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/90 via-black/50 to-transparent">
+                    <h3 className={`text-sm md:text-base font-semibold transition-colors duration-300 ${
                       isSelected ? 'text-purple-200' : 'text-white group-hover:text-purple-200'
                     }`}>
                       {trailer.title}
                     </h3>
-                  </motion.div>
+                    <p className="text-gray-300 text-xs mt-1 opacity-80">
+                      Click to watch trailer
+                    </p>
+                  </div>
                 </motion.div>
               </motion.div>
             );
           })}
         </Slider>
+        </div>
       </motion.div>
     </div>
   );

@@ -12,6 +12,7 @@ import {
   FileText,
   CreditCard,
   ScanLine,
+  Image,
 } from "lucide-react";
 import { getDashboardStats, getPaymentStats } from "../../../../apis/admin.api";
 import { useQuery } from "@tanstack/react-query";
@@ -74,6 +75,13 @@ export const AdminSidebar = ({
       icon: FileText,
       count: dataDashboard?.hr_stats?.total_contracts || 0,
       color: "from-teal-500 to-green-500",
+    },
+    {
+      id: "banners",
+      label: "Banner Management",
+      icon: Image,
+      count: null,
+      color: "from-pink-500 to-rose-500",
     },
     {
       id: "payments",
