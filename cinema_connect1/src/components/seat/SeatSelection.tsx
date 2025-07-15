@@ -1,16 +1,22 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import type { Seat } from "../../types/Screen.type";
 import type { LockedSeat } from "../../types/Showtime.type";
 import { useAuthAction } from "../../hooks/useAuthAction";
 import { useAuthStore } from "../../store/useAuthStore";
+import { useSeatPersistence } from "../../hooks/useSeatPersistence";
 import LoginModal from "../user/LoginModal";
 import {
   getShowtimeById,
   getShowtimeByIdLockedSeats,
 } from "../../apis/showtime.api";
+import { useMutation } from "@tanstack/react-query";
+import bookingApi, {
+  type ReqBodyMultipleSeatLock,
+} from "../../apis/booking.api";
+import { toast } from "sonner";
 
 type priceType = {
   regular: number;
@@ -36,109 +42,157 @@ export default function SeatSelection({
   const [bookedSeats, setBookedSeats] = useState<string[]>([]);
   const [countdowns, setCountdowns] = useState<Record<string, number>>({});
   const [isRefetching, setIsRefetching] = useState(false);
+  const [hasInitialized, setHasInitialized] = useState(false);
   const navigate = useNavigate();
   const { requireAuth, showLoginModal, setShowLoginModal } = useAuthAction();
   const { user } = useAuthStore();
+  const {
+    seatData,
+    isExpired,
+    updateSeats,
+    updateTotalAmount,
+    extendExpiration,
+  } = useSeatPersistence();
 
-  // Lấy ghế đã chọn từ localStorage
+  // Delete locked seats mutation
+  const deletedLockedSeatsMutation = useMutation({
+    mutationFn: ({
+      showtime,
+      body,
+    }: {
+      showtime: string;
+      body: ReqBodyMultipleSeatLock;
+    }) => bookingApi.deletedShowtimeBySeatLocked(showtime, body),
+
+    onSuccess: () => {
+      toast.success("Đã hủy giữ ghế thành công!");
+      // Refresh seat data after unlocking
+      fetchSeatData();
+    },
+    onError: (error: any) => {
+      const message = error.response?.data?.message || "Không thể hủy giữ ghế";
+      console.error("Error unlocking seat:", message);
+    },
+  });
+
+  // Load seats from persistence hook (only on mount or when showtimeId changes)
   useEffect(() => {
-    const stored = localStorage.getItem("selected-movie-info");
-    if (stored) {
-      const data = JSON.parse(stored);
-      if (Array.isArray(data.seats)) {
-        setSelectedSeats(data.seats);
-      }
+    if (isExpired) {
+      setSelectedSeats([]);
+      return;
     }
-  }, []);
 
-  // Cập nhật seats đã chọn vào localStorage
-  useEffect(() => {
-    const prevData = localStorage.getItem("selected-movie-info");
-    const parsed = prevData ? JSON.parse(prevData) : {};
-    localStorage.setItem(
-      "selected-movie-info",
-      JSON.stringify({ ...parsed, seats: selectedSeats })
-    );
-  }, [selectedSeats]);
+    if (seatData && Array.isArray(seatData.seats) && !hasInitialized) {
+      setSelectedSeats(seatData.seats);
+      setHasInitialized(true);
+    }
+  }, [seatData?.showtimeId, isExpired, hasInitialized]);
+
+  // Remove automatic localStorage updates to avoid infinite loops
+  // Updates will be handled manually in toggleSeat function
 
   // Fetch seat data function
-  const fetchSeatData = async () => {
-    const data = localStorage.getItem("selected-movie-info");
-    if (data) {
-      const parsed = JSON.parse(data);
-      if (parsed.showtimeId) {
-        setIsRefetching(true);
-        try {
-          const [showtime, locked] = await Promise.all([
-            getShowtimeById(parsed.showtimeId),
-            getShowtimeByIdLockedSeats(parsed.showtimeId),
-          ]);
+  const fetchSeatData = useCallback(async () => {
+    if (!seatData || !seatData.showtimeId) return;
 
-          setPrice(showtime.price);
-          setLockedSeats(locked);
+    const showtimeId = seatData.showtimeId;
+    if (showtimeId) {
+      setIsRefetching(true);
+      try {
+        const [showtime, locked] = await Promise.all([
+          getShowtimeById(showtimeId),
+          getShowtimeByIdLockedSeats(showtimeId),
+        ]);
 
-          // Initialize countdowns for locked seats
-          const newCountdowns: Record<string, number> = {};
-          const userLockedSeats: string[] = [];
+        setPrice(showtime.price);
+        setLockedSeats(locked);
 
-          locked.forEach((seat) => {
-            const key = `${seat.row}${seat.number}`;
-            const expiresAt = new Date(seat.expires_at).getTime();
-            const now = new Date().getTime();
-            const remaining = Math.max(0, Math.floor((expiresAt - now) / 1000));
-            newCountdowns[key] = remaining;
+        // Initialize countdowns for locked seats
+        const newCountdowns: Record<string, number> = {};
+        const userLockedSeats: string[] = [];
 
-            // Auto-select seats locked by current user
-            if (user && seat.user_id === user._id) {
-              userLockedSeats.push(key);
-            }
+        locked.forEach((seat) => {
+          const key = `${seat.row}${seat.number}`;
+          const expiresAt = new Date(seat.expires_at).getTime();
+          const now = new Date().getTime();
+          const remaining = Math.max(0, Math.floor((expiresAt - now) / 1000));
+          newCountdowns[key] = remaining;
+
+          // Auto-select seats locked by current user
+          if (user && seat.user_id === user._id) {
+            userLockedSeats.push(key);
+          }
+        });
+
+        setCountdowns(newCountdowns);
+
+        // Add user's locked seats to selected seats
+        if (userLockedSeats.length > 0) {
+          setSelectedSeats((prev) => {
+            const newSelection = [...new Set([...prev, ...userLockedSeats])];
+            // Also update localStorage when adding locked seats
+            updateSeats(newSelection);
+            return newSelection;
           });
-
-          setCountdowns(newCountdowns);
-
-          // Add user's locked seats to selected seats
-          if (userLockedSeats.length > 0) {
-            setSelectedSeats((prev) => {
-              const newSelection = [...new Set([...prev, ...userLockedSeats])];
-              // Update localStorage
-              const prevData = localStorage.getItem("selected-movie-info");
-              const parsed = prevData ? JSON.parse(prevData) : {};
-              localStorage.setItem(
-                "selected-movie-info",
-                JSON.stringify({ ...parsed, seats: newSelection })
-              );
-              return newSelection;
-            });
-          }
-
-          // Xử lý booked_seats, loại trừ locked seats
-          if (showtime.booked_seats) {
-            const lockedSeatKeys = locked.map(
-              (seat) => `${seat.row}${seat.number}`
-            );
-            const bookedSeatKeys = showtime.booked_seats
-              .map((seat: any) => `${seat.row}${seat.number}`)
-              .filter((seatKey: string) => !lockedSeatKeys.includes(seatKey));
-            setBookedSeats(bookedSeatKeys);
-          }
-        } catch (error) {
-          console.error("Failed to fetch showtime data:", error);
-        } finally {
-          setIsRefetching(false);
         }
+
+        // Xử lý booked_seats, loại trừ locked seats
+        if (showtime.booked_seats) {
+          const lockedSeatKeys = locked.map(
+            (seat) => `${seat.row}${seat.number}`
+          );
+          const bookedSeatKeys = showtime.booked_seats
+            .map((seat: any) => `${seat.row}${seat.number}`)
+            .filter((seatKey: string) => !lockedSeatKeys.includes(seatKey));
+          setBookedSeats(bookedSeatKeys);
+        }
+      } catch (error) {
+        console.error("Failed to fetch showtime data:", error);
+      } finally {
+        setIsRefetching(false);
       }
     }
-  };
+  }, [seatData, user]);
+
+  // Reset initialization flag when showtimeId changes
+  useEffect(() => {
+    setHasInitialized(false);
+  }, [seatData?.showtimeId]);
 
   // Lấy giá tiền và ghế đã đặt từ showtimeId
   useEffect(() => {
-    fetchSeatData();
-  }, []);
+    if (seatData && !isExpired && seatData.showtimeId && !hasInitialized) {
+      fetchSeatData();
+      setHasInitialized(true);
+    }
+  }, [seatData?.showtimeId, isExpired, hasInitialized, fetchSeatData]); // Only run once when showtimeId is available
 
   const toggleSeat = (seat: Seat) => {
     const key = `${seat.row}${seat.number}`;
+    const isAlreadySelected = selectedSeats.includes(key);
+
+    // Check if this seat is locked by current user
+    const lockedSeat = lockedSeats.find(
+      (locked) => `${locked.row}${locked.number}` === key
+    );
+    const isUserLocked = lockedSeat && user && lockedSeat.user_id === user._id;
+
+    if (isAlreadySelected && isUserLocked && seatData) {
+      // If deselecting a locked seat, call API to unlock it
+      deletedLockedSeatsMutation.mutate({
+        showtime: seatData.showtimeId,
+        body: {
+          seats: [
+            {
+              seat_row: seat.row,
+              seat_number: seat.number,
+            },
+          ],
+        },
+      });
+    }
+
     setSelectedSeats((prev) => {
-      const isAlreadySelected = prev.includes(key);
       const newSelection = isAlreadySelected
         ? prev.filter((s) => s !== key)
         : [...prev, key];
@@ -147,13 +201,21 @@ export default function SeatSelection({
         onSelectSeat();
       }
 
+      // Extend expiration time when user selects seat
+      if (!isAlreadySelected) {
+        extendExpiration();
+      }
+
+      // Manually update localStorage for user actions
+      updateSeats(newSelection);
+
       return newSelection;
     });
   };
 
   const handleCheckout = () => {
     requireAuth(() => {
-      navigate("/checkout");
+      navigate(`/checkout?screenId=${seatData?.screenId}`);
     });
   };
 
@@ -201,7 +263,7 @@ export default function SeatSelection({
   useEffect(() => {
     if (!price) return;
 
-    const totalAmount = selectedSeats.reduce((sum, seatKey) => {
+    const calculatedTotal = selectedSeats.reduce((sum, seatKey) => {
       for (const row of seatLayout) {
         for (const seat of row) {
           const key = `${seat.row}${seat.number}`;
@@ -213,13 +275,8 @@ export default function SeatSelection({
       return sum;
     }, 0);
 
-    const prevData = localStorage.getItem("selected-movie-info");
-    const parsed = prevData ? JSON.parse(prevData) : {};
-    localStorage.setItem(
-      "selected-movie-info",
-      JSON.stringify({ ...parsed, totalAmount })
-    );
-  }, [selectedSeats, price, seatLayout]);
+    updateTotalAmount(calculatedTotal);
+  }, [selectedSeats, price, seatLayout, updateTotalAmount]);
 
   // Countdown timer for locked seats
   useEffect(() => {
@@ -509,7 +566,10 @@ export default function SeatSelection({
 
       <div className="flex flex-col sm:flex-row gap-4 items-center justify-center w-full">
         <motion.button
-          onClick={fetchSeatData}
+          onClick={() => {
+            setHasInitialized(false);
+            fetchSeatData();
+          }}
           disabled={isRefetching}
           whileHover={{ scale: isRefetching ? 1 : 1.05 }}
           whileTap={{ scale: isRefetching ? 1 : 0.95 }}
