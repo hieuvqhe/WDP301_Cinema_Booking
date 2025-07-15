@@ -23,6 +23,7 @@ const createBannerRequest = () => {
     }
   });
 };
+// Test
 
 // Create public axios instance for public banner endpoints
 const createPublicBannerRequest = () => {
