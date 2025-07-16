@@ -29,7 +29,29 @@ export const useCreateBooking = () => {
     },
   });
 };
+export const useUpdateBooking = () => {
+  const queryClient = useQueryClient();
 
+  return useMutation({
+    mutationFn: ({
+      bookingId,
+      data,
+    }: {
+      bookingId: string;
+      data: CreateBookingRequest;
+    }) => bookingApi.updateBooking(data, bookingId),
+    onSuccess: () => {
+      toast.success("Booking updated successfully");
+      queryClient.invalidateQueries({ queryKey: ["bookings"] });
+      queryClient.invalidateQueries({ queryKey: ["my-bookings"] });
+    },
+    onError: (error: any) => {
+      const message =
+        error.response?.data?.message || "Failed to update booking";
+      toast.error(message);
+    },
+  });
+};
 // Hook for fetching user's bookings
 export const useMyBookings = (params?: BookingQueryParams) => {
   return useQuery({

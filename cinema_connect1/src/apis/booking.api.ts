@@ -139,7 +139,13 @@ const bookingApi = {
     const authRequest = createAuthRequest();
     return authRequest.post<CreateBookingResponse>("/cinema/bookings", data);
   },
-
+  updateBooking: (data: CreateBookingRequest, bookingId: string) => {
+    const authRequest = createAuthRequest();
+    return authRequest.post<SuccessResponse<{ messages: string }>>(
+      `/bookings/updateBookingAndSeats/${bookingId}`,
+      data
+    );
+  },
   // Get my bookings
   getMyBookings: (params?: BookingQueryParams) => {
     const authRequest = createAuthRequest();
@@ -205,7 +211,10 @@ const bookingApi = {
     });
   },
   //deleted showtime by seat locked
-  deletedShowtimeBySeatLocked: (showtimeId: string, body: ReqBodyMultipleSeatLock) => {
+  deletedShowtimeBySeatLocked: (
+    showtimeId: string,
+    body: ReqBodyMultipleSeatLock
+  ) => {
     const authRequest = createAuthRequest();
     return authRequest.post<SuccessResponse<{ message: string }>>(
       `/bookings/delete/showtime/${showtimeId}`,

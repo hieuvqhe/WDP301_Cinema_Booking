@@ -19,7 +19,11 @@ import type { Showtime } from "../types/Showtime.type";
 import { getScreenById } from "../apis/screen.api";
 import { getMovieById } from "../apis/movie.api";
 import { getShowtimeById } from "../apis/showtime.api";
-import { useCreateBooking, useBookingExpiration } from "../hooks/useBooking";
+import {
+  useCreateBooking,
+  useUpdateBooking,
+  useBookingExpiration,
+} from "../hooks/useBooking";
 import { useAuthStore } from "../store/useAuthStore";
 import { useSeatPersistence } from "../hooks/useSeatPersistence";
 import CheckoutPaymentStep from "../components/checkout/CheckoutPaymentStep";
@@ -56,6 +60,7 @@ export default function CheckoutPage() {
 
   // Enhanced hooks
   const createBookingMutation = useCreateBooking();
+  const updateBookingMutation = useUpdateBooking();
   const { data: expirationInfo } = useBookingExpiration(
     bookingId || "",
     !!bookingId
@@ -120,13 +125,13 @@ export default function CheckoutPage() {
 
     if (seatData && !hasLoadedData) {
       // Get screenId from URL params for validation
-      const urlScreenId = searchParams.get('screenId');
-      
+      const urlScreenId = searchParams.get("screenId");
+
       // Validate screenId matches URL parameter if provided
       if (urlScreenId && seatData.screenId !== urlScreenId) {
-        console.warn('ScreenId mismatch between localStorage and URL:', {
+        console.warn("ScreenId mismatch between localStorage and URL:", {
           localStorage: seatData.screenId,
-          url: urlScreenId
+          url: urlScreenId,
         });
         toast.error("Screen information mismatch. Please select seats again.");
         clearSeatData();
@@ -165,7 +170,15 @@ export default function CheckoutPage() {
           .catch(() => setShowtime(null));
       }
     }
-  }, [seatData, isExpired, hasLoadedData, clearSeatData, navigate, deletedLockedSeatsMutation, searchParams]);
+  }, [
+    seatData,
+    isExpired,
+    hasLoadedData,
+    clearSeatData,
+    navigate,
+    deletedLockedSeatsMutation,
+    searchParams,
+  ]);
 
   // Update seats and price when seatData changes (without calling APIs again)
   useEffect(() => {
@@ -218,7 +231,13 @@ export default function CheckoutPage() {
 
       return () => clearInterval(timer);
     }
-  }, [currentStep, timeRemaining, navigate, bookingInfo, deletedLockedSeatsMutation]);
+  }, [
+    currentStep,
+    timeRemaining,
+    navigate,
+    bookingInfo,
+    deletedLockedSeatsMutation,
+  ]);
 
   const formatTime = (iso: string) =>
     new Date(iso).toLocaleString("vi-VN", {
@@ -234,6 +253,33 @@ export default function CheckoutPage() {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, "0")}`;
+  };
+
+  // Helper function to check if BOTH selected-movie-info AND seat-locked exist for the current showtimeId
+  const checkExistingBooking = (showtimeId: string) => {
+    try {
+      console.log("Checking existing booking for showtimeId:", showtimeId);
+
+      // Check for selected-movie-info data
+      const selectedMovieInfo = localStorage.getItem("selected-movie-info");
+      let hasSelectedMovieInfo = false;
+      if (selectedMovieInfo) {
+        const parsedData = JSON.parse(selectedMovieInfo);
+        console.log("Parsed selected-movie-info data:", parsedData.showtimeId);
+        if (parsedData.showtimeId === showtimeId) {
+          console.log("Found matching selected-movie-info data");
+          hasSelectedMovieInfo = true;
+        }
+      }
+
+      // Only return true if BOTH exist
+      const bothExist = hasSelectedMovieInfo;
+      console.log("Both seat-locked and selected-movie-info exist:", bothExist);
+      return bothExist;
+    } catch (error) {
+      console.error("Error checking existing booking data:", error);
+      return false;
+    }
   };
 
   // Create booking before payment
@@ -264,12 +310,63 @@ export default function CheckoutPage() {
         }),
       };
 
-      console.log("Creating booking with data:", bookingData);
-      console.log("Selected seats:", bookingInfo.seats);
+      // Check if existing booking data exists for this showtimeId
 
-      // Use the booking hook
-      const response = await createBookingMutation.mutateAsync(bookingData);
-      const newBookingId = response.data.result.booking._id;
+      const hasExistingBooking = checkExistingBooking(bookingInfo.showtimeId);
+      console.log("hasExistingBooking:", hasExistingBooking);
+
+      let response;
+      let newBookingId;
+
+      if (hasExistingBooking) {
+        // Both selected-movie-info AND seat-locked exist, use updateBooking
+        console.log(
+          "Both selected-movie-info and seat-locked exist, using updateBooking"
+        );
+
+        // Get existing booking ID from seat-locked data (preferred) or selected-movie-info
+        let existingBookingId = null;
+
+        // Fallback to selected-movie-info if no bookingId in seat-locked
+        if (!existingBookingId) {
+          const selectedMovieInfo = localStorage.getItem("selected-movie-info");
+          console.log("selectedMovieInfo:", selectedMovieInfo);
+          if (selectedMovieInfo) {
+            const parsedData = JSON.parse(selectedMovieInfo);
+            existingBookingId = parsedData.bookingId;
+            console.log(
+              "existingBookingId from selected-movie-info:",
+              existingBookingId
+            );
+          }
+        }
+
+        if (existingBookingId) {
+          console.log("Using updateBooking with bookingId:", existingBookingId);
+          response = await updateBookingMutation.mutateAsync({
+            bookingId: existingBookingId,
+            data: bookingData,
+          });
+          newBookingId = existingBookingId;
+        } else {
+          console.log(
+            "ERROR: Both localStorage items exist but no bookingId found!"
+          );
+          console.log(
+            "This should not happen - bookingId should exist in localStorage"
+          );
+          // Fallback to createBooking
+          response = await createBookingMutation.mutateAsync(bookingData, {});
+          newBookingId = response.data.result.booking._id;
+        }
+      } else {
+        console.log(
+          "Either selected-movie-info or seat-locked missing, using createBooking"
+        );
+        // Use createBooking if either or both localStorage items are missing
+        response = await createBookingMutation.mutateAsync(bookingData);
+        newBookingId = response.data.result.booking._id;
+      }
 
       setBookingId(newBookingId);
       setCurrentStep("payment");
@@ -603,7 +700,9 @@ export default function CheckoutPage() {
                     <motion.button
                       onClick={handleCreateBooking}
                       disabled={
-                        isCreatingBooking || createBookingMutation.isPending
+                        isCreatingBooking ||
+                        createBookingMutation.isPending ||
+                        updateBookingMutation.isPending
                       }
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
@@ -612,10 +711,12 @@ export default function CheckoutPage() {
                                transition-all disabled:opacity-50 disabled:cursor-not-allowed
                                flex items-center justify-center gap-2"
                     >
-                      {isCreatingBooking || createBookingMutation.isPending ? (
+                      {isCreatingBooking ||
+                      createBookingMutation.isPending ||
+                      updateBookingMutation.isPending ? (
                         <>
                           <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white" />
-                          Creating Booking...
+                          Processing Booking...
                         </>
                       ) : (
                         <>

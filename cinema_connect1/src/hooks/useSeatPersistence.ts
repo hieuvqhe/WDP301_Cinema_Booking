@@ -5,6 +5,7 @@ interface SeatData {
   screenId: string;
   movieId: string;
   showtimeId: string;
+  bookingId: string;
   totalAmount: number;
   theaterId?: string;
   timestamp: number;
@@ -86,7 +87,7 @@ export const useSeatPersistence = () => {
   };
 
   const updateSeats = useCallback((seats: string[]) => {
-    setSeatData(currentData => {
+    setSeatData((currentData) => {
       if (currentData) {
         const updatedData = {
           ...currentData,
@@ -101,11 +102,26 @@ export const useSeatPersistence = () => {
   }, []);
 
   const updateTotalAmount = useCallback((totalAmount: number) => {
-    setSeatData(currentData => {
+    setSeatData((currentData) => {
       if (currentData) {
         const updatedData = {
           ...currentData,
           totalAmount,
+          timestamp: Date.now(),
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedData));
+        return updatedData;
+      }
+      return currentData;
+    });
+  }, []);
+
+  const updateBookingId = useCallback((bookingId: string) => {
+    setSeatData((currentData) => {
+      if (currentData) {
+        const updatedData = {
+          ...currentData,
+          bookingId,
           timestamp: Date.now(),
         };
         localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedData));
@@ -124,21 +140,24 @@ export const useSeatPersistence = () => {
     }
   };
 
-  const extendExpiration = useCallback((additionalTime: number = SEAT_EXPIRATION_TIME) => {
-    setSeatData(currentData => {
-      if (currentData) {
-        const now = Date.now();
-        const updatedData = {
-          ...currentData,
-          expiresAt: now + additionalTime,
-          timestamp: now,
-        };
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedData));
-        return updatedData;
-      }
-      return currentData;
-    });
-  }, []);
+  const extendExpiration = useCallback(
+    (additionalTime: number = SEAT_EXPIRATION_TIME) => {
+      setSeatData((currentData) => {
+        if (currentData) {
+          const now = Date.now();
+          const updatedData = {
+            ...currentData,
+            expiresAt: now + additionalTime,
+            timestamp: now,
+          };
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedData));
+          return updatedData;
+        }
+        return currentData;
+      });
+    },
+    []
+  );
 
   const getTimeRemaining = (): number => {
     if (!seatData || !seatData.expiresAt) return 0;
@@ -171,6 +190,7 @@ export const useSeatPersistence = () => {
     saveSeatData,
     updateSeats,
     updateTotalAmount,
+    updateBookingId,
     clearSeatData,
     extendExpiration,
     getTimeRemaining,
