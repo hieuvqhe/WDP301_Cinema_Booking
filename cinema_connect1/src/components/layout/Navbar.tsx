@@ -1,7 +1,5 @@
 import { Link } from "react-router-dom";
-import { IoMenu } from "react-icons/io5";
 import { IoIosSearch } from "react-icons/io";
-import { FaTimes } from "react-icons/fa";
 import { useState, useEffect, useRef } from "react";
 import LoginModal from "../user/LoginModal";
 import { useAuthStore } from "../../store/useAuthStore";
@@ -9,6 +7,7 @@ import { Popover, PopoverButton, PopoverPanel } from "@headlessui/react";
 import Avatar from "../ui/Avatar";
 import { useWindowScroll } from "react-use";
 import gsap from "gsap";
+import { FaBars, FaTimes } from "react-icons/fa";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -47,8 +46,6 @@ const Navbar = () => {
     const baseItems = [
       { title: "Home", link: "/" },
       { title: "Movies", link: "/movies" },
-      { title: "My Bookings", link: "/my-bookings" },
-      { title: "Favourites", link: "/favourite" },
     ];
 
     if (!user) {
@@ -61,10 +58,13 @@ const Navbar = () => {
       case "staff":
         return [...baseItems, { title: "Partner Dashboard", link: "/partner" }];
       case "customer":
-      default:
         return [
           ...baseItems,
+          { title: "My Bookings", link: "/my-bookings" },
+          { title: "Favourites", link: "/favourite" },
         ];
+      default:
+        return [...baseItems];
     }
   };
 
@@ -114,10 +114,42 @@ const Navbar = () => {
 
   return (
     <>
+      <div className="md:hidden fixed top-4 right-4 z-50">
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className="p-2 rounded-md bg-gray-800 text-white transition-all duration-300"
+        >
+          {isOpen ? <FaTimes /> : <FaBars />}
+        </button>
+      </div>
+
+      {/* Menu dropdown khi mở */}
+      {isOpen && (
+        <div
+          className="md:hidden fixed inset-0 z-40 bg-black bg-opacity-50"
+          onClick={() => setIsOpen(false)}
+        >
+          <div
+            className="fixed top-0 right-0 h-full w-64 bg-gray-600 shadow-lg flex flex-col pt-16 p-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {navigationItems.map((item, index) => (
+              <Link
+                key={index}
+                className="nav-hover-btn py-3 rounded-md"
+                to={item.link}
+                onClick={() => setIsOpen(false)}
+              >
+                {item.title}
+              </Link>
+            ))} 
+          </div>
+        </div>
+      )}
       <div
         ref={navContainerRef}
         className={`fixed inset-x-0 top-4 z-50 h-16 border-none transition-all duration-700
-      sm:inset-x-6 flex items-center justify-between px-4`}
+        sm:inset-x-6 flex items-center justify-between px-4 max-md:hidden`}
       >
         <Link to={"/"} className="max-md:flex-1">
           <img
@@ -128,10 +160,6 @@ const Navbar = () => {
         </Link>
 
         <div>
-          <FaTimes
-            onClick={() => setIsOpen(!isOpen)}
-            className={`md:hidden absolute top-6 right-6 w-6 h-6 cursor-pointer transition-colors duration-300`}
-          />
           {navigationItems.map((item, index) => (
             <Link
               key={index}
@@ -207,11 +235,6 @@ const Navbar = () => {
             </button>
           )}
         </div>
-
-        <IoMenu
-          className={`max-md:ml-4 md:hidden w-8 h-8 cursor-pointer transition-colors duration-300 `}
-          onClick={() => setIsOpen(!isOpen)}
-        />
       </div>
 
       {isLoginForm && <LoginModal isFormOpen={setIsLoginForm} />}

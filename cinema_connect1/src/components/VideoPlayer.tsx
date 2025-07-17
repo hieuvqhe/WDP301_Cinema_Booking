@@ -1,70 +1,75 @@
-import { useEffect, useRef, useState } from 'react'
-import { motion } from 'framer-motion'
-import Hls from 'hls.js'
+import { useEffect, useRef, useState } from "react";
+import { motion } from "framer-motion";
+import Hls from "hls.js";
 
 interface VideoPlayerProps {
-  src: string
-  classNames?: string
-  autoPlay?: boolean
-  showGlow?: boolean
+  src: string;
+  classNames?: string;
+  autoPlay?: boolean;
+  showGlow?: boolean;
 }
 
-const VideoPlayer = ({ src, classNames, autoPlay = true, showGlow = true }: VideoPlayerProps) => {
-  const videoRef = useRef<HTMLVideoElement>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [isPlaying, setIsPlaying] = useState(false)
+const VideoPlayer = ({
+  src,
+  classNames,
+  autoPlay = true,
+  showGlow = true,
+}: VideoPlayerProps) => {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isPlaying, setIsPlaying] = useState(false);
 
   useEffect(() => {
     if (videoRef.current) {
-      const video = videoRef.current
+      const video = videoRef.current;
 
       // Add event listeners
-      const handleLoadStart = () => setIsLoading(true)
-      const handleCanPlay = () => setIsLoading(false)
-      const handlePlay = () => setIsPlaying(true)
-      const handlePause = () => setIsPlaying(false)
+      const handleLoadStart = () => setIsLoading(true);
+      const handleCanPlay = () => setIsLoading(false);
+      const handlePlay = () => setIsPlaying(true);
+      const handlePause = () => setIsPlaying(false);
 
-      video.addEventListener('loadstart', handleLoadStart)
-      video.addEventListener('canplay', handleCanPlay)
-      video.addEventListener('play', handlePlay)
-      video.addEventListener('pause', handlePause)
+      video.addEventListener("loadstart", handleLoadStart);
+      video.addEventListener("canplay", handleCanPlay);
+      video.addEventListener("play", handlePlay);
+      video.addEventListener("pause", handlePause);
 
       if (Hls.isSupported()) {
-        const hls = new Hls()
-        hls.loadSource(src)
-        hls.attachMedia(video)
+        const hls = new Hls();
+        hls.loadSource(src);
+        hls.attachMedia(video);
 
         hls.on(Hls.Events.MANIFEST_PARSED, () => {
-          console.log('Video is ready to play')
-          setIsLoading(false)
-        })
+          console.log("Video is ready to play");
+          setIsLoading(false);
+        });
 
         return () => {
-          hls.destroy()
-          video.removeEventListener('loadstart', handleLoadStart)
-          video.removeEventListener('canplay', handleCanPlay)
-          video.removeEventListener('play', handlePlay)
-          video.removeEventListener('pause', handlePause)
-        }
-      } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-        video.src = src
+          hls.destroy();
+          video.removeEventListener("loadstart", handleLoadStart);
+          video.removeEventListener("canplay", handleCanPlay);
+          video.removeEventListener("play", handlePlay);
+          video.removeEventListener("pause", handlePause);
+        };
+      } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
+        video.src = src;
       }
 
       return () => {
-        video.removeEventListener('loadstart', handleLoadStart)
-        video.removeEventListener('canplay', handleCanPlay)
-        video.removeEventListener('play', handlePlay)
-        video.removeEventListener('pause', handlePause)
-      }
+        video.removeEventListener("loadstart", handleLoadStart);
+        video.removeEventListener("canplay", handleCanPlay);
+        video.removeEventListener("play", handlePlay);
+        video.removeEventListener("pause", handlePause);
+      };
     }
-  }, [src])
+  }, [src]);
 
   return (
-    <motion.div 
+    <motion.div
       className={`relative overflow-hidden rounded-2xl ${classNames}`}
     >
       {/* Animated Border Gradient */}
-      <div className="absolute inset-0 rounded-2xl">
+      {/* <div className="absolute inset-0 rounded-2xl">
         <motion.div
           className="absolute inset-0 rounded-2xl"
           animate={{
@@ -87,48 +92,23 @@ const VideoPlayer = ({ src, classNames, autoPlay = true, showGlow = true }: Vide
         >
           <div className="w-full h-full bg-gray-900 rounded-2xl"></div>
         </motion.div>
-      </div>
+      </div> */}
 
       {/* Glow Effect */}
       {showGlow && (
-        <>
-          <motion.div
-            className="absolute -inset-2 rounded-2xl opacity-50 blur-xl"
-            animate={{
-              background: [
-                "linear-gradient(45deg, #8B5CF6, #EC4899)",
-                "linear-gradient(135deg, #EC4899, #F59E0B)", 
-                "linear-gradient(225deg, #F59E0B, #8B5CF6)",
-                "linear-gradient(315deg, #8B5CF6, #EC4899)"
-              ]
-            }}
-            transition={{
-              duration: 3,
-              repeat: Infinity,
-              ease: "easeInOut"
-            }}
-          />
-          
-          {/* Pulse effect when playing */}
-          {isPlaying && (
-            <motion.div
-              className="absolute -inset-4 rounded-2xl opacity-30"
-              animate={{
-                scale: [1, 1.05, 1],
-                opacity: [0.3, 0.6, 0.3]
-              }}
-              transition={{
-                duration: 2,
-                repeat: Infinity,
-                ease: "easeInOut"
-              }}
-              style={{
-                background: "linear-gradient(45deg, #8B5CF6, #EC4899)",
-                filter: "blur(20px)"
-              }}
-            />
-          )}
-        </>
+        // <>
+        //   <motion.div
+        //     className="absolute -inset-2 rounded-2xl opacity-50 blur-xl"
+        //   />
+
+        //   {/* Pulse effect when playing */}
+        //   {isPlaying && (
+        //     <motion.div
+        //       className="absolute -inset-4 rounded-2xl opacity-30"
+        //     />
+        //   )}
+        // </>
+        <></>
       )}
 
       {/* Video Container */}
@@ -161,12 +141,12 @@ const VideoPlayer = ({ src, classNames, autoPlay = true, showGlow = true }: Vide
           <div className="absolute bottom-2 right-2 w-6 h-6 border-r-2 border-b-2 border-white/30 rounded-br-lg z-30"></div>
 
           {/* Video Element */}
-          <video 
-            ref={videoRef} 
-            controls 
+          <video
+            ref={videoRef}
+            controls
             autoPlay={autoPlay}
             className="w-full h-auto rounded-xl relative z-10"
-            style={{ display: 'block' }}
+            style={{ display: "block" }}
           />
         </motion.div>
       </div>
@@ -182,27 +162,27 @@ const VideoPlayer = ({ src, classNames, autoPlay = true, showGlow = true }: Vide
                 x: [
                   Math.random() * 100 + "%",
                   Math.random() * 100 + "%",
-                  Math.random() * 100 + "%"
+                  Math.random() * 100 + "%",
                 ],
                 y: [
-                  Math.random() * 100 + "%", 
                   Math.random() * 100 + "%",
-                  Math.random() * 100 + "%"
+                  Math.random() * 100 + "%",
+                  Math.random() * 100 + "%",
                 ],
-                opacity: [0, 1, 0]
+                opacity: [0, 1, 0],
               }}
               transition={{
                 duration: 3 + Math.random() * 2,
                 repeat: Infinity,
                 delay: Math.random() * 2,
-                ease: "easeInOut"
+                ease: "easeInOut",
               }}
             />
           ))}
         </div>
       )}
     </motion.div>
-  )
-}
+  );
+};
 
-export default VideoPlayer
+export default VideoPlayer;
