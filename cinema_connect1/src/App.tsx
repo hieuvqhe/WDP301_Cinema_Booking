@@ -21,6 +21,7 @@ import PaymentSuccess from "./pages/PaymentSuccess/PaymentSuccess";
 import PaymentFailed from "./pages/PaymentFailed/PaymentFailed";
 import ProfilePage from "./pages/ProfilePage";
 import SepayInstructions from "./components/sepay/SepayInstructions";
+import AdvancedSearchPage from "./pages/AdvancedSearchPage/AdvancedSearchPage";
 
 function App() {
   return (
@@ -75,6 +76,7 @@ function App() {
                 <Route path="/home" element={<HomePage />} />
                 <Route path="/movies" element={<MoviesPage />} />
                 <Route path="/movies/:id" element={<MovieDetail />} />
+                <Route path="/search" element={<AdvancedSearchPage />} />
 
                 {/* Routes that require authentication */}
                 <Route

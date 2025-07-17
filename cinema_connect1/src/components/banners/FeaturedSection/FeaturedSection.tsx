@@ -21,12 +21,13 @@ const FeaturedSection = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const movies = await getPopularMovies(4, (pages - 1) * 4);
+        const movies = await getPopularMovies(4, pages);
         if (!ignore) {
           setGetShowingMovies((prev) => [...prev, ...movies]);
-        }
-        if (movies.length < 4) {
-          setIsMaxMovie(true);
+          // Kiểm tra nếu số lượng phim trả về ít hơn limit hoặc không có phim nào
+          if (movies.length < 4) {
+            setIsMaxMovie(true);
+          }
         }
       } catch (error) {
         console.error("Failed to fetch popular movies:", error);

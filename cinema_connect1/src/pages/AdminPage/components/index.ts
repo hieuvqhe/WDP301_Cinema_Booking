@@ -29,5 +29,8 @@ export { ContractManagement } from "./ContractManagement/ContractManagement";
 // Payment Management Components
 export { PaymentManagement } from "../../../components/admin/PaymentManagement";
 
+// Banner Management Components
+export { BannerManagement } from "./BannerManagement/BannerManagement";
+
 // Ticket Verification Components
 export { TicketVerification } from "./TicketVerification";

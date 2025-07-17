@@ -42,6 +42,16 @@ const handleStaffError = (error: unknown): Error => {
 // SHOWTIME TYPES
 // ===============================
 
+export type ShowtimeStatus = 'scheduled' | 'booking_open' | 'booking_closed' | 'cancelled' | 'completed';
+
+export const ShowtimeStatusValues = {
+  SCHEDULED: 'scheduled' as const,
+  BOOKING_OPEN: 'booking_open' as const,
+  BOOKING_CLOSED: 'booking_closed' as const,
+  CANCELLED: 'cancelled' as const,
+  COMPLETED: 'completed' as const
+} as const;
+
 export interface Seat {
   row: string;
   number: number;
@@ -98,7 +108,7 @@ export interface Showtime {
   end_time: string;
   price: ShowtimePrice;
   available_seats: number;
-  status: 'scheduled' | 'ongoing' | 'completed' | 'cancelled';
+  status: ShowtimeStatus;
   created_at: string;
   updated_at: string;
   movie?: ShowtimeMovie;
@@ -115,6 +125,7 @@ export interface ShowtimeCreateRequest {
   end_time: string;
   price: ShowtimePrice;
   available_seats: number;
+  status?: ShowtimeStatus;
 }
 
 export interface ShowtimeUpdateRequest {
@@ -122,7 +133,7 @@ export interface ShowtimeUpdateRequest {
   end_time?: string;
   price?: ShowtimePrice;
   available_seats?: number;
-  status?: 'scheduled' | 'ongoing' | 'completed' | 'cancelled';
+  status?: ShowtimeStatus;
 }
 
 export interface ShowtimeListResponse {
@@ -179,7 +190,7 @@ export const getMyShowtimes = async (
   page: number = 1,
   limit: number = 10,
   movieId?: string,
-  status?: 'scheduled' | 'ongoing' | 'completed' | 'cancelled',
+  status?: ShowtimeStatus,
   startDate?: string,
   endDate?: string
 ): Promise<ShowtimeListResponse> => {
@@ -264,8 +275,8 @@ export const deleteShowtime = async (showtimeId: string): Promise<ShowtimeDelete
  * Validate showtime status
  * @param status - Status to validate
  */
-export const isValidShowtimeStatus = (status: string): status is 'scheduled' | 'ongoing' | 'completed' | 'cancelled' => {
-  return ['scheduled', 'ongoing', 'completed', 'cancelled'].includes(status);
+export const isValidShowtimeStatus = (status: string): status is ShowtimeStatus => {
+  return ['scheduled', 'booking_open', 'booking_closed', 'cancelled', 'completed'].includes(status);
 };
 
 /**
@@ -276,12 +287,14 @@ export const getShowtimeStatusDisplay = (status: string): string => {
   switch (status) {
     case 'scheduled':
       return 'Scheduled';
-    case 'ongoing':
-      return 'Ongoing';
-    case 'completed':
-      return 'Completed';
+    case 'booking_open':
+      return 'Booking Open';
+    case 'booking_closed':
+      return 'Booking Closed';
     case 'cancelled':
       return 'Cancelled';
+    case 'completed':
+      return 'Completed';
     default:
       return status;
   }
@@ -295,12 +308,14 @@ export const getShowtimeStatusColor = (status: string): string => {
   switch (status) {
     case 'scheduled':
       return 'bg-blue-500/20 border-blue-500/30 text-blue-400';
-    case 'ongoing':
+    case 'booking_open':
       return 'bg-green-500/20 border-green-500/30 text-green-400';
-    case 'completed':
-      return 'bg-gray-500/20 border-gray-500/30 text-gray-400';
+    case 'booking_closed':
+      return 'bg-yellow-500/20 border-yellow-500/30 text-yellow-400';
     case 'cancelled':
       return 'bg-red-500/20 border-red-500/30 text-red-400';
+    case 'completed':
+      return 'bg-gray-500/20 border-gray-500/30 text-gray-400';
     default:
       return 'bg-slate-500/20 border-slate-500/30 text-slate-400';
   }

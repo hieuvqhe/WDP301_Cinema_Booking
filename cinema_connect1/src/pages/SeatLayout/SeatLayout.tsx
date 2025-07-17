@@ -1,7 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { getScreenById } from "../../apis/screen.api";
 import type { Screen } from "../../types/Screen.type";
+import { useSeatPersistence } from "../../hooks/useSeatPersistence";
 import SeatSelection from "../../components/seat/SeatSelection";
 
 export default function SeatLayout() {
@@ -10,28 +12,57 @@ export default function SeatLayout() {
   const [loading, setLoading] = useState(true);
   const [secondsLeft, setSecondsLeft] = useState<number | null>(null); // null = chưa bắt đầu
   const navigate = useNavigate();
+  const { getTimeRemaining, isExpired, clearSeatData, seatData, saveSeatData } = useSeatPersistence();
 
-  // ⏳ Đếm ngược thời gian giữ ghế
+  // Initialize seat data from localStorage if not exists
   useEffect(() => {
-    if (secondsLeft === null) return;
-
-    const timer = setInterval(() => {
-      setSecondsLeft((prev) => {
-        if (!prev || prev <= 1) {
-          clearInterval(timer);
-          navigate(`/movies/${id}`);
-          return 0;
+    if (!seatData && screenId && id) {
+      // Check if we have data from MovieDetailPage
+      const storedInfo = localStorage.getItem("selected-movie-info");
+      if (storedInfo) {
+        const parsed = JSON.parse(storedInfo);
+        if (parsed.movieId && parsed.showtimeId && parsed.screenId && parsed.theaterId) {
+          saveSeatData({
+            seats: [],
+            screenId: parsed.screenId,
+            movieId: parsed.movieId,
+            showtimeId: parsed.showtimeId,
+            totalAmount: 0,
+            theaterId: parsed.theaterId,
+          });
         }
-        return prev - 1;
-      });
+      }
+    }
+  }, [seatData, screenId, id, saveSeatData]);
+
+  // ⏳ Sync with persistence hook timer
+  useEffect(() => {
+    if (isExpired) {
+      clearSeatData();
+      navigate(`/movies/${id}`);
+      return;
+    }
+
+    const interval = setInterval(() => {
+      const remaining = getTimeRemaining();
+      setSecondsLeft(remaining);
+
+      if (remaining <= 0) {
+        clearInterval(interval);
+        navigate(`/movies/${id}`);
+      }
     }, 1000);
 
-    return () => clearInterval(timer);
-  }, [secondsLeft, navigate, id]);
+    // Set initial time
+    setSecondsLeft(getTimeRemaining());
+
+    return () => clearInterval(interval);
+  }, [isExpired, getTimeRemaining, navigate, id, clearSeatData]);
 
   const startTimer = () => {
     if (secondsLeft === null) {
-      setSecondsLeft(600); // 10 phút
+      const remaining = getTimeRemaining();
+      setSecondsLeft(remaining > 0 ? remaining : 600); // 10 phút hoặc thời gian còn lại
     }
   };
 

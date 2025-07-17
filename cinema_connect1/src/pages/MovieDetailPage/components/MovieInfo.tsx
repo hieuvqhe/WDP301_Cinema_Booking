@@ -74,7 +74,9 @@ export default function MovieInfo({
         Thời lượng: {movie.duration} phút
       </motion.p>
       <motion.p variants={fadeUp} custom={5} className="mb-1">
-        Thể loại: {movie.genre.join(", ")}
+        Thể loại: {movie.genre.map((genre: any) => 
+          typeof genre === 'string' ? genre : genre.name
+        ).join(", ")}
       </motion.p>
 
       <motion.div

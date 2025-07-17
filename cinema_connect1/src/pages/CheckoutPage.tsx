@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Check,
@@ -19,12 +19,19 @@ import type { Showtime } from "../types/Showtime.type";
 import { getScreenById } from "../apis/screen.api";
 import { getMovieById } from "../apis/movie.api";
 import { getShowtimeById } from "../apis/showtime.api";
-import { useCreateBooking, useBookingExpiration } from "../hooks/useBooking";
+import {
+  useCreateBooking,
+  useUpdateBooking,
+  useBookingExpiration,
+} from "../hooks/useBooking";
 import { useAuthStore } from "../store/useAuthStore";
+import { useSeatPersistence } from "../hooks/useSeatPersistence";
 import CheckoutPaymentStep from "../components/checkout/CheckoutPaymentStep";
 import { formatCurrency } from "../utils/format";
 import { toast } from "sonner";
 import type { CreateBookingRequest } from "../types/Booking.type";
+import { useMutation } from "@tanstack/react-query";
+import bookingApi, { type ReqBodyMultipleSeatLock } from "../apis/booking.api";
 
 type CheckoutStep = "review" | "payment" | "processing";
 
@@ -39,6 +46,7 @@ interface BookingInfo {
 
 export default function CheckoutPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user } = useAuthStore();
   const [currentStep, setCurrentStep] = useState<CheckoutStep>("review");
   const [bookingId, setBookingId] = useState<string | null>(null);
@@ -52,6 +60,7 @@ export default function CheckoutPage() {
 
   // Enhanced hooks
   const createBookingMutation = useCreateBooking();
+  const updateBookingMutation = useUpdateBooking();
   const { data: expirationInfo } = useBookingExpiration(
     bookingId || "",
     !!bookingId
@@ -59,24 +68,90 @@ export default function CheckoutPage() {
   const [timeRemaining, setTimeRemaining] = useState<number>(300); // 5 minutes in seconds
   const [isCreatingBooking, setIsCreatingBooking] = useState(false);
   const [bookingInfo, setBookingInfo] = useState<BookingInfo | null>(null);
+  const [hasLoadedData, setHasLoadedData] = useState(false);
+  const { seatData, isExpired, getTimeRemaining, clearSeatData } =
+    useSeatPersistence();
 
-  // Load saved booking info from localStorage
+  // Delete locked seats mutation
+  const deletedLockedSeatsMutation = useMutation({
+    mutationFn: ({
+      showtime,
+      body,
+    }: {
+      showtime: string;
+      body: ReqBodyMultipleSeatLock;
+    }) => bookingApi.deletedShowtimeBySeatLocked(showtime, body),
+
+    onSuccess: () => {
+      toast.success("Đã hủy giữ ghế thành công!");
+      clearSeatData();
+      navigate("/movies");
+    },
+    onError: (error: any) => {
+      const message = error.response?.data?.message || "Không thể hủy giữ ghế";
+      toast.error(message);
+    },
+  });
+
+  // Reset flag when showtimeId changes
   useEffect(() => {
-    const info = localStorage.getItem("selected-movie-info");
-    if (info) {
-      const parsed = JSON.parse(info);
+    setHasLoadedData(false);
+  }, [seatData?.showtimeId]);
+
+  // Load saved booking info from persistence hook (only once)
+  useEffect(() => {
+    if (isExpired) {
+      // Try to cancel locked seats before clearing data
+      if (seatData && seatData.seats.length > 0) {
+        deletedLockedSeatsMutation.mutate({
+          showtime: seatData.showtimeId,
+          body: {
+            seats: seatData.seats.map((seat) => {
+              const [row, number] = seat.split(/(\d+)/).filter(Boolean);
+              return {
+                seat_row: row,
+                seat_number: parseInt(number),
+              };
+            }),
+          },
+        });
+      } else {
+        clearSeatData();
+        toast.error("Session expired! Please select seats again.");
+        navigate("/movies");
+      }
+      return;
+    }
+
+    if (seatData && !hasLoadedData) {
+      // Get screenId from URL params for validation
+      const urlScreenId = searchParams.get("screenId");
+
+      // Validate screenId matches URL parameter if provided
+      if (urlScreenId && seatData.screenId !== urlScreenId) {
+        console.warn("ScreenId mismatch between localStorage and URL:", {
+          localStorage: seatData.screenId,
+          url: urlScreenId,
+        });
+        toast.error("Screen information mismatch. Please select seats again.");
+        clearSeatData();
+        navigate("/movies");
+        return;
+      }
+
       const bookingData: BookingInfo = {
-        seats: Array.isArray(parsed.seats) ? parsed.seats : [],
-        screenId: parsed.screenId,
-        movieId: parsed.movieId,
-        showtimeId: parsed.showtimeId,
-        totalAmount: parsed.totalAmount || 0,
-        theaterId: parsed.theaterId,
+        seats: Array.isArray(seatData.seats) ? seatData.seats : [],
+        screenId: seatData.screenId,
+        movieId: seatData.movieId,
+        showtimeId: seatData.showtimeId,
+        totalAmount: seatData.totalAmount || 0,
+        theaterId: seatData.theaterId,
       };
 
       setBookingInfo(bookingData);
       setSeats(bookingData.seats);
       setPrice(bookingData.totalAmount);
+      setHasLoadedData(true);
 
       // Load related data
       if (bookingData.screenId) {
@@ -95,14 +170,34 @@ export default function CheckoutPage() {
           .catch(() => setShowtime(null));
       }
     }
-  }, []);
+  }, [
+    seatData,
+    isExpired,
+    hasLoadedData,
+    clearSeatData,
+    navigate,
+    deletedLockedSeatsMutation,
+    searchParams,
+  ]);
 
-  // Update timer from expiration info
+  // Update seats and price when seatData changes (without calling APIs again)
+  useEffect(() => {
+    if (seatData && hasLoadedData && bookingInfo) {
+      setSeats(Array.isArray(seatData.seats) ? seatData.seats : []);
+      setPrice(seatData.totalAmount || 0);
+    }
+  }, [seatData?.seats, seatData?.totalAmount, hasLoadedData, bookingInfo]);
+
+  // Update timer from both persistence hook and booking expiration
   useEffect(() => {
     if (expirationInfo && !expirationInfo.is_expired) {
       setTimeRemaining(expirationInfo.time_remaining_seconds);
+    } else {
+      // Fallback to persistence hook timer if no booking expiration info
+      const remaining = getTimeRemaining();
+      setTimeRemaining(remaining);
     }
-  }, [expirationInfo]);
+  }, [expirationInfo, getTimeRemaining]);
 
   // Countdown timer
   useEffect(() => {
@@ -110,8 +205,24 @@ export default function CheckoutPage() {
       const timer = setInterval(() => {
         setTimeRemaining((prev) => {
           if (prev <= 1) {
-            toast.error("Session expired! Please select seats again.");
-            navigate("/movies");
+            // Try to cancel locked seats before expiring
+            if (bookingInfo && bookingInfo.seats.length > 0) {
+              deletedLockedSeatsMutation.mutate({
+                showtime: bookingInfo.showtimeId,
+                body: {
+                  seats: bookingInfo.seats.map((seat) => {
+                    const [row, number] = seat.split(/(\d+)/).filter(Boolean);
+                    return {
+                      seat_row: row,
+                      seat_number: parseInt(number),
+                    };
+                  }),
+                },
+              });
+            } else {
+              toast.error("Session expired! Please select seats again.");
+              navigate("/movies");
+            }
             return 0;
           }
           return prev - 1;
@@ -120,7 +231,13 @@ export default function CheckoutPage() {
 
       return () => clearInterval(timer);
     }
-  }, [currentStep, timeRemaining, navigate]);
+  }, [
+    currentStep,
+    timeRemaining,
+    navigate,
+    bookingInfo,
+    deletedLockedSeatsMutation,
+  ]);
 
   const formatTime = (iso: string) =>
     new Date(iso).toLocaleString("vi-VN", {
@@ -138,10 +255,42 @@ export default function CheckoutPage() {
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
+  // Helper function to check if BOTH selected-movie-info AND seat-locked exist for the current showtimeId
+  const checkExistingBooking = (showtimeId: string) => {
+    try {
+      console.log("Checking existing booking for showtimeId:", showtimeId);
+
+      // Check for selected-movie-info data
+      const selectedMovieInfo = localStorage.getItem("selected-movie-info");
+      let hasSelectedMovieInfo = false;
+      if (selectedMovieInfo) {
+        const parsedData = JSON.parse(selectedMovieInfo);
+        console.log("Parsed selected-movie-info data:", parsedData.showtimeId);
+        if (parsedData.showtimeId === showtimeId) {
+          console.log("Found matching selected-movie-info data");
+          hasSelectedMovieInfo = true;
+        }
+      }
+
+      // Only return true if BOTH exist
+      const bothExist = hasSelectedMovieInfo;
+      console.log("Both seat-locked and selected-movie-info exist:", bothExist);
+      return bothExist;
+    } catch (error) {
+      console.error("Error checking existing booking data:", error);
+      return false;
+    }
+  };
+
   // Create booking before payment
   const handleCreateBooking = async () => {
     if (!bookingInfo || !user) {
       toast.error("Missing booking information or user not logged in");
+      return;
+    }
+
+    if (!bookingInfo.seats || bookingInfo.seats.length === 0) {
+      toast.error("Please select at least one seat");
       return;
     }
 
@@ -161,9 +310,63 @@ export default function CheckoutPage() {
         }),
       };
 
-      // Use the booking hook
-      const response = await createBookingMutation.mutateAsync(bookingData);
-      const newBookingId = response.data.result.booking._id;
+      // Check if existing booking data exists for this showtimeId
+
+      const hasExistingBooking = checkExistingBooking(bookingInfo.showtimeId);
+      console.log("hasExistingBooking:", hasExistingBooking);
+
+      let response;
+      let newBookingId;
+
+      if (hasExistingBooking) {
+        // Both selected-movie-info AND seat-locked exist, use updateBooking
+        console.log(
+          "Both selected-movie-info and seat-locked exist, using updateBooking"
+        );
+
+        // Get existing booking ID from seat-locked data (preferred) or selected-movie-info
+        let existingBookingId = null;
+
+        // Fallback to selected-movie-info if no bookingId in seat-locked
+        if (!existingBookingId) {
+          const selectedMovieInfo = localStorage.getItem("selected-movie-info");
+          console.log("selectedMovieInfo:", selectedMovieInfo);
+          if (selectedMovieInfo) {
+            const parsedData = JSON.parse(selectedMovieInfo);
+            existingBookingId = parsedData.bookingId;
+            console.log(
+              "existingBookingId from selected-movie-info:",
+              existingBookingId
+            );
+          }
+        }
+
+        if (existingBookingId) {
+          console.log("Using updateBooking with bookingId:", existingBookingId);
+          response = await updateBookingMutation.mutateAsync({
+            bookingId: existingBookingId,
+            data: bookingData,
+          });
+          newBookingId = existingBookingId;
+        } else {
+          console.log(
+            "ERROR: Both localStorage items exist but no bookingId found!"
+          );
+          console.log(
+            "This should not happen - bookingId should exist in localStorage"
+          );
+          // Fallback to createBooking
+          response = await createBookingMutation.mutateAsync(bookingData, {});
+          newBookingId = response.data.result.booking._id;
+        }
+      } else {
+        console.log(
+          "Either selected-movie-info or seat-locked missing, using createBooking"
+        );
+        // Use createBooking if either or both localStorage items are missing
+        response = await createBookingMutation.mutateAsync(bookingData);
+        newBookingId = response.data.result.booking._id;
+      }
 
       setBookingId(newBookingId);
       setCurrentStep("payment");
@@ -176,6 +379,8 @@ export default function CheckoutPage() {
   };
 
   const handlePaymentSuccess = () => {
+    // Clear seat data after successful payment
+    clearSeatData();
     navigate(`/payment/success?bookingId=${bookingId}`);
   };
 
@@ -186,6 +391,28 @@ export default function CheckoutPage() {
         error
       )}`
     );
+  };
+
+  // Handle canceling locked seats
+  const handleCancelLockedSeats = async () => {
+    if (!bookingInfo || !user) return;
+
+    try {
+      await deletedLockedSeatsMutation.mutateAsync({
+        showtime: bookingInfo.showtimeId,
+        body: {
+          seats: bookingInfo.seats.map((seat) => {
+            const [row, number] = seat.split(/(\d+)/).filter(Boolean);
+            return {
+              seat_row: row,
+              seat_number: parseInt(number),
+            };
+          }),
+        },
+      });
+    } catch (error) {
+      console.error("Error canceling locked seats:", error);
+    }
   };
 
   if (!screen || seats.length === 0 || !bookingInfo) {
@@ -227,18 +454,41 @@ export default function CheckoutPage() {
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex items-center mb-8"
+          className="flex items-center justify-between mb-8"
         >
-          <button
-            onClick={() => navigate(-1)}
-            className="flex items-center gap-2 text-gray-300 hover:text-white transition-colors mr-4"
+          <div className="flex items-center">
+            <button
+              onClick={() => navigate(-1)}
+              className="flex items-center gap-2 text-gray-300 hover:text-white transition-colors mr-4"
+            >
+              <ArrowLeft className="h-5 w-5" />
+              Back
+            </button>
+            <h1 className="text-3xl font-bold text-white">
+              Complete Your Booking
+            </h1>
+          </div>
+
+          {/* Cancel locked seats button */}
+          <motion.button
+            onClick={handleCancelLockedSeats}
+            disabled={deletedLockedSeatsMutation.isPending}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors disabled:opacity-50"
           >
-            <ArrowLeft className="h-5 w-5" />
-            Back
-          </button>
-          <h1 className="text-3xl font-bold text-white">
-            Complete Your Booking
-          </h1>
+            {deletedLockedSeatsMutation.isPending ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+                Canceling...
+              </>
+            ) : (
+              <>
+                <AlertTriangle className="h-4 w-4" />
+                Cancel Seats
+              </>
+            )}
+          </motion.button>
         </motion.div>
 
         {/* Steps Indicator */}
@@ -450,7 +700,9 @@ export default function CheckoutPage() {
                     <motion.button
                       onClick={handleCreateBooking}
                       disabled={
-                        isCreatingBooking || createBookingMutation.isPending
+                        isCreatingBooking ||
+                        createBookingMutation.isPending ||
+                        updateBookingMutation.isPending
                       }
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
@@ -459,10 +711,12 @@ export default function CheckoutPage() {
                                transition-all disabled:opacity-50 disabled:cursor-not-allowed
                                flex items-center justify-center gap-2"
                     >
-                      {isCreatingBooking || createBookingMutation.isPending ? (
+                      {isCreatingBooking ||
+                      createBookingMutation.isPending ||
+                      updateBookingMutation.isPending ? (
                         <>
                           <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white" />
-                          Creating Booking...
+                          Processing Booking...
                         </>
                       ) : (
                         <>

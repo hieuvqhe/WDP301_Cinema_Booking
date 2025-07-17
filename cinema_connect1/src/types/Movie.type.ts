@@ -73,6 +73,40 @@ export interface MovieQueryParams {
   sortOrder?: 'asc' | 'desc';
 }
 
+export interface AdvancedSearchParams {
+  q?: string; // search query
+  genre?: string;
+  year?: number;
+  language?: string;
+  duration_min?: number;
+  duration_max?: number;
+  rating_min?: number;
+  rating_max?: number;
+  page?: number;
+  limit?: number;
+}
+
+export interface AdvancedSearchResponse {
+  message: string;
+  result: {
+    movies: Movie[];
+    total: number;
+    page: number;
+    limit: number;
+    total_pages: number;
+    query?: string;
+    filters?: {
+      genre?: string;
+      year?: number;
+      language?: string;
+      duration_min?: number;
+      duration_max?: number;
+      rating_min?: number;
+      rating_max?: number;
+    };
+  };
+}
+
 export interface GetMoviesResponse {
   success: boolean;
   message: string;

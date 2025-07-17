@@ -8,6 +8,8 @@ import type {
   GetMoviesResponse,
   GetMovieByIdResponse,
   MovieResponse,
+  AdvancedSearchParams,
+  AdvancedSearchResponse,
 } from "../types/Movie.type";
 import { getAuthToken } from "./user.api";
 import type { SuccessResponse } from "../types";
@@ -261,6 +263,34 @@ export const getLatestMovies = async (limit = 10): Promise<Movie[]> => {
       limit,
     });
     return response.result.movies;
+  } catch (error) {
+    throw handleMovieError(error);
+  }
+};
+
+// Advanced search movies with multiple filters
+export const searchMoviesAdvanced = async (
+  params: AdvancedSearchParams
+): Promise<AdvancedSearchResponse> => {
+  try {
+    const movieApi = createPublicMovieRequest();
+    const queryParams = new URLSearchParams();
+
+    // Add all search parameters
+    if (params.q) queryParams.append("q", params.q);
+    if (params.genre) queryParams.append("genre", params.genre);
+    if (params.year) queryParams.append("year", params.year.toString());
+    if (params.language) queryParams.append("language", params.language);
+    if (params.duration_min) queryParams.append("duration_min", params.duration_min.toString());
+    if (params.duration_max) queryParams.append("duration_max", params.duration_max.toString());
+    if (params.rating_min) queryParams.append("rating_min", params.rating_min.toString());
+    if (params.rating_max) queryParams.append("rating_max", params.rating_max.toString());
+    if (params.page) queryParams.append("page", params.page.toString());
+    if (params.limit) queryParams.append("limit", params.limit.toString());
+
+    const url = `/cinema/movies/search?${queryParams.toString()}`;
+    const response = await movieApi.get<AdvancedSearchResponse>(url);
+    return response.data;
   } catch (error) {
     throw handleMovieError(error);
   }

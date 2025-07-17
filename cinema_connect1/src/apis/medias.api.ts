@@ -46,12 +46,25 @@ const mediasApi = {
     const formData = new FormData()
     formData.append('video', video)
 
-    return axios.post<SuccessResponse<Media[]>>(`${BASE_URL}/medias/upload-video-hls`, formData, {
+    return axios.post<SuccessResponse<Media[]>>(`${BASE_URL}/medias/upload-video`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
         Authorization: `Bearer ${token}`
       },
       timeout: 120000 // 2 minutes for video upload (larger files)
+    })
+  },
+  uploadVideoHLS: (video: File) => {
+    const token = getAuthToken();
+    const formData = new FormData()
+    formData.append('video', video)
+
+    return axios.post<SuccessResponse<Media[]>>(`${BASE_URL}/medias/upload-video-hls`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        Authorization: `Bearer ${token}`
+      },
+      timeout: 120000 // 2 minutes for HLS video upload (larger files)
     })
   }
 }

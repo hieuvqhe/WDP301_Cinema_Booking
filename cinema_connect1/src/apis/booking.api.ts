@@ -122,14 +122,30 @@ export interface BookingExpirationInfo {
   status: string;
   payment_status: string;
 }
+export interface ReqBodySeatLock {
+  seat_row: string;
+  seat_number: number;
+}
 
+export interface ReqBodyMultipleSeatLock {
+  seats: Array<{
+    seat_row: string;
+    seat_number: number;
+  }>;
+}
 const bookingApi = {
   // Create booking
   createBooking: (data: CreateBookingRequest) => {
     const authRequest = createAuthRequest();
     return authRequest.post<CreateBookingResponse>("/cinema/bookings", data);
   },
-
+  updateBooking: (data: CreateBookingRequest, bookingId: string) => {
+    const authRequest = createAuthRequest();
+    return authRequest.post<SuccessResponse<{ messages: string }>>(
+      `/bookings/updateBookingAndSeats/${bookingId}`,
+      data
+    );
+  },
   // Get my bookings
   getMyBookings: (params?: BookingQueryParams) => {
     const authRequest = createAuthRequest();
@@ -193,6 +209,17 @@ const bookingApi = {
     >(`/cinema/bookings/${bookingId}/extend`, {
       additional_minutes: additionalMinutes,
     });
+  },
+  //deleted showtime by seat locked
+  deletedShowtimeBySeatLocked: (
+    showtimeId: string,
+    body: ReqBodyMultipleSeatLock
+  ) => {
+    const authRequest = createAuthRequest();
+    return authRequest.post<SuccessResponse<{ message: string }>>(
+      `/bookings/delete/showtime/${showtimeId}`,
+      body
+    );
   },
 };
 
