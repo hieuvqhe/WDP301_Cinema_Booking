@@ -29,6 +29,7 @@ export default function SeatLayout() {
             showtimeId: parsed.showtimeId,
             totalAmount: 0,
             theaterId: parsed.theaterId,
+            bookingId: parsed.bookingId
           });
         }
       }

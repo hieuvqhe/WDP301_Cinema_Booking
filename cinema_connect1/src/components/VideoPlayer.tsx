@@ -19,6 +19,8 @@ const VideoPlayer = ({
   const [isLoading, setIsLoading] = useState(true);
   const [isPlaying, setIsPlaying] = useState(false);
 
+  console.log(isPlaying);
+
   useEffect(() => {
     if (videoRef.current) {
       const video = videoRef.current;
