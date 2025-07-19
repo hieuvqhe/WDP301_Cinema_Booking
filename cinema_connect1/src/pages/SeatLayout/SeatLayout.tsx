@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+// /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { getScreenById } from "../../apis/screen.api";
@@ -85,13 +85,13 @@ export default function SeatLayout() {
     fetchScreen();
   }, [screenId]);
 
-  const formatTime = (sec: number) => {
-    const m = Math.floor(sec / 60)
-      .toString()
-      .padStart(2, "0");
-    const s = (sec % 60).toString().padStart(2, "0");
-    return `${m}:${s}`;
-  };
+  // const formatTime = (sec: number) => {
+  //   const m = Math.floor(sec / 60)
+  //     .toString()
+  //     .padStart(2, "0");
+  //   const s = (sec % 60).toString().padStart(2, "0");
+  //   return `${m}:${s}`;
+  // };
 
   if (loading)
     return (
