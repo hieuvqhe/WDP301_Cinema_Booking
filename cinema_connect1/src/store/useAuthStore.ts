@@ -130,12 +130,12 @@ export const getRedirectPathByRole = (
 ): string => {
   switch (role) {
     case "customer":
-      return "/home";
+      return "";
     case "staff":
       return "/partner";
     case "admin":
       return "/admin";
-    default:
-      return "/home";
+    // default:
+    //   return "/home";
   }
 };

@@ -515,7 +515,7 @@ export default function SeatSelection({
           <span className="w-4 h-4 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full"></span>
           Chú thích loại ghế
         </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 justify-self-center">
           {[
             [
               "Regular",
@@ -528,16 +528,6 @@ export default function SeatSelection({
               "Ghế cao cấp",
             ],
             [
-              "Recliner",
-              "bg-gradient-to-r from-pink-500 to-pink-600",
-              "Ghế nằm",
-            ],
-            [
-              "Couple",
-              "bg-gradient-to-r from-yellow-500 to-orange-500",
-              "Ghế đôi",
-            ],
-            [
               "Ghế đã chọn",
               "bg-gradient-to-r from-green-500 to-green-600",
               "Bạn đã chọn",
@@ -548,40 +538,32 @@ export default function SeatSelection({
               "Không thể chọn",
             ],
             [
-              "Ghế của bạn",
-              "bg-gradient-to-r from-green-400 to-emerald-500",
-              "Tạm khóa",
-            ],
-            [
-              "Ghế khác khóa",
-              "bg-gradient-to-r from-yellow-500 to-orange-500",
-              "Người khác đang chọn",
-            ],
-            [
               "Không khả dụng",
               "bg-gradient-to-r from-gray-500 to-gray-600",
               "Ghế hỏng",
             ],
-          ].map(([type, color, description], i) => (
-            <motion.div
-              key={i}
-              className="flex flex-col items-center gap-2 p-3 bg-gray-800/50 rounded-xl border border-gray-600/30 hover:border-gray-500/50 transition-all duration-300"
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.4 + i * 0.05 }}
-              whileHover={{ scale: 1.05, y: -2 }}
-            >
-              <div
-                className={`w-8 h-8 ${color} rounded-lg shadow-lg border-2 border-white/20 flex items-center justify-center`}
+          ].map(([type, color, description], i) => {
+            return (
+              <motion.div
+                key={i}
+                className="flex flex-col items-center gap-2 p-3 bg-gray-800/50 rounded-xl border border-gray-600/30 hover:border-gray-500/50 transition-all duration-300"
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.4 + i * 0.05 }}
+                whileHover={{ scale: 1.05, y: -2 }}
               >
-                <span className="text-white text-xs font-bold">{i + 1}</span>
-              </div>
-              <div className="text-center">
-                <p className="text-sm font-semibold text-gray-200">{type}</p>
-                <p className="text-xs text-gray-400 mt-1">{description}</p>
-              </div>
-            </motion.div>
-          ))}
+                <div
+                  className={`w-8 h-8 ${color} rounded-lg shadow-lg border-2 border-white/20 flex items-center justify-center`}
+                >
+                  <span className="text-white text-xs font-bold">{i + 1}</span>
+                </div>
+                <div className="text-center">
+                  <p className="text-sm font-semibold text-gray-200">{type}</p>
+                  <p className="text-xs text-gray-400 mt-1">{description}</p>
+                </div>
+              </motion.div>
+            );
+          })}
         </div>
       </motion.div>
 

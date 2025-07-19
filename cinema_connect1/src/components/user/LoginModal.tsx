@@ -108,7 +108,7 @@ const LoginModal = ({ isFormOpen }: LoginModalProps) => {
       const success = await login(formData);
 
       if (success) {
-        toast.success("Login successful! Redirecting...");
+        toast.success("Login successful!");
         // Get user from store after successful login
         isFormOpen(false);
         const currentUser = useAuthStore.getState().user;
