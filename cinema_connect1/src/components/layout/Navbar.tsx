@@ -10,7 +10,7 @@ import { Popover, PopoverButton, PopoverPanel } from "@headlessui/react";
 import Avatar from "../ui/Avatar";
 import { useWindowScroll } from "react-use";
 import gsap from "gsap";
-import { FaBars} from "react-icons/fa";
+import { FaBars } from "react-icons/fa";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -20,7 +20,7 @@ const Navbar = () => {
   const [searchResults, setSearchResults] = useState<Movie[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const { user, logout } = useAuthStore();
-  
+
   const searchRef = useRef<HTMLDivElement>(null);
 
   const [lastScrollY, setLastScrollY] = useState(0);
@@ -86,7 +86,10 @@ const Navbar = () => {
   // Close search when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+      if (
+        searchRef.current &&
+        !searchRef.current.contains(event.target as Node)
+      ) {
         setIsSearchOpen(false);
         setSearchQuery("");
         setSearchResults([]);
@@ -136,7 +139,6 @@ const Navbar = () => {
         return [
           ...baseItems,
           { title: "My Bookings", link: "/my-bookings" },
-          { title: "Favourites", link: "/favourite" },
         ];
       default:
         return [...baseItems];
@@ -148,18 +150,6 @@ const Navbar = () => {
   const getUserQuickAccess = () => {
     const baseActions = [
       {
-        title: "Profile",
-        link: "/profile",
-      },
-      {
-        title: "My Bookings",
-        link: "/my-bookings",
-      },
-      {
-        title: "Payment History",
-        link: "/payment-history",
-      },
-      {
         title: "Sign out",
         link: "",
         action: () => logout(),
@@ -169,9 +159,12 @@ const Navbar = () => {
     if (user?.role === "customer") {
       return [
         {
-          title: "Favourites",
-          link: "/favourite",
-          action: () => console.log("Favourites"),
+          title: "Profile",
+          link: "/profile",
+        },
+        {
+          title: "Payment History",
+          link: "/payment-history",
         },
         {
           title: "My Bookings",
@@ -189,7 +182,119 @@ const Navbar = () => {
 
   return (
     <>
-      <div className="md:hidden fixed top-4 right-4 z-50">
+      <div className="md:hidden fixed top-4 right-4 z-50 flex gap-40 items-center">
+        <div ref={searchRef} className="relative">
+          {isOpen ? (
+            <IoIosSearch
+              onClick={handleSearchIconClick}
+              className={`w-6 h-6 cursor-pointer transition-colors duration-300 hover:text-orange-500 ${
+                isSearchOpen ? "text-orange-500" : ""
+              }`}
+            />
+          ) : (
+            <></>
+          )}
+
+          {/* Search input and dropdown */}
+          {isSearchOpen && (
+            <div className="absolute right-0 top-8 w-80 bg-gray-900 border border-gray-700 rounded-lg shadow-2xl z-50">
+              {/* Search input */}
+              <div className="p-4 border-b border-gray-700">
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Search for movies..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full px-4 py-2 pl-10 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-orange-500 transition-colors"
+                    autoFocus
+                  />
+                  <IoIosSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                </div>
+              </div>
+
+              {/* Search results */}
+              <div className="max-h-80 overflow-y-auto">
+                {searchLoading && (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-orange-500"></div>
+                  </div>
+                )}
+
+                {!searchLoading && searchResults.length > 0 && (
+                  <div className="p-2">
+                    {searchResults.map((movie) => (
+                      <Link
+                        key={movie._id}
+                        to={`/movies/${movie._id}`}
+                        onClick={() => {
+                          setIsSearchOpen(false);
+                          setSearchQuery("");
+                          setSearchResults([]);
+                        }}
+                        className="flex items-center gap-3 p-3 hover:bg-gray-800 rounded-lg transition-colors"
+                      >
+                        <img
+                          src={movie.poster_url}
+                          alt={movie.title}
+                          className="w-12 h-16 object-cover rounded"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <h4 className="text-white font-medium truncate">
+                            {movie.title}
+                          </h4>
+                          <p className="text-gray-400 text-sm">
+                            {new Date(movie.release_date).getFullYear()} •{" "}
+                            {movie.duration} min
+                          </p>
+                          <div className="flex items-center gap-1 mt-1">
+                            <span className="text-yellow-400 text-sm">★</span>
+                            <span className="text-gray-400 text-sm">
+                              {movie.average_rating}/10
+                            </span>
+                          </div>
+                        </div>
+                      </Link>
+                    ))}
+
+                    {/* View all results button */}
+                    <button
+                      onClick={handleViewAllResults}
+                      className="w-full mt-2 p-3 text-center text-orange-500 hover:text-orange-400 hover:bg-gray-800 rounded-lg transition-colors border-t border-gray-700"
+                    >
+                      View all results for "{searchQuery}"
+                    </button>
+                  </div>
+                )}
+
+                {!searchLoading &&
+                  searchResults.length === 0 &&
+                  searchQuery.trim() && (
+                    <div className="p-8 text-center">
+                      <p className="text-gray-400">
+                        No movies found for "{searchQuery}"
+                      </p>
+                      <button
+                        onClick={handleViewAllResults}
+                        className="mt-2 text-orange-500 hover:text-orange-400 transition-colors"
+                      >
+                        Try advanced search
+                      </button>
+                    </div>
+                  )}
+
+                {!searchQuery.trim() && (
+                  <div className="p-8 text-center">
+                    <p className="text-gray-400">
+                      Start typing to search for movies...
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+
         <button
           onClick={() => setIsOpen(!isOpen)}
           className="p-2 rounded-md bg-gray-800 text-white transition-all duration-300"
@@ -217,7 +322,71 @@ const Navbar = () => {
               >
                 {item.title}
               </Link>
-            ))} 
+            ))}
+
+            <div className="w-full border-b border-gray-500 " />
+
+            <div>
+              {user ? (
+                <div>
+                  <Popover as="div" className="relative inline-block text-left">
+                    <PopoverButton
+                      className={`p-1 rounded-full transition-all duration-300 flex mt-2 items-center`}
+                    >
+                      <Avatar
+                        src={user.avatar}
+                        alt={user.name}
+                        size="lg"
+                        className={`transition-all duration-300 `}
+                      />
+
+                      <div className="flex flex-col items-start">
+                        {userQuickAccess.map((item, index) =>
+                          item.link ? (
+                            <Link
+                              key={index}
+                              to={item.link}
+                              className={`block px-4 py-2 text-sm transition-all duration-200 `}
+                            >
+                              {item.title}
+                            </Link>
+                          ) : (
+                            <a
+                              key={index}
+                              href="#"
+                              className={`block px-4 py-2 text-sm transition-all duration-200 `}
+                              onClick={item.action}
+                            >
+                              {item.title}
+                            </a>
+                          )
+                        )}
+                      </div>
+                    </PopoverButton>
+                  </Popover>
+                </div>
+              ) : (
+                <button
+                  className="px-4 py-1 sm:px-7 sm:py-2 bg-[#F84565] hover:bg-[#D63854]
+            transition rounded-full font-medium cursor-pointer w-full mt-3"
+                  onClick={() => setIsLoginForm(true)}
+                >
+                  Login
+                </button>
+              )}
+            </div>
+
+            <div className="w-full border-b border-gray-500 " />
+
+            <div className="mt-4">
+              <Link
+                to="/search"
+                className="flex items-center justify-center gap-2 px-3 py-1.5 text-sm text-gray-300 hover:text-white bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                <FaFilter size={14} />
+                Advanced
+              </Link>
+            </div>
           </div>
         </div>
       )}
@@ -256,7 +425,7 @@ const Navbar = () => {
                 isSearchOpen ? "text-orange-500" : ""
               }`}
             />
-            
+
             {/* Search input and dropdown */}
             {isSearchOpen && (
               <div className="absolute right-0 top-8 w-80 bg-gray-900 border border-gray-700 rounded-lg shadow-2xl z-50">
@@ -302,18 +471,23 @@ const Navbar = () => {
                             className="w-12 h-16 object-cover rounded"
                           />
                           <div className="flex-1 min-w-0">
-                            <h4 className="text-white font-medium truncate">{movie.title}</h4>
+                            <h4 className="text-white font-medium truncate">
+                              {movie.title}
+                            </h4>
                             <p className="text-gray-400 text-sm">
-                              {new Date(movie.release_date).getFullYear()} • {movie.duration} min
+                              {new Date(movie.release_date).getFullYear()} •{" "}
+                              {movie.duration} min
                             </p>
                             <div className="flex items-center gap-1 mt-1">
                               <span className="text-yellow-400 text-sm">★</span>
-                              <span className="text-gray-400 text-sm">{movie.average_rating}/10</span>
+                              <span className="text-gray-400 text-sm">
+                                {movie.average_rating}/10
+                              </span>
                             </div>
                           </div>
                         </Link>
                       ))}
-                      
+
                       {/* View all results button */}
                       <button
                         onClick={handleViewAllResults}
@@ -324,29 +498,35 @@ const Navbar = () => {
                     </div>
                   )}
 
-                  {!searchLoading && searchResults.length === 0 && searchQuery.trim() && (
-                    <div className="p-8 text-center">
-                      <p className="text-gray-400">No movies found for "{searchQuery}"</p>
-                      <button
-                        onClick={handleViewAllResults}
-                        className="mt-2 text-orange-500 hover:text-orange-400 transition-colors"
-                      >
-                        Try advanced search
-                      </button>
-                    </div>
-                  )}
+                  {!searchLoading &&
+                    searchResults.length === 0 &&
+                    searchQuery.trim() && (
+                      <div className="p-8 text-center">
+                        <p className="text-gray-400">
+                          No movies found for "{searchQuery}"
+                        </p>
+                        <button
+                          onClick={handleViewAllResults}
+                          className="mt-2 text-orange-500 hover:text-orange-400 transition-colors"
+                        >
+                          Try advanced search
+                        </button>
+                      </div>
+                    )}
 
                   {!searchQuery.trim() && (
                     <div className="p-8 text-center">
-                      <p className="text-gray-400">Start typing to search for movies...</p>
+                      <p className="text-gray-400">
+                        Start typing to search for movies...
+                      </p>
                     </div>
                   )}
                 </div>
               </div>
             )}
           </div>
-          
-          <Link 
+
+          <Link
             to="/search"
             className="hidden md:flex items-center gap-2 px-3 py-1.5 text-sm text-gray-300 hover:text-white bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
           >

@@ -243,10 +243,10 @@ const ProfilePage = () => {
         >
           {/* Header */}
           <div className="bg-gradient-to-r from-primary to-gray-600 p-8">
-            <div className="flex items-center justify-between">
+            <div className="md:flex md:flex-row flex-col items-center justify-between gap-3">
               <h1 className="text-3xl font-bold text-white">My Profile</h1>
               {!isEditing ? (
-                <div className="flex gap-3">
+                <div className="flex gap-3 mt-3">
                   <motion.button
                     onClick={() => setIsChangingPassword(true)}
                     whileHover={{ scale: 1.05 }}
@@ -269,7 +269,7 @@ const ProfilePage = () => {
                   </motion.button>
                 </div>
               ) : (
-                <div className="flex gap-2">
+                <div className="flex gap-2 mt-3">
                   <motion.button
                     onClick={handleSaveProfile}
                     disabled={loading}
