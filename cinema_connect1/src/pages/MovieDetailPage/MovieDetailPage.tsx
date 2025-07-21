@@ -6,8 +6,7 @@ import type { Movie } from "../../types/Movie.type";
 import type { Showtime } from "../../types/Showtime.type";
 import type { GetTheatersResponse } from "../../types/Theater.type";
 import { getMovieById } from "../../apis/movie.api";
-import { getTheaters } from "../../apis/theater.api";
-import { getShowtimeByMovieIdAndTheaterId } from "../../apis/showtime.api";
+import { getShowtimeByMovieIdAndTheaterId, getTheatersWithShowtimes } from "../../apis/showtime.api";
 import { useAuthAction } from "../../hooks/useAuthAction";
 import LoginModal from "../../components/user/LoginModal";
 import ReactPlayer from "react-player";
@@ -29,6 +28,8 @@ export default function MovieDetailsPage() {
   const { id = "" } = useParams<{ id: string }>();
   const [movie, setMovie] = useState<Movie | null>(null);
   const [theater, setTheater] = useState<GetTheatersResponse | null>(null);
+  const [isLoadingTheaters, setIsLoadingTheaters] = useState(false);
+  const [isLoadingShowtimes, setIsLoadingShowtimes] = useState(false);
   const navigate = useNavigate();
   const { requireAuth, showLoginModal, setShowLoginModal } = useAuthAction();
   const [isPlayTrailer, setIsPlayTrailer] = useState(false);
@@ -70,7 +71,9 @@ export default function MovieDetailsPage() {
 
     const fetchTheater = async () => {
       try {
-        const theaterData = await getTheaters();
+        setIsLoadingTheaters(true);
+        // Lấy các rạp có lịch chiếu cho phim này
+        const theaterData = await getTheatersWithShowtimes(id);
         setTheater(theaterData);
         const firstId = theaterData.result?.theaters?.[0]?._id;
         if (firstId) {
@@ -82,6 +85,8 @@ export default function MovieDetailsPage() {
         }
       } catch {
         setTheater(null);
+      } finally {
+        setIsLoadingTheaters(false);
       }
     };
 
@@ -104,10 +109,13 @@ export default function MovieDetailsPage() {
 
   const fetchShowtimesByTheater = async (theaterId: string) => {
     try {
+      setIsLoadingShowtimes(true);
       const data = await getShowtimeByMovieIdAndTheaterId(id, theaterId);
       setShowtimes(data);
     } catch {
       setShowtimes([]);
+    } finally {
+      setIsLoadingShowtimes(false);
     }
   };
 
@@ -217,6 +225,8 @@ export default function MovieDetailsPage() {
               fetchShowtimesByTheater={fetchShowtimesByTheater}
               handleBookSeats={handleBookSeats}
               userId={userId}
+              isLoadingTheaters={isLoadingTheaters}
+              isLoadingShowtimes={isLoadingShowtimes}
             />
           </motion.div>
         </motion.div>

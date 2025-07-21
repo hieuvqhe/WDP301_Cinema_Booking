@@ -9,6 +9,7 @@ import {
   UserManagement,
   StaffManagement,
   ContractManagement,
+  CouponManagement,
   BannerManagement,
   TicketVerification,
 } from "./components";
@@ -40,6 +41,8 @@ const AdminPage = () => {
         return <StaffManagement />;
       case "contracts":
         return <ContractManagement />;
+      case "coupons":
+        return <CouponManagement />;
       case "banners":
         return <BannerManagement />;
       case "payments":

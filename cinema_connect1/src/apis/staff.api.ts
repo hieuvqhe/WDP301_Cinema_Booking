@@ -360,17 +360,17 @@ export const getMyMovies = async (
   }
 };
 
-// Check if a movie title already exists for current staff
+// Check if a movie title already exists in the entire system
 export const checkMovieTitleExists = async (title: string): Promise<boolean> => {
   try {
-    const staffApi = createStaffRequest();
-    
-    // Search for exact title match
-    const response = await staffApi.get('/staff/movies', { 
-      params: { 
-        search: title,
-        limit: 100 // Get enough results to check thoroughly
-      } 
+    // Use public API to check all movies in the system
+    const response = await axios.get(`${BASE_URL}/cinema/movies`, {
+      params: {
+        page: 1,
+        limit: 100, // Get enough results to check thoroughly
+        sort_by: 'release_date',
+        sort_order: 'desc'
+      }
     });
     
     // Normalize function to remove accents, convert to lowercase, and remove special characters

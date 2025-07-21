@@ -124,6 +124,7 @@ const Navbar = () => {
     const baseItems = [
       { title: "Home", link: "/" },
       { title: "Movies", link: "/movies" },
+      
     ];
 
     if (!user) {
@@ -151,6 +152,18 @@ const Navbar = () => {
         link: "",
         action: () => logout(),
       },
+      {
+          title: "Profile",
+          link: "/profile",
+        },
+        {
+          title: "Payment History",
+          link: "/payment-history",
+        },
+        {
+          title: "My Bookings",
+          link: "/my-bookings",
+        },
     ];
 
     if (user?.role === "customer") {
@@ -392,7 +405,7 @@ const Navbar = () => {
       >
         <Link to={"/"} className="max-md:flex-1">
           <img
-            src={"logo.png"}
+            src={"https://movie-store-wdp301.s3.ap-southeast-1.amazonaws.com/Images/2e128e74a80867df70af3c302.jpg"}
             alt=""
             className={`w-14 h-14 transition-all duration-300`}
           />

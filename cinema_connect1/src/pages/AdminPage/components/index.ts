@@ -26,6 +26,9 @@ export { StaffManagement } from "./StaffManagement/StaffManagement";
 // Contract Management Components
 export { ContractManagement } from "./ContractManagement/ContractManagement";
 
+// Coupon Management Components
+export { CouponManagement } from "./CouponManagement/CouponManagement";
+
 // Payment Management Components
 export { PaymentManagement } from "../../../components/admin/PaymentManagement";
 

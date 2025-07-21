@@ -240,3 +240,61 @@ export const getAllShowtimeByMovieIdAndTheaterId = async (
     throw handleShowtimeError(error);
   }
 };
+
+// Lấy danh sách rạp có lịch chiếu cho phim cụ thể
+export const getTheatersWithShowtimes = async (movie_id: string) => {
+  try {
+    const res = await showtimeApi.get<any>("", {
+      params: { 
+        movie_id,
+        page: 1,
+        limit: 1000, // Lấy nhiều để đảm bảo có đủ dữ liệu
+        sort_by: 'start_time',
+        sort_order: 'asc'
+      },
+    });
+
+    const showtimes = res.data.result?.showtimes || res.data.showtimes || [];
+    
+    // Lọc chỉ lấy suất chiếu trong tương lai
+    const futureShowtimes = filterFutureShowtimes(showtimes);
+    
+    // Tạo map các rạp từ showtimes
+    const theaterMap = new Map();
+    
+    futureShowtimes.forEach((showtime: any) => {
+      if (showtime.theater && showtime.theater._id) {
+        theaterMap.set(showtime.theater._id, {
+          _id: showtime.theater._id,
+          name: showtime.theater.name,
+          location: showtime.theater.location,
+          address: showtime.theater.address || "",
+          city: showtime.theater.city || "",
+          state: showtime.theater.state || "",
+          pincode: showtime.theater.pincode || "",
+          screens: showtime.theater.screens || 0,
+          amenities: showtime.theater.amenities || [],
+          status: showtime.theater.status || "active",
+          created_at: showtime.theater.created_at || "",
+          updated_at: showtime.theater.updated_at || ""
+        });
+      }
+    });
+    
+    // Chuyển map thành array
+    const theaters = Array.from(theaterMap.values());
+    
+    return {
+      message: "Get theaters with showtimes success",
+      result: {
+        theaters: theaters,
+        total: theaters.length,
+        page: 1,
+        limit: theaters.length,
+        total_pages: 1
+      }
+    };
+  } catch (error) {
+    throw handleShowtimeError(error);
+  }
+};

@@ -16,6 +16,8 @@ type Props = {
   fetchShowtimesByTheater: (id: string) => void;
   handleBookSeats: () => void;
   userId?: string | null;
+  isLoadingTheaters: boolean;
+  isLoadingShowtimes: boolean;
 };
 
 export default function MovieInfo({
@@ -27,6 +29,8 @@ export default function MovieInfo({
   fetchShowtimesByTheater,
   handleBookSeats,
   userId,
+  isLoadingTheaters,
+  isLoadingShowtimes,
 }: Props) {
 
   const fadeUp = {
@@ -116,6 +120,8 @@ export default function MovieInfo({
             setSelectedInfo={setSelectedInfo}
             showtimes={showtimes}
             fetchShowtimesByTheater={fetchShowtimesByTheater}
+            isLoadingTheaters={isLoadingTheaters}
+            isLoadingShowtimes={isLoadingShowtimes}
           />
         </motion.div>
 

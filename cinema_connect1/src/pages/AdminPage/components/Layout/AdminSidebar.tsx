@@ -13,6 +13,7 @@ import {
   CreditCard,
   ScanLine,
   Image,
+  Tag,
 } from "lucide-react";
 import { getDashboardStats, getPaymentStats } from "../../../../apis/admin.api";
 import { useQuery } from "@tanstack/react-query";
@@ -83,6 +84,13 @@ export const AdminSidebar = ({
       icon: Image,
       count: null,
       color: "from-pink-500 to-rose-500",
+    },
+    {
+      id: "coupons",
+      label: "Coupon Management",
+      icon: Tag,
+      count: null,
+      color: "from-yellow-500 to-orange-500",
     },
     {
       id: "payments",

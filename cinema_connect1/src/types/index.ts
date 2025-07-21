@@ -5,3 +5,4 @@ export * from "./Movie.type";
 export * from "./Banner.type";
 export * from "./Feedback.type";
 export * from "./Theater.type";
+export * from "./Coupon.type";
