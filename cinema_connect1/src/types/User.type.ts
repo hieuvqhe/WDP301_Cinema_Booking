@@ -12,7 +12,7 @@ export interface User {
   email: string;
   username: string;
   role: "staff" | "admin" | "customer";
-  verify: number; // 0=unverified, 1=verified, 2=banned 
+  verify: number; // 0=unverified, 1=verified, 2=banned
   avatar: string;
   created_at: string;
   updated_at: string;
@@ -58,7 +58,10 @@ export interface RegisterUserType {
   address: Address;
   phone: string;
 }
-
+export interface addConciergeType {
+  email: string;
+  password: string;
+}
 export interface OtpRegisterType {
   email: string;
   otpVerify: string;
@@ -96,4 +99,3 @@ export interface ChangePasswordRequest {
 export interface ChangePasswordResponse {
   message: string;
 }
-

@@ -65,8 +65,14 @@ export default function SeatSelection({
       body: ReqBodyMultipleSeatLock;
     }) => bookingApi.deletedShowtimeBySeatLocked(showtime, body),
 
-    onSuccess: () => {
-      toast.success("Đã hủy giữ ghế thành công!");
+    onSuccess: (data) => {
+      console.log(data);
+
+      toast.success(
+        `Đã hủy ghế ${(data?.data?.result as any)?.deleted_seats[0].seat_row}${
+          (data?.data?.result as any)?.deleted_seats[0].seat_number
+        } thành công!`
+      );
 
       // Delay refresh to allow server to process the unlock
       setTimeout(() => {
@@ -398,6 +404,7 @@ export default function SeatSelection({
                   `}
                   >
                     <span className="text-xs sm:text-sm font-extrabold">
+                      {seat.row}
                       {seat.number}
                     </span>
                   </motion.button>
@@ -515,7 +522,7 @@ export default function SeatSelection({
           <span className="w-4 h-4 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full"></span>
           Chú thích loại ghế
         </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
           {[
             [
               "Regular",
@@ -527,16 +534,7 @@ export default function SeatSelection({
               "bg-gradient-to-r from-purple-500 to-purple-600",
               "Ghế cao cấp",
             ],
-            [
-              "Recliner",
-              "bg-gradient-to-r from-pink-500 to-pink-600",
-              "Ghế nằm",
-            ],
-            [
-              "Couple",
-              "bg-gradient-to-r from-yellow-500 to-orange-500",
-              "Ghế đôi",
-            ],
+
             [
               "Ghế đã chọn",
               "bg-gradient-to-r from-green-500 to-green-600",
@@ -556,11 +554,6 @@ export default function SeatSelection({
               "Ghế khác khóa",
               "bg-gradient-to-r from-yellow-500 to-orange-500",
               "Người khác đang chọn",
-            ],
-            [
-              "Không khả dụng",
-              "bg-gradient-to-r from-gray-500 to-gray-600",
-              "Ghế hỏng",
             ],
           ].map(([type, color, description], i) => (
             <motion.div

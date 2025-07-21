@@ -21,6 +21,7 @@ import type {
   PaymentStatsQueryParams,
 } from "../../../../types";
 import { useState } from "react";
+import { BiSolidUserAccount } from "react-icons/bi";
 
 interface AdminSidebarProps {
   activeTab: string;
@@ -131,6 +132,13 @@ export const AdminSidebar = ({
       icon: BarChart3,
       count: null,
       color: "from-amber-500 to-yellow-500",
+    },
+    {
+      id: "add-concierge-qr",
+      label: "Add Concierge QR",
+      icon: BiSolidUserAccount,
+      count: null,
+      color: "from-gray-500 to-slate-500",
     },
   ];
 

@@ -284,7 +284,6 @@ const TicketVerification: React.FC = () => {
     try {
       const result = await verifyTicketCode(ticketCode.trim());
       setScanResult(result.result);
-      console.log("Ticket verification result:", result);
 
       // Check if ticket is valid (confirmed status and completed payment)
       const isValid =
@@ -292,10 +291,10 @@ const TicketVerification: React.FC = () => {
         result.result.payment_status === "completed";
 
       if (isValid) {
-        toast.success("✅ Valid Ticket - Allow Entry!");
+        toast.success("Valid Ticket - Allow Entry!");
         playSound(true);
       } else {
-        toast.error("❌ Invalid Ticket - Deny Entry!");
+        toast.error("Invalid Ticket - Deny Entry!");
         playSound(false);
       }
 
@@ -308,7 +307,7 @@ const TicketVerification: React.FC = () => {
     } catch (err: any) {
       const errorMessage = err.message || "Failed to verify ticket";
       setError(errorMessage);
-      toast.error(`❌ ${errorMessage}`);
+      toast.error(`${errorMessage}`);
       playSound(false);
 
       // Auto-clear error after 5 seconds

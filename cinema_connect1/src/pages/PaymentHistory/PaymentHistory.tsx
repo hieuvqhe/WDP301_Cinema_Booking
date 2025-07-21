@@ -5,7 +5,6 @@ import { motion } from "framer-motion";
 import {
   Filter,
   Search,
-  Download,
   CreditCard,
   CheckCircle,
   XCircle,
@@ -23,6 +22,7 @@ import type {
   PaymentStatus,
   PaymentMethod,
 } from "../../types/Payment.type";
+import VietQRBanking from "../../components/QR/QRSection";
 
 const PaymentHistory: React.FC = () => {
   const [filters, setFilters] = useState<PaymentQueryParams>({
@@ -34,7 +34,9 @@ const PaymentHistory: React.FC = () => {
 
   const [searchTerm, setSearchTerm] = useState("");
   const [showFilters, setShowFilters] = useState(false);
-  const [, setSelectedPayment] = useState<Payment | null>(null);
+  const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
+  const [showQRModal, setShowQRModal] = useState(false);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
 
   const { data: paymentsData, isLoading } = useQuery({
     queryKey: ["payments", filters],
@@ -103,6 +105,31 @@ const PaymentHistory: React.FC = () => {
       hour: "2-digit",
       minute: "2-digit",
     });
+  };
+
+  const calculateTimeRemaining = (paymentTime: string) => {
+    const paymentDate = new Date(paymentTime);
+    const expirationDate = new Date(paymentDate.getTime() + 15 * 60 * 1000); // Add 15 minutes
+    const now = new Date();
+    const timeRemaining = expirationDate.getTime() - now.getTime();
+
+    if (timeRemaining <= 0) {
+      return "Đã hết hạn";
+    }
+
+    const minutes = Math.floor(timeRemaining / (1000 * 60));
+    const seconds = Math.floor((timeRemaining % (1000 * 60)) / 1000);
+
+    return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+  };
+
+  const handleViewDetails = (payment: Payment) => {
+    setSelectedPayment(payment);
+    if (payment.status === "pending") {
+      setShowQRModal(true);
+    } else {
+      setShowDetailsModal(true);
+    }
   };
 
   const handleFilterChange = (key: keyof PaymentQueryParams, value: any) => {
@@ -191,15 +218,6 @@ const PaymentHistory: React.FC = () => {
                   showFilters ? "rotate-180" : ""
                 }`}
               />
-            </button>
-
-            {/* Export Button */}
-            <button
-              className="flex items-center gap-2 px-4 py-2 bg-green-600/30 text-green-200 rounded-lg 
-                           hover:bg-green-600/50 transition-colors"
-            >
-              <Download className="h-4 w-4" />
-              Export
             </button>
           </div>
 
@@ -329,7 +347,7 @@ const PaymentHistory: React.FC = () => {
                 transition={{ delay: index * 0.1 }}
                 className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20 hover:border-white/40 
                          transition-all cursor-pointer"
-                onClick={() => setSelectedPayment(payment as any)}
+                onClick={() => handleViewDetails(payment as any)}
               >
                 <div className="flex flex-col lg:flex-row lg:items-center gap-4">
                   {/* Movie Poster and Info */}
@@ -385,12 +403,16 @@ const PaymentHistory: React.FC = () => {
                     {/* Action */}
                     <button className="flex items-center gap-2 text-purple-400 hover:text-purple-300 transition-colors">
                       <Eye className="h-4 w-4" />
-                      <span className="hidden lg:inline">View Details</span>
+                      <span className="hidden lg:inline">
+                        {payment.status === "pending"
+                          ? "Thanh toán"
+                          : "View Details"}
+                      </span>
                     </button>
                   </div>
                 </div>
 
-                {/* Transaction ID */}
+                {/* Transaction ID and Expiration Time for Pending */}
                 {payment.transaction_id && (
                   <div className="mt-4 pt-4 border-t border-white/10">
                     <p className="text-gray-400 text-sm">
@@ -399,6 +421,20 @@ const PaymentHistory: React.FC = () => {
                         {payment.transaction_id}
                       </span>
                     </p>
+                  </div>
+                )}
+
+                {payment.status === "pending" && (
+                  <div className="mt-4 pt-4 border-t border-white/10">
+                    <div className="flex items-center justify-between">
+                      <p className="text-yellow-400 text-sm font-medium">
+                        ⏰ Thời gian còn lại:{" "}
+                        {calculateTimeRemaining(payment.payment_time)}
+                      </p>
+                      <p className="text-gray-400 text-xs">
+                        Hết hạn sau 15 phút
+                      </p>
+                    </div>
                   </div>
                 )}
               </motion.div>
@@ -433,6 +469,191 @@ const PaymentHistory: React.FC = () => {
               ))}
             </div>
           </motion.div>
+        )}
+
+        {/* QR Code Modal for Pending Payments */}
+        {showQRModal &&
+          selectedPayment &&
+          selectedPayment.status === "pending" && (
+            <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20 max-w-md w-full"
+              >
+                <div className="text-center mb-6">
+                  <h3 className="text-2xl font-bold text-white mb-2">
+                    Thanh toán đơn hàng
+                  </h3>
+                  <p className="text-gray-300">Quét mã QR để thanh toán</p>
+                  <div className="mt-4">
+                    <p className="text-yellow-400 text-lg font-medium">
+                      Còn lại:{" "}
+                      {calculateTimeRemaining(selectedPayment.payment_time)}
+                    </p>
+                  </div>
+                </div>
+
+                <VietQRBanking
+                  amount={selectedPayment.amount}
+                  content={selectedPayment.booking?.ticket_code as string}
+                />
+
+                <div className="mt-6">
+                  <button
+                    onClick={() => setShowQRModal(false)}
+                    className="w-full px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors"
+                  >
+                    Đóng
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+
+        {/* Payment Details Modal for Completed/Other Status */}
+        {showDetailsModal && selectedPayment && (
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20 max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+            >
+              {/* Header */}
+              <div className="text-center mb-6">
+                <div className="flex items-center justify-center mb-4">
+                  {getStatusIcon(selectedPayment.status)}
+                  <h3 className="text-2xl font-bold text-white ml-3">
+                    Chi tiết thanh toán
+                  </h3>
+                </div>
+                <div
+                  className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-medium ${getStatusColor(
+                    selectedPayment.status
+                  )}`}
+                >
+                  {selectedPayment.status.charAt(0).toUpperCase() +
+                    selectedPayment.status.slice(1)}
+                </div>
+              </div>
+
+              {/* Movie Info */}
+              <div className="bg-white/5 rounded-xl p-6 mb-6">
+                <div className="flex items-center gap-4 mb-4">
+                  {selectedPayment.movie?.poster_url && (
+                    <img
+                      src={selectedPayment.movie.poster_url}
+                      alt={selectedPayment.movie.title}
+                      className="w-16 h-20 object-cover rounded-lg"
+                    />
+                  )}
+                  <div>
+                    <h4 className="text-xl font-bold text-white mb-1">
+                      {selectedPayment.movie?.title || "Movie Title"}
+                    </h4>
+                    <div className="flex items-center gap-2 text-gray-300 text-sm">
+                      <MapPin className="h-4 w-4" />
+                      <span>{selectedPayment.theater?.name}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-gray-300 text-sm">
+                      <Calendar className="h-4 w-4" />
+                      <span>
+                        {formatDateTime(
+                          selectedPayment.showtime?.start_time as string
+                        )}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Payment Details */}
+              <div className="grid md:grid-cols-2 gap-6 mb-6">
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-gray-400 text-sm">Mã vé</p>
+                    <p className="text-white font-mono text-lg">
+                      {selectedPayment.booking?.ticket_code}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-gray-400 text-sm">Số ghế</p>
+                    <p className="text-white font-medium">
+                      {selectedPayment.booking?.seats}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-gray-400 text-sm">
+                      Phương thức thanh toán
+                    </p>
+                    <p className="text-white font-medium">
+                      {getPaymentMethodIcon(selectedPayment.payment_method)}{" "}
+                      {selectedPayment.payment_method.replace("_", " ")}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-gray-400 text-sm">Tổng tiền</p>
+                    <p className="text-green-400 font-bold text-2xl">
+                      {formatCurrency(selectedPayment.amount)}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-gray-400 text-sm">
+                      Thời gian thanh toán
+                    </p>
+                    <p className="text-white font-medium">
+                      {formatDateTime(selectedPayment.payment_time)}
+                    </p>
+                  </div>
+                  {selectedPayment.transaction_id && (
+                    <div>
+                      <p className="text-gray-400 text-sm">Mã giao dịch</p>
+                      <p className="text-white font-mono text-sm break-all">
+                        {selectedPayment.transaction_id}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Error Message for Failed Payments */}
+              {selectedPayment.status === "failed" && selectedPayment.error && (
+                <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 mb-6">
+                  <p className="text-red-400 font-medium text-sm">
+                    Lỗi thanh toán:
+                  </p>
+                  <p className="text-red-300 text-sm">
+                    Quá thời gian chuyển khoản hoặc giao dịch không thành công.
+                  </p>
+                </div>
+              )}
+
+              {/* Admin Note */}
+              {selectedPayment.admin_note && (
+                <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4 mb-6">
+                  <p className="text-blue-400 font-medium text-sm">Ghi chú:</p>
+                  <p className="text-blue-300 text-sm">
+                    {selectedPayment.admin_note}
+                  </p>
+                </div>
+              )}
+
+              {/* Close Button */}
+              <div className="text-center">
+                <button
+                  onClick={() => setShowDetailsModal(false)}
+                  className="px-8 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors font-medium"
+                >
+                  Đóng
+                </button>
+              </div>
+            </motion.div>
+          </div>
         )}
       </div>
     </div>
