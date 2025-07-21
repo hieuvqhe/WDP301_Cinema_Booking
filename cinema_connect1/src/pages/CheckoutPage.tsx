@@ -19,7 +19,11 @@ import type { Showtime } from "../types/Showtime.type";
 import { getScreenById } from "../apis/screen.api";
 import { getMovieById } from "../apis/movie.api";
 import { getShowtimeById } from "../apis/showtime.api";
-import { useCreateBooking, useBookingExpiration } from "../hooks/useBooking";
+import {
+  useCreateBooking,
+  useUpdateBooking,
+  useBookingExpiration,
+} from "../hooks/useBooking";
 import { useAuthStore } from "../store/useAuthStore";
 import { useSeatPersistence } from "../hooks/useSeatPersistence";
 import CheckoutPaymentStep from "../components/checkout/CheckoutPaymentStep";
@@ -56,6 +60,7 @@ export default function CheckoutPage() {
 
   // Enhanced hooks
   const createBookingMutation = useCreateBooking();
+  const updateBookingMutation = useUpdateBooking();
   const { data: expirationInfo } = useBookingExpiration(
     bookingId || "",
     !!bookingId
@@ -120,13 +125,13 @@ export default function CheckoutPage() {
 
     if (seatData && !hasLoadedData) {
       // Get screenId from URL params for validation
-      const urlScreenId = searchParams.get('screenId');
-      
+      const urlScreenId = searchParams.get("screenId");
+
       // Validate screenId matches URL parameter if provided
       if (urlScreenId && seatData.screenId !== urlScreenId) {
-        console.warn('ScreenId mismatch between localStorage and URL:', {
+        console.warn("ScreenId mismatch between localStorage and URL:", {
           localStorage: seatData.screenId,
-          url: urlScreenId
+          url: urlScreenId,
         });
         toast.error("Screen information mismatch. Please select seats again.");
         clearSeatData();
@@ -165,7 +170,15 @@ export default function CheckoutPage() {
           .catch(() => setShowtime(null));
       }
     }
-  }, [seatData, isExpired, hasLoadedData, clearSeatData, navigate, deletedLockedSeatsMutation, searchParams]);
+  }, [
+    seatData,
+    isExpired,
+    hasLoadedData,
+    clearSeatData,
+    navigate,
+    deletedLockedSeatsMutation,
+    searchParams,
+  ]);
 
   // Update seats and price when seatData changes (without calling APIs again)
   useEffect(() => {
@@ -218,7 +231,13 @@ export default function CheckoutPage() {
 
       return () => clearInterval(timer);
     }
-  }, [currentStep, timeRemaining, navigate, bookingInfo, deletedLockedSeatsMutation]);
+  }, [
+    currentStep,
+    timeRemaining,
+    navigate,
+    bookingInfo,
+    deletedLockedSeatsMutation,
+  ]);
 
   const formatTime = (iso: string) =>
     new Date(iso).toLocaleString("vi-VN", {
@@ -234,6 +253,29 @@ export default function CheckoutPage() {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, "0")}`;
+  };
+
+  // Helper function to check if BOTH selected-movie-info AND seat-locked exist for the current showtimeId
+  const checkExistingBooking = (showtimeId: string) => {
+    try {
+
+      // Check for selected-movie-info data
+      const selectedMovieInfo = localStorage.getItem("selected-movie-info");
+      let hasSelectedMovieInfo = false;
+      if (selectedMovieInfo) {
+        const parsedData = JSON.parse(selectedMovieInfo);
+        if (parsedData.showtimeId === showtimeId) {
+          hasSelectedMovieInfo = true;
+        }
+      }
+
+      // Only return true if BOTH exist
+      const bothExist = hasSelectedMovieInfo;
+      return bothExist;
+    } catch (error) {
+      console.error("Error checking existing booking data:", error);
+      return false;
+    }
   };
 
   // Create booking before payment
@@ -264,12 +306,47 @@ export default function CheckoutPage() {
         }),
       };
 
-      console.log("Creating booking with data:", bookingData);
-      console.log("Selected seats:", bookingInfo.seats);
+      // Check if existing booking data exists for this showtimeId
 
-      // Use the booking hook
-      const response = await createBookingMutation.mutateAsync(bookingData);
-      const newBookingId = response.data.result.booking._id;
+      const hasExistingBooking = checkExistingBooking(bookingInfo.showtimeId);
+
+      let response;
+      let newBookingId;
+
+      if (hasExistingBooking) {
+        // Both selected-movie-info AND seat-locked exist, use updateBooking
+      
+        // Get existing booking ID from seat-locked data (preferred) or selected-movie-info
+        let existingBookingId = null;
+
+        // Fallback to selected-movie-info if no bookingId in seat-locked
+        if (!existingBookingId) {
+          const selectedMovieInfo = localStorage.getItem("selected-movie-info");
+          if (selectedMovieInfo) {
+            const parsedData = JSON.parse(selectedMovieInfo);
+            existingBookingId = parsedData.bookingId;
+           
+          }
+        }
+
+        if (existingBookingId) {
+          response = await updateBookingMutation.mutateAsync({
+            bookingId: existingBookingId,
+            data: bookingData,
+          });
+          newBookingId = existingBookingId;
+        } else {
+         
+          // Fallback to createBooking
+          response = await createBookingMutation.mutateAsync(bookingData, {});
+          newBookingId = response.data.result.booking._id;
+        }
+      } else {
+      
+        // Use createBooking if either or both localStorage items are missing
+        response = await createBookingMutation.mutateAsync(bookingData);
+        newBookingId = response.data.result.booking._id;
+      }
 
       setBookingId(newBookingId);
       setCurrentStep("payment");
@@ -352,14 +429,14 @@ export default function CheckoutPage() {
         <div className="absolute bottom-20 right-10 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl" />
       </div>
 
-      <div className="relative z-10 container mx-auto px-4 max-w-4xl">
+      <div className="relative z-10 container mx-auto px-4 max-w-4xl mt-20">
         {/* Header with Back Button */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex items-center justify-between mb-8"
+          className="mb-8"
         >
-          <div className="flex items-center">
+          <div className="flex items-center justify-between mb-5">
             <button
               onClick={() => navigate(-1)}
               className="flex items-center gap-2 text-gray-300 hover:text-white transition-colors mr-4"
@@ -367,31 +444,33 @@ export default function CheckoutPage() {
               <ArrowLeft className="h-5 w-5" />
               Back
             </button>
-            <h1 className="text-3xl font-bold text-white">
-              Complete Your Booking
-            </h1>
+
+            <motion.button
+              onClick={handleCancelLockedSeats}
+              disabled={deletedLockedSeatsMutation.isPending}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors disabled:opacity-50"
+            >
+              {deletedLockedSeatsMutation.isPending ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+                  Canceling...
+                </>
+              ) : (
+                <>
+                  <AlertTriangle className="h-4 w-4" />
+                  Cancel Seats
+                </>
+              )}
+            </motion.button>
           </div>
 
           {/* Cancel locked seats button */}
-          <motion.button
-            onClick={handleCancelLockedSeats}
-            disabled={deletedLockedSeatsMutation.isPending}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors disabled:opacity-50"
-          >
-            {deletedLockedSeatsMutation.isPending ? (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
-                Canceling...
-              </>
-            ) : (
-              <>
-                <AlertTriangle className="h-4 w-4" />
-                Cancel Seats
-              </>
-            )}
-          </motion.button>
+
+          <h1 className="text-3xl font-bold text-white">
+            Complete Your Booking
+          </h1>
         </motion.div>
 
         {/* Steps Indicator */}
@@ -603,7 +682,9 @@ export default function CheckoutPage() {
                     <motion.button
                       onClick={handleCreateBooking}
                       disabled={
-                        isCreatingBooking || createBookingMutation.isPending
+                        isCreatingBooking ||
+                        createBookingMutation.isPending ||
+                        updateBookingMutation.isPending
                       }
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
@@ -612,10 +693,12 @@ export default function CheckoutPage() {
                                transition-all disabled:opacity-50 disabled:cursor-not-allowed
                                flex items-center justify-center gap-2"
                     >
-                      {isCreatingBooking || createBookingMutation.isPending ? (
+                      {isCreatingBooking ||
+                      createBookingMutation.isPending ||
+                      updateBookingMutation.isPending ? (
                         <>
                           <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white" />
-                          Creating Booking...
+                          Processing Booking...
                         </>
                       ) : (
                         <>

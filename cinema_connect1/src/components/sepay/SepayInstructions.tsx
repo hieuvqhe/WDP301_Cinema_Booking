@@ -138,20 +138,29 @@ const SepayInstructions: React.FC = () => {
         <div className="absolute bottom-20 right-10 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl" />
       </div>
 
-      <div className="relative z-10 container mx-auto px-4 max-w-4xl">
+      <div className="relative z-10 container mx-auto px-4 max-w-4xl mt-20">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex items-center mb-8"
+          className="mb-8"
         >
-          <button
-            onClick={() => navigate(-1)}
-            className="flex items-center gap-2 text-gray-300 hover:text-white transition-colors mr-4"
-          >
-            <ArrowLeft className="h-5 w-5" />
-            Back
-          </button>
+          <div className="flex items-center justify-between mb-5">
+            <button
+              onClick={() => navigate(-1)}
+              className="flex items-center gap-2 text-gray-300 hover:text-white transition-colors mr-4"
+            >
+              <ArrowLeft className="h-5 w-5" />
+              Back
+            </button>
+
+            {/* Timer */}
+            <div className="flex items-center gap-2 bg-orange-500/20 text-orange-300 px-4 py-2 rounded-lg">
+              <Timer className="h-5 w-5" />
+              <span className="font-mono text-lg">{formatTime(timeLeft)}</span>
+            </div>
+          </div>
+
           <div className="flex-1">
             <h1 className="text-3xl font-bold text-white flex items-center gap-3">
               <Building2 className="h-8 w-8 text-emerald-400" />
@@ -160,12 +169,6 @@ const SepayInstructions: React.FC = () => {
             <p className="text-gray-300 mt-1">
               Complete your payment via bank transfer
             </p>
-          </div>
-
-          {/* Timer */}
-          <div className="flex items-center gap-2 bg-orange-500/20 text-orange-300 px-4 py-2 rounded-lg">
-            <Timer className="h-5 w-5" />
-            <span className="font-mono text-lg">{formatTime(timeLeft)}</span>
           </div>
         </motion.div>
 

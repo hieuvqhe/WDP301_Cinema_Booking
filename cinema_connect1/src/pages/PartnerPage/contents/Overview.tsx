@@ -26,16 +26,23 @@ import {
 
 // Import other APIs
 import { getMyMovies, type MovieListResponse } from "../../../apis/staff.api";
-import { getTheaterBookings, formatPrice, type BookingListResponse } from "../../../apis/staff_booking.api";
+import {
+  getTheaterBookings,
+  formatPrice,
+  type BookingListResponse,
+} from "../../../apis/staff_booking.api";
 
 const Overview = () => {
   // State management
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [myTheaterAnalytics, setMyTheaterAnalytics] = useState<MyTheaterAnalyticsResponse | null>(null);
-  const [allTheatersAnalytics, setAllTheatersAnalytics] = useState<AllTheatersAnalyticsResponse | null>(null);
+  const [myTheaterAnalytics, setMyTheaterAnalytics] =
+    useState<MyTheaterAnalyticsResponse | null>(null);
+  const [allTheatersAnalytics, setAllTheatersAnalytics] =
+    useState<AllTheatersAnalyticsResponse | null>(null);
   const [myMovies, setMyMovies] = useState<MovieListResponse | null>(null);
-  const [recentBookings, setRecentBookings] = useState<BookingListResponse | null>(null);
+  const [recentBookings, setRecentBookings] =
+    useState<BookingListResponse | null>(null);
 
   // Fetch all data
   useEffect(() => {
@@ -45,44 +52,50 @@ const Overview = () => {
         setError(null);
 
         // Fetch analytics data in parallel
-        const [myTheaterData, allTheatersData, moviesData, bookingsData] = await Promise.allSettled([
-          getMyTheaterAnalytics(),
-          getAllTheatersAnalytics(),
-          getMyMovies(1, 10), // Get first 10 movies
-          getTheaterBookings(1, 5, 'confirmed'), // Get 5 recent confirmed bookings
-        ]);
+        const [myTheaterData, allTheatersData, moviesData, bookingsData] =
+          await Promise.allSettled([
+            getMyTheaterAnalytics(),
+            getAllTheatersAnalytics(),
+            getMyMovies(1, 10), // Get first 10 movies
+            getTheaterBookings(1, 5, "confirmed"), // Get 5 recent confirmed bookings
+          ]);
 
         // Handle my theater analytics
-        if (myTheaterData.status === 'fulfilled') {
+        if (myTheaterData.status === "fulfilled") {
           setMyTheaterAnalytics(myTheaterData.value);
         } else {
-          console.error('Failed to fetch my theater analytics:', myTheaterData.reason);
+          console.error(
+            "Failed to fetch my theater analytics:",
+            myTheaterData.reason
+          );
         }
 
         // Handle all theaters analytics
-        if (allTheatersData.status === 'fulfilled') {
+        if (allTheatersData.status === "fulfilled") {
           setAllTheatersAnalytics(allTheatersData.value);
         } else {
-          console.error('Failed to fetch all theaters analytics:', allTheatersData.reason);
+          console.error(
+            "Failed to fetch all theaters analytics:",
+            allTheatersData.reason
+          );
         }
 
         // Handle movies data
-        if (moviesData.status === 'fulfilled') {
+        if (moviesData.status === "fulfilled") {
           setMyMovies(moviesData.value);
         } else {
-          console.error('Failed to fetch movies:', moviesData.reason);
+          console.error("Failed to fetch movies:", moviesData.reason);
         }
 
         // Handle bookings data
-        if (bookingsData.status === 'fulfilled') {
+        if (bookingsData.status === "fulfilled") {
           setRecentBookings(bookingsData.value);
         } else {
-          console.error('Failed to fetch bookings:', bookingsData.reason);
+          console.error("Failed to fetch bookings:", bookingsData.reason);
         }
-
       } catch (err) {
-        console.error('Error fetching overview data:', err);
-        setError(err instanceof Error ? err.message : 'An error occurred');
+        console.error("Error fetching overview data:", err);
+        setError(err instanceof Error ? err.message : "An error occurred");
       } finally {
         setLoading(false);
       }
@@ -95,31 +108,53 @@ const Overview = () => {
   const stats = [
     {
       label: "Total Revenue",
-      value: myTheaterAnalytics ? formatRevenueShort(myTheaterAnalytics.result.analytics.total_revenue) : "Loading...",
-      change: myTheaterAnalytics ? 
-        `${myTheaterAnalytics.result.analytics.total_revenue > 0 ? '+' : ''}${((myTheaterAnalytics.result.analytics.total_revenue / 1000000) * 100).toFixed(1)}%` : 
-        "+0%",
+      value: myTheaterAnalytics
+        ? formatRevenueShort(myTheaterAnalytics.result.analytics.total_revenue)
+        : "Loading...",
+      change: myTheaterAnalytics
+        ? `${
+            myTheaterAnalytics.result.analytics.total_revenue > 0 ? "+" : ""
+          }${(
+            (myTheaterAnalytics.result.analytics.total_revenue / 1000000) *
+            100
+          ).toFixed(1)}%`
+        : "+0%",
       icon: DollarSign,
       changeType: "positive" as const,
     },
     {
       label: "My Theater",
       value: myTheaterAnalytics ? "1" : "0",
-      change: myTheaterAnalytics?.result.theater_info.status === 'active' ? "Active" : "Inactive",
+      change:
+        myTheaterAnalytics?.result.theater_info.status === "active"
+          ? "Active"
+          : "Inactive",
       icon: Building2,
-      changeType: myTheaterAnalytics?.result.theater_info.status === 'active' ? "positive" as const : "negative" as const,
+      changeType:
+        myTheaterAnalytics?.result.theater_info.status === "active"
+          ? ("positive" as const)
+          : ("negative" as const),
     },
     {
       label: "Movies Managed",
       value: myMovies ? myMovies.result.total.toString() : "0",
-      change: myMovies ? `${myMovies.result.movies.filter(m => m.status === 'now_showing').length} showing` : "0 showing",
+      change: myMovies
+        ? `${
+            myMovies.result.movies.filter((m) => m.status === "now_showing")
+              .length
+          } showing`
+        : "0 showing",
       icon: Film,
       changeType: "positive" as const,
     },
     {
       label: "Total Bookings",
-      value: myTheaterAnalytics ? myTheaterAnalytics.result.analytics.total_bookings.toString() : "0",
-      change: myTheaterAnalytics ? `${myTheaterAnalytics.result.analytics.total_customers} customers` : "0 customers",
+      value: myTheaterAnalytics
+        ? myTheaterAnalytics.result.analytics.total_bookings.toString()
+        : "0",
+      change: myTheaterAnalytics
+        ? `${myTheaterAnalytics.result.analytics.total_customers} customers`
+        : "0 customers",
       icon: Calendar,
       changeType: "positive" as const,
     },
@@ -221,21 +256,28 @@ const Overview = () => {
                   >
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <p className="text-white font-medium">Booking #{booking.ticket_code}</p>
+                        <p className="text-white font-medium">
+                          Booking #{booking.ticket_code}
+                        </p>
                         <div className="flex items-center gap-1">
-                          <span className={`text-xs px-2 py-1 rounded-full ${
-                            booking.status === 'confirmed' 
-                              ? 'bg-green-500/20 text-green-400' 
-                              : booking.status === 'pending'
-                              ? 'bg-yellow-500/20 text-yellow-400'
-                              : 'bg-red-500/20 text-red-400'
-                          }`}>
+                          <span
+                            className={`text-xs px-2 py-1 rounded-full ${
+                              booking.status === "confirmed"
+                                ? "bg-green-500/20 text-green-400"
+                                : booking.status === "pending"
+                                ? "bg-yellow-500/20 text-yellow-400"
+                                : "bg-red-500/20 text-red-400"
+                            }`}
+                          >
                             {booking.status}
                           </span>
                         </div>
                       </div>
                       <p className="text-slate-400 text-sm">
-                        {booking.seats.length} seats • {new Date(booking.booking_time).toLocaleDateString('vi-VN')}
+                        {booking.seats.length} seats •{" "}
+                        {new Date(booking.booking_time).toLocaleDateString(
+                          "vi-VN"
+                        )}
                       </p>
                     </div>
                     <div className="text-right">
@@ -243,7 +285,7 @@ const Overview = () => {
                         {formatPrice(booking.total_amount)}
                       </span>
                       <p className="text-slate-400 text-xs">
-                        {booking.payment_status === 'paid' ? 'Paid' : 'Pending'}
+                        {booking.payment_status}
                       </p>
                     </div>
                   </motion.div>
@@ -272,7 +314,7 @@ const Overview = () => {
                 <BarChart3 size={20} className="text-white" />
               </div>
             </div>
-            
+
             {myTheaterAnalytics ? (
               <div className="space-y-4">
                 {/* My Theater Performance */}
@@ -285,79 +327,122 @@ const Overview = () => {
                 >
                   <div className="flex items-center justify-between mb-3">
                     <div>
-                      <p className="text-white font-medium">{myTheaterAnalytics.result.theater_info.name}</p>
+                      <p className="text-white font-medium">
+                        {myTheaterAnalytics.result.theater_info.name}
+                      </p>
                       <p className="text-slate-400 text-sm">
-                        {myTheaterAnalytics.result.theater_info.location} • {myTheaterAnalytics.result.theater_info.city}
+                        {myTheaterAnalytics.result.theater_info.location} •{" "}
+                        {myTheaterAnalytics.result.theater_info.city}
                       </p>
                     </div>
                     <div className="text-right">
                       <span className="text-orange-400 font-semibold">
-                        {formatRevenueShort(myTheaterAnalytics.result.analytics.total_revenue)}
+                        {formatRevenueShort(
+                          myTheaterAnalytics.result.analytics.total_revenue
+                        )}
                       </span>
                       <p className="text-slate-400 text-xs">Total Revenue</p>
                     </div>
                   </div>
-                  
+
                   {/* Performance metrics */}
                   <div className="grid grid-cols-3 gap-4 mt-4">
                     <div className="text-center">
-                      <p className="text-2xl font-bold text-white">{myTheaterAnalytics.result.analytics.total_bookings}</p>
+                      <p className="text-2xl font-bold text-white">
+                        {myTheaterAnalytics.result.analytics.total_bookings}
+                      </p>
                       <p className="text-slate-400 text-xs">Bookings</p>
                     </div>
                     <div className="text-center">
-                      <p className="text-2xl font-bold text-white">{myTheaterAnalytics.result.analytics.total_customers}</p>
+                      <p className="text-2xl font-bold text-white">
+                        {myTheaterAnalytics.result.analytics.total_customers}
+                      </p>
                       <p className="text-slate-400 text-xs">Customers</p>
                     </div>
                     <div className="text-center">
-                      <p className="text-2xl font-bold" style={{ 
-                        color: getPerformanceStatusColor(getTheaterPerformanceStatus(myTheaterAnalytics.result.analytics.total_revenue))
-                      }}>
-                        {getPerformanceStatusDisplay(getTheaterPerformanceStatus(myTheaterAnalytics.result.analytics.total_revenue))}
+                      <p
+                        className="text-2xl font-bold"
+                        style={{
+                          color: getPerformanceStatusColor(
+                            getTheaterPerformanceStatus(
+                              myTheaterAnalytics.result.analytics.total_revenue
+                            )
+                          ),
+                        }}
+                      >
+                        {getPerformanceStatusDisplay(
+                          getTheaterPerformanceStatus(
+                            myTheaterAnalytics.result.analytics.total_revenue
+                          )
+                        )}
                       </p>
                       <p className="text-slate-400 text-xs">Performance</p>
                     </div>
                   </div>
-                  
+
                   {/* Performance bar */}
                   <div className="w-full bg-slate-600 rounded-full h-3 overflow-hidden mt-4">
                     <motion.div
                       className="bg-gradient-to-r from-orange-500 to-amber-500 h-3 rounded-full shadow-lg"
                       initial={{ width: 0 }}
-                      animate={{ width: `${Math.min((myTheaterAnalytics.result.analytics.total_revenue / 10000000) * 100, 100)}%` }}
+                      animate={{
+                        width: `${Math.min(
+                          (myTheaterAnalytics.result.analytics.total_revenue /
+                            10000000) *
+                            100,
+                          100
+                        )}%`,
+                      }}
                       transition={{ duration: 1, delay: 0.6 }}
                     />
                   </div>
                 </motion.div>
 
                 {/* Comparison with other theaters */}
-                {allTheatersAnalytics && allTheatersAnalytics.result.length > 1 && (
-                  <div className="mt-4">
-                    <h4 className="text-white font-medium mb-3">Market Comparison</h4>
-                    <div className="space-y-2">
-                      {allTheatersAnalytics.result
-                        .filter(theater => theater.theater_id !== myTheaterAnalytics.result.theater_info._id)
-                        .sort((a, b) => b.total_revenue - a.total_revenue)
-                        .slice(0, 3)
-                        .map((theater, index) => (
-                          <motion.div
-                            key={theater.theater_id}
-                            className="flex items-center justify-between p-3 bg-slate-700/20 rounded-lg"
-                            initial={{ opacity: 0, x: -10 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ duration: 0.3, delay: 0.6 + index * 0.1 }}
-                          >
-                            <div className="flex-1">
-                              <p className="text-white text-sm font-medium">{theater.theater_name}</p>
-                              <p className="text-slate-400 text-xs">{theater.theater_location}</p>
-                            </div>
-                            <div className="text-right">
-                              <span className="text-slate-300 text-sm">{formatRevenueShort(theater.total_revenue)}</span>
-                            </div>
-                          </motion.div>
-                        ))}
+                {allTheatersAnalytics &&
+                  allTheatersAnalytics.result.length > 1 && (
+                    <div className="mt-4">
+                      <h4 className="text-white font-medium mb-3">
+                        Market Comparison
+                      </h4>
+                      <div className="space-y-2">
+                        {allTheatersAnalytics.result
+                          .filter(
+                            (theater) =>
+                              theater.theater_id !==
+                              myTheaterAnalytics.result.theater_info._id
+                          )
+                          .sort((a, b) => b.total_revenue - a.total_revenue)
+                          .slice(0, 3)
+                          .map((theater, index) => (
+                            <motion.div
+                              key={theater.theater_id}
+                              className="flex items-center justify-between p-3 bg-slate-700/20 rounded-lg"
+                              initial={{ opacity: 0, x: -10 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              transition={{
+                                duration: 0.3,
+                                delay: 0.6 + index * 0.1,
+                              }}
+                            >
+                              <div className="flex-1">
+                                <p className="text-white text-sm font-medium">
+                                  {theater.theater_name}
+                                </p>
+                                <p className="text-slate-400 text-xs">
+                                  {theater.theater_location}
+                                </p>
+                              </div>
+                              <div className="text-right">
+                                <span className="text-slate-300 text-sm">
+                                  {formatRevenueShort(theater.total_revenue)}
+                                </span>
+                              </div>
+                            </motion.div>
+                          ))}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
               </div>
             ) : (
               <div className="text-center py-8">
@@ -420,7 +505,9 @@ const Overview = () => {
                   <action.icon size={24} className="text-white" />
                 </div>
                 <p className="text-white font-medium text-sm">{action.label}</p>
-                <p className="text-slate-400 text-xs mt-1">{action.description}</p>
+                <p className="text-slate-400 text-xs mt-1">
+                  {action.description}
+                </p>
               </motion.button>
             ))}
           </div>
@@ -440,7 +527,7 @@ const Overview = () => {
                 <Film size={20} className="text-white" />
               </div>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {myMovies.result.movies.slice(0, 6).map((movie, index) => (
                 <motion.div
@@ -454,8 +541,8 @@ const Overview = () => {
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-16 bg-slate-600 rounded overflow-hidden flex-shrink-0">
                       {movie.poster_url ? (
-                        <img 
-                          src={movie.poster_url} 
+                        <img
+                          src={movie.poster_url}
                           alt={movie.title}
                           className="w-full h-full object-cover"
                         />
@@ -466,22 +553,31 @@ const Overview = () => {
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-white font-medium text-sm truncate">{movie.title}</p>
+                      <p className="text-white font-medium text-sm truncate">
+                        {movie.title}
+                      </p>
                       <p className="text-slate-400 text-xs">{movie.language}</p>
                       <div className="flex items-center gap-2 mt-1">
-                        <span className={`text-xs px-2 py-1 rounded-full ${
-                          movie.status === 'now_showing' 
-                            ? 'bg-green-500/20 text-green-400' 
-                            : movie.status === 'coming_soon'
-                            ? 'bg-blue-500/20 text-blue-400'
-                            : 'bg-gray-500/20 text-gray-400'
-                        }`}>
-                          {movie.status.replace('_', ' ')}
+                        <span
+                          className={`text-xs px-2 py-1 rounded-full ${
+                            movie.status === "now_showing"
+                              ? "bg-green-500/20 text-green-400"
+                              : movie.status === "coming_soon"
+                              ? "bg-blue-500/20 text-blue-400"
+                              : "bg-gray-500/20 text-gray-400"
+                          }`}
+                        >
+                          {movie.status.replace("_", " ")}
                         </span>
                         {movie.average_rating > 0 && (
                           <div className="flex items-center gap-1">
-                            <Star size={10} className="text-yellow-400 fill-current" />
-                            <span className="text-yellow-400 text-xs">{movie.average_rating.toFixed(1)}</span>
+                            <Star
+                              size={10}
+                              className="text-yellow-400 fill-current"
+                            />
+                            <span className="text-yellow-400 text-xs">
+                              {movie.average_rating.toFixed(1)}
+                            </span>
                           </div>
                         )}
                       </div>
@@ -490,7 +586,7 @@ const Overview = () => {
                 </motion.div>
               ))}
             </div>
-            
+
             {myMovies.result.total > 6 && (
               <div className="text-center mt-4">
                 <p className="text-slate-400 text-sm">

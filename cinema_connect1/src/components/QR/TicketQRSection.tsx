@@ -1,6 +1,7 @@
 import React from "react";
 import { Ticket, Download, MapPin, Clock, User, Phone } from "lucide-react";
 import QRCode from "react-qr-code";
+import { FaTimes } from "react-icons/fa";
 
 interface TicketQRSectionProps {
   qrData: string;
@@ -30,12 +31,14 @@ interface TicketQRSectionProps {
       phone?: string;
     };
   };
+  handleClose: () => void;
 }
 
 const TicketQRSection: React.FC<TicketQRSectionProps> = ({
   qrData,
   ticketCode,
   bookingData,
+  handleClose,
 }) => {
   const formatDateTime = (dateString: string) => {
     const date = new Date(dateString);
@@ -56,13 +59,11 @@ const TicketQRSection: React.FC<TicketQRSectionProps> = ({
   const getQRData = () => {
     // Ưu tiên ticketCode trước
     if (ticketCode && ticketCode.trim()) {
-      console.log("Using ticketCode for QR:", ticketCode);
       return ticketCode.trim();
     }
 
     // Fallback: sử dụng qrData nếu có
     if (qrData && qrData.trim()) {
-      console.log("Using provided qrData:", qrData);
       return qrData.trim();
     }
 
@@ -113,16 +114,15 @@ const TicketQRSection: React.FC<TicketQRSectionProps> = ({
     ? formatDateTime(bookingData.showtime.start_time)
     : null;
 
-  // Debug info - simplified
-  React.useEffect(() => {
-    console.log("=== QR DEBUG INFO ===");
-    console.log("ticketCode:", ticketCode);
-    console.log("finalQRData:", finalQRData);
-    console.log("QR ready:", !!finalQRData);
-  }, [ticketCode, finalQRData]);
-
   return (
     <div className="bg-white rounded-xl p-6 border border-gray-200 w-full max-w-4xl mx-auto shadow-lg">
+      <div className="flex justify-end text-black ">
+        <FaTimes
+          onClick={() => handleClose()}
+          className="hover:scale-150 transition-all duration-300 cursor-pointer"
+        />
+      </div>
+
       <div className="flex items-center justify-center gap-2 mb-6">
         <Ticket className="h-6 w-6 text-blue-600" />
         <h3 className="text-xl font-bold text-gray-800">QR CODE</h3>

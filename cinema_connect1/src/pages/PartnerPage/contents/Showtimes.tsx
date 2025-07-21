@@ -1,22 +1,23 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { 
-  Calendar, 
-  Clock, 
-  Plus, 
-  Search, 
-  Edit, 
-  Eye, 
-  Trash2, 
+import {
+  Calendar,
+  Clock,
+  Plus,
+  Search,
+  Edit,
+  Eye,
+  Trash2,
   Users,
   AlertTriangle,
   X,
-  MonitorPlay
+  MonitorPlay,
 } from "lucide-react";
-import { toast } from 'sonner';
+import { toast } from "sonner";
 
 // Import APIs
-import { 
+import {
   getMyShowtimes,
   createShowtime,
   getShowtimeById,
@@ -33,15 +34,12 @@ import {
   type Showtime,
   type ShowtimeCreateRequest,
   type ShowtimeStatus,
-  ShowtimeStatusValues
-} from '../../../apis/showtime_staff.api';
+  ShowtimeStatusValues,
+} from "../../../apis/showtime_staff.api";
 
-import { 
-  getMyTheater,
-  type TheaterResponse 
-} from '../../../apis/staff.api';
+import { getMyTheater, type TheaterResponse } from "../../../apis/staff.api";
 
-import { 
+import {
   searchAvailableMovies,
   getPopularMovies,
   getMovieById,
@@ -50,13 +48,10 @@ import {
   getMovieStatusColor,
   isMovieAvailableForShowtime,
   type StaffMovie,
-  type MovieSearchParams
-} from '../../../apis/movie_staff.api';
+  type MovieSearchParams,
+} from "../../../apis/movie_staff.api";
 
-import { 
-  getTheaterScreens,
-  type Screen 
-} from '../../../apis/staff_screen.api';
+import { getTheaterScreens, type Screen } from "../../../apis/staff_screen.api";
 
 // Movie Select Item Component
 interface MovieSelectItemProps {
@@ -65,30 +60,40 @@ interface MovieSelectItemProps {
   onSelect: (movie: StaffMovie) => void;
 }
 
-const MovieSelectItem = ({ movie, isSelected, onSelect }: MovieSelectItemProps) => (
+const MovieSelectItem = ({
+  movie,
+  isSelected,
+  onSelect,
+}: MovieSelectItemProps) => (
   <div
     onClick={() => onSelect(movie)}
     className={`p-3 cursor-pointer border-b border-slate-600/50 last:border-b-0 transition-colors ${
-      isSelected 
-        ? 'bg-orange-500/20 border-orange-500/30' 
-        : 'hover:bg-slate-600/30'
+      isSelected
+        ? "bg-orange-500/20 border-orange-500/30"
+        : "hover:bg-slate-600/30"
     }`}
   >
     <div className="flex items-center">
-      <img 
-        src={movie.poster_url} 
+      <img
+        src={movie.poster_url}
         alt={movie.title}
         className="w-12 h-16 object-cover rounded mr-3"
         onError={(e) => {
-          e.currentTarget.src = '/placeholder-movie.jpg';
+          e.currentTarget.src = "/placeholder-movie.jpg";
         }}
       />
       <div className="flex-1">
         <h4 className="text-white font-medium">{movie.title}</h4>
-        <p className="text-slate-400 text-sm">{formatMovieDuration(movie.duration)}</p>
-        <p className="text-slate-400 text-xs">{movie.genre.join(', ')}</p>
+        <p className="text-slate-400 text-sm">
+          {formatMovieDuration(movie.duration)}
+        </p>
+        <p className="text-slate-400 text-xs">{movie.genre.join(", ")}</p>
         <div className="flex items-center gap-2 mt-1">
-          <span className={`px-2 py-1 rounded text-xs ${getMovieStatusColor(movie.status)}`}>
+          <span
+            className={`px-2 py-1 rounded text-xs ${getMovieStatusColor(
+              movie.status
+            )}`}
+          >
             {getMovieStatusDisplay(movie.status)}
           </span>
           <span className="text-slate-400 text-xs">
@@ -124,19 +129,24 @@ const Showtimes = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [selectedShowtime, setSelectedShowtime] = useState<Showtime | null>(null);
-  const [showtimeToDelete, setShowtimeToDelete] = useState<{id: string, movie: string} | null>(null);
+  const [selectedShowtime, setSelectedShowtime] = useState<Showtime | null>(
+    null
+  );
+  const [showtimeToDelete, setShowtimeToDelete] = useState<{
+    id: string;
+    movie: string;
+  } | null>(null);
 
   // Form states for modals
   const [formData, setFormData] = useState<ShowtimeCreateRequest>({
-    movie_id: '',
-    screen_id: '',
-    theater_id: '',
-    start_time: '',
-    end_time: '',
+    movie_id: "",
+    screen_id: "",
+    theater_id: "",
+    start_time: "",
+    end_time: "",
     price: { regular: 50000, premium: 70000 },
     available_seats: 0,
-    status: ShowtimeStatusValues.SCHEDULED
+    status: ShowtimeStatusValues.SCHEDULED,
   });
   const [formErrors, setFormErrors] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -144,8 +154,8 @@ const Showtimes = () => {
   // Form states for create/edit
   const [selectedMovie, setSelectedMovie] = useState<StaffMovie | null>(null);
   const [selectedScreen, setSelectedScreen] = useState<Screen | null>(null);
-  const [showDate, setShowDate] = useState('');
-  const [showTime, setShowTime] = useState('');
+  const [showDate, setShowDate] = useState("");
+  const [showTime, setShowTime] = useState("");
   const [timeSlots] = useState(generateTimeSlots(8, 23, 30));
 
   // Fetch initial data
@@ -153,19 +163,27 @@ const Showtimes = () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       // Get theater info first
       const theaterResponse = await getMyTheater();
       setTheater(theaterResponse);
-      
+
       if (theaterResponse.result?._id) {
         // Get popular movies, screens, and showtimes in parallel
-        const [popularMoviesResponse, screensResponse, showtimesResponse] = await Promise.all([
-          getPopularMovies(20), // Get popular movies for quick selection
-          getTheaterScreens(theaterResponse.result._id, 1, 100), // Get all screens
-          getMyShowtimes(page, limit, undefined, undefined, undefined, undefined)
-        ]);
-        
+        const [popularMoviesResponse, screensResponse, showtimesResponse] =
+          await Promise.all([
+            getPopularMovies(20), // Get popular movies for quick selection
+            getTheaterScreens(theaterResponse.result._id, 1, 100), // Get all screens
+            getMyShowtimes(
+              page,
+              limit,
+              undefined,
+              undefined,
+              undefined,
+              undefined
+            ),
+          ]);
+
         setPopularMovies(popularMoviesResponse.result.movies);
         setScreens(screensResponse.result.screens);
         setShowtimes(showtimesResponse.result.showtimes);
@@ -173,9 +191,10 @@ const Showtimes = () => {
         setTotal(showtimesResponse.result.total);
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch data';
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to fetch data";
       setError(errorMessage);
-      console.error('Error fetching data:', err);
+      console.error("Error fetching data:", err);
     } finally {
       setLoading(false);
     }
@@ -193,27 +212,36 @@ const Showtimes = () => {
       const params: MovieSearchParams = {
         search: searchTerm,
         limit: 10,
-        status: 'now_showing' // Only show movies that are currently showing or coming soon
+        status: "now_showing", // Only show movies that are currently showing or coming soon
       };
-      
+
       const response = await searchAvailableMovies(params);
-      setSearchResults(response.result.movies.filter(isMovieAvailableForShowtime));
+      setSearchResults(
+        response.result.movies.filter(isMovieAvailableForShowtime)
+      );
     } catch (err) {
-      console.error('Error searching movies:', err);
-      toast.error('Failed to search movies');
+      console.error("Error searching movies:", err);
+      toast.error("Failed to search movies");
     } finally {
       setMovieLoading(false);
     }
   };
 
   // Helper function to format date for input fields
-  const formatDateForInput = (dateString: string): { date: string; time: string } => {
+  const formatDateForInput = (
+    dateString: string
+  ): { date: string; time: string } => {
     const date = new Date(dateString);
-    const formattedDate = date.getFullYear() + '-' + 
-                         String(date.getMonth() + 1).padStart(2, '0') + '-' + 
-                         String(date.getDate()).padStart(2, '0');
-    const formattedTime = String(date.getHours()).padStart(2, '0') + ':' + 
-                         String(date.getMinutes()).padStart(2, '0');
+    const formattedDate =
+      date.getFullYear() +
+      "-" +
+      String(date.getMonth() + 1).padStart(2, "0") +
+      "-" +
+      String(date.getDate()).padStart(2, "0");
+    const formattedTime =
+      String(date.getHours()).padStart(2, "0") +
+      ":" +
+      String(date.getMinutes()).padStart(2, "0");
     return { date: formattedDate, time: formattedTime };
   };
 
@@ -224,11 +252,11 @@ const Showtimes = () => {
 
   // Handle form field changes
   const handleFormChange = (field: keyof ShowtimeCreateRequest, value: any) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
-    
+
     // Clear related errors
     if (formErrors.length > 0) {
       setFormErrors([]);
@@ -238,46 +266,45 @@ const Showtimes = () => {
   // Handle movie selection
   const handleMovieSelect = (movie: StaffMovie) => {
     setSelectedMovie(movie);
-    handleFormChange('movie_id', movie._id);
-    
+    handleFormChange("movie_id", movie._id);
+
     // Auto-calculate end time when movie and start time are selected
     if (showDate && showTime && movie.duration) {
       const startDateTime = createLocalDateTime(showDate, showTime);
-      const endDateTime = new Date(startDateTime.getTime() + (movie.duration * 60 * 1000));
-      handleFormChange('end_time', endDateTime.toISOString());
+      const endDateTime = new Date(
+        startDateTime.getTime() + movie.duration * 60 * 1000
+      );
+      handleFormChange("end_time", endDateTime.toISOString());
     }
   };
 
   // Handle screen selection
   const handleScreenSelect = (screen: Screen) => {
     setSelectedScreen(screen);
-    handleFormChange('screen_id', screen._id);
-    handleFormChange('available_seats', screen.capacity);
+    handleFormChange("screen_id", screen._id);
+    handleFormChange("available_seats", screen.capacity);
   };
 
   // Handle date and time changes
   const handleDateTimeChange = (date: string, time: string) => {
     setShowDate(date);
     setShowTime(time);
-    
+
     if (date && time) {
       // Create date without timezone offset to maintain local time
       const startDateTime = createLocalDateTime(date, time);
-      console.log('Selected date/time:', date, time);
-      console.log('Created startDateTime:', startDateTime);
-      console.log('ISO string:', startDateTime.toISOString());
-      
-      handleFormChange('start_time', startDateTime.toISOString());
-      
+
+      handleFormChange("start_time", startDateTime.toISOString());
+
       // Calculate end time if we have movie duration
       if (selectedMovie && selectedMovie.duration) {
-        const endDateTime = new Date(startDateTime.getTime() + (selectedMovie.duration * 60 * 1000));
-        console.log('Calculated endDateTime:', endDateTime);
-        handleFormChange('end_time', endDateTime.toISOString());
+        const endDateTime = new Date(
+          startDateTime.getTime() + selectedMovie.duration * 60 * 1000
+        );
+        handleFormChange("end_time", endDateTime.toISOString());
       }
     }
   };
-
 
   // Check if showtime has any bookings
   const hasBookings = (showtime: Showtime): boolean => {
@@ -285,14 +312,14 @@ const Showtimes = () => {
     if (showtime.booked_seats && showtime.booked_seats.length > 0) {
       return true;
     }
-    
+
     // Fallback: Check if available seats is less than total capacity
     if (showtime.screen?.capacity) {
       const totalCapacity = showtime.screen.capacity;
       const availableSeats = showtime.available_seats;
       return availableSeats < totalCapacity;
     }
-    
+
     return false;
   };
 
@@ -300,16 +327,19 @@ const Showtimes = () => {
   const canModifyShowtime = (showtime: Showtime): boolean => {
     // Cannot modify if it has bookings
     if (hasBookings(showtime)) return false;
-    
+
     // Cannot modify if it's in the past
     const now = new Date();
     const showtimeStart = new Date(showtime.start_time);
     if (showtimeStart <= now) return false;
-    
+
     // Cannot modify if status is completed or cancelled
-    if (showtime.status === ShowtimeStatusValues.COMPLETED || 
-        showtime.status === ShowtimeStatusValues.CANCELLED) return false;
-    
+    if (
+      showtime.status === ShowtimeStatusValues.COMPLETED ||
+      showtime.status === ShowtimeStatusValues.CANCELLED
+    )
+      return false;
+
     return true;
   };
 
@@ -323,19 +353,23 @@ const Showtimes = () => {
       // Check if showtime can be modified with latest data
       if (!canModifyShowtime(latestShowtime)) {
         if (hasBookings(latestShowtime)) {
-          toast.error('Cannot delete showtime with existing bookings');
+          toast.error("Cannot delete showtime with existing bookings");
         } else if (new Date(latestShowtime.start_time) <= new Date()) {
-          toast.error('Cannot delete past showtimes');
+          toast.error("Cannot delete past showtimes");
         } else {
-          toast.error('Cannot delete this showtime');
+          toast.error("Cannot delete this showtime");
         }
         return;
       }
 
-      setShowtimeToDelete({ id: latestShowtime._id, movie: latestShowtime.movie?.title || 'Unknown' });
+      setShowtimeToDelete({
+        id: latestShowtime._id,
+        movie: latestShowtime.movie?.title || "Unknown",
+      });
       setShowDeleteModal(true);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch showtime details';
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to fetch showtime details";
       toast.error(errorMessage);
     }
   };
@@ -347,12 +381,13 @@ const Showtimes = () => {
     try {
       setIsSubmitting(true);
       await deleteShowtime(showtimeToDelete.id);
-      toast.success('Showtime deleted successfully');
+      toast.success("Showtime deleted successfully");
       setShowDeleteModal(false);
       setShowtimeToDelete(null);
       await fetchData(); // Refresh the list
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to delete showtime';
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to delete showtime";
       toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
@@ -368,19 +403,19 @@ const Showtimes = () => {
   // Modal handlers
   const handleAddShowtime = () => {
     setFormData({
-      movie_id: '',
-      screen_id: '',
-      theater_id: theater?.result?._id || '',
-      start_time: '',
-      end_time: '',
+      movie_id: "",
+      screen_id: "",
+      theater_id: theater?.result?._id || "",
+      start_time: "",
+      end_time: "",
       price: { regular: 50000, premium: 70000 },
       available_seats: 0,
-      status: ShowtimeStatusValues.SCHEDULED
+      status: ShowtimeStatusValues.SCHEDULED,
     });
     setSelectedMovie(null);
     setSelectedScreen(null);
-    setShowDate('');
-    setShowTime('');
+    setShowDate("");
+    setShowTime("");
     setFormErrors([]);
     setIsSubmitting(false);
     setShowAddModal(true);
@@ -395,11 +430,11 @@ const Showtimes = () => {
       // Check if showtime can be modified with latest data
       if (!canModifyShowtime(latestShowtime)) {
         if (hasBookings(latestShowtime)) {
-          toast.error('Cannot edit showtime with existing bookings');
+          toast.error("Cannot edit showtime with existing bookings");
         } else if (new Date(latestShowtime.start_time) <= new Date()) {
-          toast.error('Cannot edit past showtimes');
+          toast.error("Cannot edit past showtimes");
         } else {
-          toast.error('Cannot edit this showtime');
+          toast.error("Cannot edit this showtime");
         }
         return;
       }
@@ -413,28 +448,29 @@ const Showtimes = () => {
         end_time: latestShowtime.end_time,
         price: latestShowtime.price,
         available_seats: latestShowtime.available_seats,
-        status: latestShowtime.status
+        status: latestShowtime.status,
       });
-      
+
       // Fetch movie details and find screen
       const [movieResponse] = await Promise.all([
-        getMovieById(latestShowtime.movie_id)
+        getMovieById(latestShowtime.movie_id),
       ]);
-      
-      const screen = screens.find(s => s._id === latestShowtime.screen_id);
+
+      const screen = screens.find((s) => s._id === latestShowtime.screen_id);
       setSelectedMovie(movieResponse.result);
       setSelectedScreen(screen || null);
-      
+
       // Set date and time from start_time - use local timezone
       const { date, time } = formatDateForInput(latestShowtime.start_time);
       setShowDate(date);
       setShowTime(time);
-      
+
       setFormErrors([]);
       setIsSubmitting(false);
       setShowEditModal(true);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch showtime details';
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to fetch showtime details";
       toast.error(errorMessage);
     }
   };
@@ -445,7 +481,8 @@ const Showtimes = () => {
       setSelectedShowtime(response.result);
       setShowViewModal(true);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch showtime details';
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to fetch showtime details";
       toast.error(errorMessage);
     }
   };
@@ -459,8 +496,8 @@ const Showtimes = () => {
     setShowtimeToDelete(null);
     setSelectedMovie(null);
     setSelectedScreen(null);
-    setShowDate('');
-    setShowTime('');
+    setShowDate("");
+    setShowTime("");
     setFormErrors([]);
     setIsSubmitting(false);
   };
@@ -468,19 +505,19 @@ const Showtimes = () => {
   // Form validation
   const validateForm = (): string[] => {
     const errors = validateShowtimeData(formData);
-    
-    if (!selectedMovie) errors.push('Please select a movie');
-    if (!selectedScreen) errors.push('Please select a screen');
-    if (!showDate) errors.push('Please select a date');
-    if (!showTime) errors.push('Please select a time');
-    if (!formData.end_time) errors.push('End time is required');
-    
+
+    if (!selectedMovie) errors.push("Please select a movie");
+    if (!selectedScreen) errors.push("Please select a screen");
+    if (!showDate) errors.push("Please select a date");
+    if (!showTime) errors.push("Please select a time");
+    if (!formData.end_time) errors.push("End time is required");
+
     // Check if start time is in the future
     if (formData.start_time) {
       const startTime = new Date(formData.start_time);
       const now = new Date();
       if (startTime <= now) {
-        errors.push('Start time must be in the future');
+        errors.push("Start time must be in the future");
       }
     }
 
@@ -489,30 +526,32 @@ const Showtimes = () => {
       const startTime = new Date(formData.start_time);
       const endTime = new Date(formData.end_time);
       if (endTime <= startTime) {
-        errors.push('End time must be after start time');
+        errors.push("End time must be after start time");
       }
     }
-    
+
     return errors;
   };
 
   // Handle form submission for creating showtime
   const handleCreateShowtime = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Ensure end_time is calculated before validation
     if (selectedMovie && showDate && showTime && selectedMovie.duration) {
       const startDateTime = createLocalDateTime(showDate, showTime);
-      const endDateTime = new Date(startDateTime.getTime() + (selectedMovie.duration * 60 * 1000));
-      handleFormChange('end_time', endDateTime.toISOString());
-      
+      const endDateTime = new Date(
+        startDateTime.getTime() + selectedMovie.duration * 60 * 1000
+      );
+      handleFormChange("end_time", endDateTime.toISOString());
+
       // Update formData with latest end_time
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        end_time: endDateTime.toISOString()
+        end_time: endDateTime.toISOString(),
       }));
     }
-    
+
     const errors = validateForm();
     if (errors.length > 0) {
       setFormErrors(errors);
@@ -522,7 +561,7 @@ const Showtimes = () => {
     try {
       setIsSubmitting(true);
       setFormErrors([]);
-      
+
       // Prepare the final data to ensure all fields are included
       const showtimeData: ShowtimeCreateRequest = {
         movie_id: formData.movie_id,
@@ -531,18 +570,18 @@ const Showtimes = () => {
         start_time: formData.start_time,
         end_time: formData.end_time,
         price: formData.price,
-        available_seats: formData.available_seats
+        available_seats: formData.available_seats,
       };
 
       // Debug log to check if end_time is included
-      console.log('Showtime data being sent:', showtimeData);
-      
+
       await createShowtime(showtimeData);
-      toast.success('Showtime created successfully');
+      toast.success("Showtime created successfully");
       closeModals();
       await fetchData(); // Refresh the list
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to create showtime';
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to create showtime";
       toast.error(errorMessage);
       setFormErrors([errorMessage]);
     } finally {
@@ -553,20 +592,22 @@ const Showtimes = () => {
   // Handle form submission for updating showtime
   const handleUpdateShowtime = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Ensure end_time is calculated before validation for update
     if (selectedMovie && showDate && showTime && selectedMovie.duration) {
       const startDateTime = createLocalDateTime(showDate, showTime);
-      const endDateTime = new Date(startDateTime.getTime() + (selectedMovie.duration * 60 * 1000));
-      handleFormChange('end_time', endDateTime.toISOString());
-      
+      const endDateTime = new Date(
+        startDateTime.getTime() + selectedMovie.duration * 60 * 1000
+      );
+      handleFormChange("end_time", endDateTime.toISOString());
+
       // Update formData with latest end_time
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        end_time: endDateTime.toISOString()
+        end_time: endDateTime.toISOString(),
       }));
     }
-    
+
     const errors = validateForm();
     if (errors.length > 0) {
       setFormErrors(errors);
@@ -574,31 +615,31 @@ const Showtimes = () => {
     }
 
     if (!selectedShowtime) {
-      toast.error('Showtime information not available');
+      toast.error("Showtime information not available");
       return;
     }
 
     try {
       setIsSubmitting(true);
       setFormErrors([]);
-      
+
       const updateData = {
         start_time: formData.start_time,
         end_time: formData.end_time,
         price: formData.price,
         available_seats: formData.available_seats,
-        status: formData.status
+        status: formData.status,
       };
 
       // Debug log to check if end_time is included in update
-      console.log('Showtime update data being sent:', updateData);
-      
+
       await updateShowtime(selectedShowtime._id, updateData);
-      toast.success('Showtime updated successfully');
+      toast.success("Showtime updated successfully");
       closeModals();
       await fetchData(); // Refresh the list
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to update showtime';
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to update showtime";
       toast.error(errorMessage);
       setFormErrors([errorMessage]);
     } finally {
@@ -615,7 +656,7 @@ const Showtimes = () => {
   // Get minimum date (today)
   const getMinDate = () => {
     const today = new Date();
-    return today.toISOString().split('T')[0];
+    return today.toISOString().split("T")[0];
   };
 
   // Fetch data on component mount and when dependencies change
@@ -624,9 +665,10 @@ const Showtimes = () => {
   }, [page]);
 
   // Filter showtimes based on search term
-  const filteredShowtimes = showtimes.filter(showtime => 
-    showtime.movie?.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    showtime.screen?.name.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredShowtimes = showtimes.filter(
+    (showtime) =>
+      showtime.movie?.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      showtime.screen?.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
   return (
     <div>
@@ -639,9 +681,15 @@ const Showtimes = () => {
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h2 className="text-2xl font-bold text-white">Showtime Management</h2>
+            <h2 className="text-2xl font-bold text-white">
+              Showtime Management
+            </h2>
             <p className="text-slate-400 text-sm">
-              {theater?.result ? `${theater.result.name} - ${total} showtime${total !== 1 ? 's' : ''} found` : 'Loading theater info...'}
+              {theater?.result
+                ? `${theater.result.name} - ${total} showtime${
+                    total !== 1 ? "s" : ""
+                  } found`
+                : "Loading theater info..."}
             </p>
           </div>
           <motion.button
@@ -660,7 +708,10 @@ const Showtimes = () => {
         <div className="flex flex-col sm:flex-row gap-4">
           <form onSubmit={handleSearch} className="flex-1">
             <div className="relative">
-              <Search size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
+              <Search
+                size={20}
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400"
+              />
               <input
                 type="text"
                 placeholder="Search showtimes by movie or screen..."
@@ -693,25 +744,56 @@ const Showtimes = () => {
               <table className="w-full">
                 <thead className="bg-slate-700/50">
                   <tr>
-                    <th className="px-6 py-4 text-left text-sm font-medium text-slate-300">Movie</th>
-                    <th className="px-6 py-4 text-left text-sm font-medium text-slate-300">Screen</th>
-                    <th className="px-6 py-4 text-left text-sm font-medium text-slate-300">Date & Time</th>
-                    <th className="px-6 py-4 text-left text-sm font-medium text-slate-300">Price</th>
-                    <th className="px-6 py-4 text-left text-sm font-medium text-slate-300">Seats</th>
-                    <th className="px-6 py-4 text-left text-sm font-medium text-slate-300">Status</th>
-                    <th className="px-6 py-4 text-left text-sm font-medium text-slate-300">Actions</th>
+                    <th className="px-6 py-4 text-left text-sm font-medium text-slate-300">
+                      Movie
+                    </th>
+                    <th className="px-6 py-4 text-left text-sm font-medium text-slate-300">
+                      Screen
+                    </th>
+                    <th className="px-6 py-4 text-left text-sm font-medium text-slate-300">
+                      Date & Time
+                    </th>
+                    <th className="px-6 py-4 text-left text-sm font-medium text-slate-300">
+                      Price
+                    </th>
+                    <th className="px-6 py-4 text-left text-sm font-medium text-slate-300">
+                      Seats
+                    </th>
+                    <th className="px-6 py-4 text-left text-sm font-medium text-slate-300">
+                      Status
+                    </th>
+                    <th className="px-6 py-4 text-left text-sm font-medium text-slate-300">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
                   {[...Array(5)].map((_, index) => (
-                    <tr key={index} className="border-t border-slate-700/50 animate-pulse">
-                      <td className="px-6 py-4"><div className="h-4 bg-slate-700/50 rounded w-32"></div></td>
-                      <td className="px-6 py-4"><div className="h-4 bg-slate-700/50 rounded w-24"></div></td>
-                      <td className="px-6 py-4"><div className="h-4 bg-slate-700/50 rounded w-28"></div></td>
-                      <td className="px-6 py-4"><div className="h-4 bg-slate-700/50 rounded w-16"></div></td>
-                      <td className="px-6 py-4"><div className="h-4 bg-slate-700/50 rounded w-20"></div></td>
-                      <td className="px-6 py-4"><div className="h-4 bg-slate-700/50 rounded w-16"></div></td>
-                      <td className="px-6 py-4"><div className="h-4 bg-slate-700/50 rounded w-24"></div></td>
+                    <tr
+                      key={index}
+                      className="border-t border-slate-700/50 animate-pulse"
+                    >
+                      <td className="px-6 py-4">
+                        <div className="h-4 bg-slate-700/50 rounded w-32"></div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="h-4 bg-slate-700/50 rounded w-24"></div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="h-4 bg-slate-700/50 rounded w-28"></div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="h-4 bg-slate-700/50 rounded w-16"></div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="h-4 bg-slate-700/50 rounded w-20"></div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="h-4 bg-slate-700/50 rounded w-16"></div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="h-4 bg-slate-700/50 rounded w-24"></div>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -762,32 +844,37 @@ const Showtimes = () => {
                           <td className="px-6 py-4">
                             <div className="flex items-center">
                               {showtime.movie?.poster_url && (
-                                <img 
-                                  src={showtime.movie.poster_url} 
+                                <img
+                                  src={showtime.movie.poster_url}
                                   alt={showtime.movie.title}
                                   className="w-12 h-16 object-cover rounded mr-3"
                                 />
                               )}
                               <div>
                                 <div className="font-medium text-white">
-                                  {showtime.movie?.title || 'Unknown Movie'}
+                                  {showtime.movie?.title || "Unknown Movie"}
                                 </div>
                                 <div className="text-sm text-slate-400">
-                                  {showtime.movie?.genre?.join(', ')}
+                                  {showtime.movie?.genre?.join(", ")}
                                 </div>
                               </div>
                             </div>
                           </td>
                           <td className="px-6 py-4">
-                            <div className="text-slate-300">{showtime.screen?.name}</div>
+                            <div className="text-slate-300">
+                              {showtime.screen?.name}
+                            </div>
                             <div className="text-sm text-slate-400">
                               Capacity: {showtime.screen?.capacity}
                             </div>
                           </td>
                           <td className="px-6 py-4">
-                            <div className="text-slate-300">{formatShowtimeDate(showtime.start_time)}</div>
+                            <div className="text-slate-300">
+                              {formatShowtimeDate(showtime.start_time)}
+                            </div>
                             <div className="text-sm text-slate-400">
-                              {formatShowtimeTime(showtime.start_time)} - {formatShowtimeTime(showtime.end_time)}
+                              {formatShowtimeTime(showtime.start_time)} -{" "}
+                              {formatShowtimeTime(showtime.end_time)}
                             </div>
                           </td>
                           <td className="px-6 py-4">
@@ -802,20 +889,27 @@ const Showtimes = () => {
                           </td>
                           <td className="px-6 py-4">
                             <div className="text-slate-300">
-                              {showtime.available_seats}/{showtime.screen?.capacity || 0}
+                              {showtime.available_seats}/
+                              {showtime.screen?.capacity || 0}
                             </div>
                             <div className="w-full bg-slate-600 rounded-full h-2 mt-1">
                               <div
                                 className="bg-gradient-to-r from-orange-500 to-amber-500 h-2 rounded-full transition-all duration-300"
                                 style={{
-                                  width: `${calculateShowtimeOccupancy(showtime)}%`,
+                                  width: `${calculateShowtimeOccupancy(
+                                    showtime
+                                  )}%`,
                                 }}
                               />
                             </div>
                           </td>
                           <td className="px-6 py-4">
                             <div className="space-y-1">
-                              <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getShowtimeStatusColor(showtime.status)}`}>
+                              <span
+                                className={`px-3 py-1 rounded-full text-xs font-medium border ${getShowtimeStatusColor(
+                                  showtime.status
+                                )}`}
+                              >
                                 {getShowtimeStatusDisplay(showtime.status)}
                               </span>
                               {hasBookings(showtime) && (
@@ -824,11 +918,14 @@ const Showtimes = () => {
                                   Has bookings
                                 </div>
                               )}
-                              {!canModifyShowtime(showtime) && !hasBookings(showtime) && (
-                                <div className="text-xs text-gray-400">
-                                  {new Date(showtime.start_time) <= new Date() ? 'Past showtime' : 'Cannot modify'}
-                                </div>
-                              )}
+                              {!canModifyShowtime(showtime) &&
+                                !hasBookings(showtime) && (
+                                  <div className="text-xs text-gray-400">
+                                    {new Date(showtime.start_time) <= new Date()
+                                      ? "Past showtime"
+                                      : "Cannot modify"}
+                                  </div>
+                                )}
                             </div>
                           </td>
                           <td className="px-6 py-4">
@@ -836,21 +933,30 @@ const Showtimes = () => {
                               <motion.button
                                 onClick={() => handleEditShowtime(showtime)}
                                 className={`px-3 py-1 rounded text-sm font-medium transition-colors duration-300 flex items-center ${
-                                  canModifyShowtime(showtime) 
-                                    ? 'bg-orange-500/20 hover:bg-orange-500/30 text-orange-400 cursor-pointer' 
-                                    : 'bg-gray-500/20 text-gray-400 cursor-not-allowed opacity-50'
+                                  canModifyShowtime(showtime)
+                                    ? "bg-orange-500/20 hover:bg-orange-500/30 text-orange-400 cursor-pointer"
+                                    : "bg-gray-500/20 text-gray-400 cursor-not-allowed opacity-50"
                                 }`}
-                                whileHover={canModifyShowtime(showtime) ? { scale: 1.05 } : {}}
-                                whileTap={canModifyShowtime(showtime) ? { scale: 0.95 } : {}}
+                                whileHover={
+                                  canModifyShowtime(showtime)
+                                    ? { scale: 1.05 }
+                                    : {}
+                                }
+                                whileTap={
+                                  canModifyShowtime(showtime)
+                                    ? { scale: 0.95 }
+                                    : {}
+                                }
                                 disabled={!canModifyShowtime(showtime)}
                                 title={
-                                  !canModifyShowtime(showtime) 
-                                    ? hasBookings(showtime) 
-                                      ? 'Cannot edit showtime with existing bookings'
-                                      : new Date(showtime.start_time) <= new Date()
-                                      ? 'Cannot edit past showtimes' 
-                                      : 'Cannot edit this showtime'
-                                    : 'Edit showtime'
+                                  !canModifyShowtime(showtime)
+                                    ? hasBookings(showtime)
+                                      ? "Cannot edit showtime with existing bookings"
+                                      : new Date(showtime.start_time) <=
+                                        new Date()
+                                      ? "Cannot edit past showtimes"
+                                      : "Cannot edit this showtime"
+                                    : "Edit showtime"
                                 }
                               >
                                 <Edit size={14} className="mr-1" />
@@ -868,21 +974,30 @@ const Showtimes = () => {
                               <motion.button
                                 onClick={() => handleDeleteShowtime(showtime)}
                                 className={`px-3 py-1 rounded text-sm font-medium transition-colors duration-300 ${
-                                  canModifyShowtime(showtime) 
-                                    ? 'bg-red-500/20 hover:bg-red-500/30 text-red-400 cursor-pointer' 
-                                    : 'bg-gray-500/20 text-gray-400 cursor-not-allowed opacity-50'
+                                  canModifyShowtime(showtime)
+                                    ? "bg-red-500/20 hover:bg-red-500/30 text-red-400 cursor-pointer"
+                                    : "bg-gray-500/20 text-gray-400 cursor-not-allowed opacity-50"
                                 }`}
-                                whileHover={canModifyShowtime(showtime) ? { scale: 1.05 } : {}}
-                                whileTap={canModifyShowtime(showtime) ? { scale: 0.95 } : {}}
+                                whileHover={
+                                  canModifyShowtime(showtime)
+                                    ? { scale: 1.05 }
+                                    : {}
+                                }
+                                whileTap={
+                                  canModifyShowtime(showtime)
+                                    ? { scale: 0.95 }
+                                    : {}
+                                }
                                 disabled={!canModifyShowtime(showtime)}
                                 title={
-                                  !canModifyShowtime(showtime) 
-                                    ? hasBookings(showtime) 
-                                      ? 'Cannot delete showtime with existing bookings'
-                                      : new Date(showtime.start_time) <= new Date()
-                                      ? 'Cannot delete past showtimes' 
-                                      : 'Cannot delete this showtime'
-                                    : 'Delete showtime'
+                                  !canModifyShowtime(showtime)
+                                    ? hasBookings(showtime)
+                                      ? "Cannot delete showtime with existing bookings"
+                                      : new Date(showtime.start_time) <=
+                                        new Date()
+                                      ? "Cannot delete past showtimes"
+                                      : "Cannot delete this showtime"
+                                    : "Delete showtime"
                                 }
                               >
                                 <Trash2 size={14} />
@@ -902,15 +1017,17 @@ const Showtimes = () => {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                 >
-                  <Calendar size={64} className="text-orange-400 mx-auto mb-4" />
+                  <Calendar
+                    size={64}
+                    className="text-orange-400 mx-auto mb-4"
+                  />
                   <h3 className="text-xl font-semibold text-white mb-2">
                     No Showtimes Found
                   </h3>
                   <p className="text-slate-300 mb-6">
-                    {searchTerm 
+                    {searchTerm
                       ? "No showtimes match your search criteria. Try adjusting your search."
-                      : "You haven't created any showtimes yet. Create your first showtime to get started."
-                    }
+                      : "You haven't created any showtimes yet. Create your first showtime to get started."}
                   </p>
                   <motion.button
                     onClick={handleAddShowtime}
@@ -936,7 +1053,7 @@ const Showtimes = () => {
                 >
                   Previous
                 </button>
-                
+
                 <div className="flex gap-1">
                   {[...Array(totalPages)].map((_, index) => {
                     const pageNum = index + 1;
@@ -946,8 +1063,8 @@ const Showtimes = () => {
                         onClick={() => setPage(pageNum)}
                         className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                           page === pageNum
-                            ? 'bg-orange-500 text-white'
-                            : 'bg-slate-800/60 border border-slate-700/50 text-slate-300 hover:bg-slate-700/60'
+                            ? "bg-orange-500 text-white"
+                            : "bg-slate-800/60 border border-slate-700/50 text-slate-300 hover:bg-slate-700/60"
                         }`}
                       >
                         {pageNum}
@@ -979,7 +1096,9 @@ const Showtimes = () => {
             exit={{ opacity: 0, scale: 0.9 }}
           >
             <div className="sticky top-0 bg-slate-800 border-b border-slate-700 p-6 flex justify-between items-center">
-              <h3 className="text-2xl font-bold text-white">Add New Showtime</h3>
+              <h3 className="text-2xl font-bold text-white">
+                Add New Showtime
+              </h3>
               <button
                 onClick={closeModals}
                 className="text-slate-400 hover:text-white transition-colors"
@@ -988,15 +1107,20 @@ const Showtimes = () => {
                 <X size={24} />
               </button>
             </div>
-            
+
             <form onSubmit={handleCreateShowtime} className="p-6 space-y-6">
               {/* Error Messages */}
               {formErrors.length > 0 && (
                 <div className="bg-red-500/20 border border-red-500/30 p-4 rounded-lg">
                   <div className="flex items-start">
-                    <AlertTriangle size={20} className="text-red-400 mr-2 mt-0.5 flex-shrink-0" />
+                    <AlertTriangle
+                      size={20}
+                      className="text-red-400 mr-2 mt-0.5 flex-shrink-0"
+                    />
                     <div>
-                      <p className="text-red-300 font-medium mb-2">Please fix the following errors:</p>
+                      <p className="text-red-300 font-medium mb-2">
+                        Please fix the following errors:
+                      </p>
                       <ul className="list-disc list-inside text-red-300 text-sm space-y-1">
                         {formErrors.map((error, index) => (
                           <li key={index}>{error}</li>
@@ -1014,11 +1138,14 @@ const Showtimes = () => {
                     <label className="block text-slate-300 text-sm font-medium mb-2">
                       Select Movie <span className="text-red-400">*</span>
                     </label>
-                    
+
                     {/* Movie Search */}
                     <div className="mb-4">
                       <div className="relative">
-                        <Search size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
+                        <Search
+                          size={20}
+                          className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400"
+                        />
                         <input
                           type="text"
                           placeholder="Search movies..."
@@ -1048,16 +1175,16 @@ const Showtimes = () => {
                                 Search Results
                               </div>
                               {searchResults.map((movie) => (
-                                <MovieSelectItem 
-                                  key={movie._id} 
-                                  movie={movie} 
+                                <MovieSelectItem
+                                  key={movie._id}
+                                  movie={movie}
                                   isSelected={selectedMovie?._id === movie._id}
                                   onSelect={handleMovieSelect}
                                 />
                               ))}
                             </div>
                           )}
-                          
+
                           {/* Popular Movies */}
                           {(!movieSearchTerm || searchResults.length === 0) && (
                             <div>
@@ -1065,22 +1192,26 @@ const Showtimes = () => {
                                 Popular Movies
                               </div>
                               {popularMovies.map((movie) => (
-                                <MovieSelectItem 
-                                  key={movie._id} 
-                                  movie={movie} 
+                                <MovieSelectItem
+                                  key={movie._id}
+                                  movie={movie}
                                   isSelected={selectedMovie?._id === movie._id}
                                   onSelect={handleMovieSelect}
                                 />
                               ))}
                             </div>
                           )}
-                          
+
                           {/* No Results */}
-                          {movieSearchTerm && searchResults.length === 0 && !movieLoading && (
-                            <div className="p-4 text-center text-slate-400">
-                              <p>No movies found matching "{movieSearchTerm}"</p>
-                            </div>
-                          )}
+                          {movieSearchTerm &&
+                            searchResults.length === 0 &&
+                            !movieLoading && (
+                              <div className="p-4 text-center text-slate-400">
+                                <p>
+                                  No movies found matching "{movieSearchTerm}"
+                                </p>
+                              </div>
+                            )}
                         </>
                       )}
                     </div>
@@ -1097,15 +1228,17 @@ const Showtimes = () => {
                           key={screen._id}
                           onClick={() => handleScreenSelect(screen)}
                           className={`p-3 cursor-pointer rounded-lg border transition-colors ${
-                            selectedScreen?._id === screen._id 
-                              ? 'bg-orange-500/20 border-orange-500/30 text-orange-400' 
-                              : 'bg-slate-700/30 border-slate-600 text-slate-300 hover:bg-slate-600/30'
+                            selectedScreen?._id === screen._id
+                              ? "bg-orange-500/20 border-orange-500/30 text-orange-400"
+                              : "bg-slate-700/30 border-slate-600 text-slate-300 hover:bg-slate-600/30"
                           }`}
                         >
                           <div className="flex items-center justify-between">
                             <div>
                               <h4 className="font-medium">{screen.name}</h4>
-                              <p className="text-sm opacity-70">Capacity: {screen.capacity} seats</p>
+                              <p className="text-sm opacity-70">
+                                Capacity: {screen.capacity} seats
+                              </p>
                             </div>
                             <MonitorPlay size={20} />
                           </div>
@@ -1124,7 +1257,9 @@ const Showtimes = () => {
                     <input
                       type="date"
                       value={showDate}
-                      onChange={(e) => handleDateTimeChange(e.target.value, showTime)}
+                      onChange={(e) =>
+                        handleDateTimeChange(e.target.value, showTime)
+                      }
                       min={getMinDate()}
                       className="w-full bg-slate-700/50 border border-slate-600 rounded-lg px-4 py-2 text-white focus:border-orange-500 focus:outline-none"
                       disabled={isSubmitting}
@@ -1137,13 +1272,17 @@ const Showtimes = () => {
                     </label>
                     <select
                       value={showTime}
-                      onChange={(e) => handleDateTimeChange(showDate, e.target.value)}
+                      onChange={(e) =>
+                        handleDateTimeChange(showDate, e.target.value)
+                      }
                       className="w-full bg-slate-700/50 border border-slate-600 rounded-lg px-4 py-2 text-white focus:border-orange-500 focus:outline-none"
                       disabled={isSubmitting}
                     >
                       <option value="">Select time</option>
                       {timeSlots.map((time) => (
-                        <option key={time} value={time}>{time}</option>
+                        <option key={time} value={time}>
+                          {time}
+                        </option>
                       ))}
                     </select>
                   </div>
@@ -1153,16 +1292,20 @@ const Showtimes = () => {
                     <label className="block text-slate-300 text-sm font-medium">
                       Ticket Pricing <span className="text-red-400">*</span>
                     </label>
-                    
+
                     <div>
-                      <label className="block text-slate-400 text-xs mb-1">Regular Seats</label>
+                      <label className="block text-slate-400 text-xs mb-1">
+                        Regular Seats
+                      </label>
                       <input
                         type="number"
                         value={formData.price.regular}
-                        onChange={(e) => handleFormChange('price', { 
-                          ...formData.price, 
-                          regular: parseInt(e.target.value) || 0 
-                        })}
+                        onChange={(e) =>
+                          handleFormChange("price", {
+                            ...formData.price,
+                            regular: parseInt(e.target.value) || 0,
+                          })
+                        }
                         min="0"
                         className="w-full bg-slate-700/50 border border-slate-600 rounded-lg px-4 py-2 text-white focus:border-orange-500 focus:outline-none"
                         disabled={isSubmitting}
@@ -1171,14 +1314,18 @@ const Showtimes = () => {
                     </div>
 
                     <div>
-                      <label className="block text-slate-400 text-xs mb-1">Premium Seats</label>
+                      <label className="block text-slate-400 text-xs mb-1">
+                        Premium Seats
+                      </label>
                       <input
                         type="number"
                         value={formData.price.premium}
-                        onChange={(e) => handleFormChange('price', { 
-                          ...formData.price, 
-                          premium: parseInt(e.target.value) || 0 
-                        })}
+                        onChange={(e) =>
+                          handleFormChange("price", {
+                            ...formData.price,
+                            premium: parseInt(e.target.value) || 0,
+                          })
+                        }
                         min="0"
                         className="w-full bg-slate-700/50 border border-slate-600 rounded-lg px-4 py-2 text-white focus:border-orange-500 focus:outline-none"
                         disabled={isSubmitting}
@@ -1188,14 +1335,18 @@ const Showtimes = () => {
 
                     {formData.price.vip !== undefined && (
                       <div>
-                        <label className="block text-slate-400 text-xs mb-1">VIP Seats</label>
+                        <label className="block text-slate-400 text-xs mb-1">
+                          VIP Seats
+                        </label>
                         <input
                           type="number"
                           value={formData.price.vip || 0}
-                          onChange={(e) => handleFormChange('price', { 
-                            ...formData.price, 
-                            vip: parseInt(e.target.value) || 0 
-                          })}
+                          onChange={(e) =>
+                            handleFormChange("price", {
+                              ...formData.price,
+                              vip: parseInt(e.target.value) || 0,
+                            })
+                          }
                           min="0"
                           className="w-full bg-slate-700/50 border border-slate-600 rounded-lg px-4 py-2 text-white focus:border-orange-500 focus:outline-none"
                           disabled={isSubmitting}
@@ -1208,23 +1359,32 @@ const Showtimes = () => {
                   {/* Summary */}
                   {selectedMovie && selectedScreen && showDate && showTime && (
                     <div className="bg-slate-700/30 p-4 rounded-lg">
-                      <h4 className="text-white font-medium mb-2">Showtime Summary</h4>
+                      <h4 className="text-white font-medium mb-2">
+                        Showtime Summary
+                      </h4>
                       <div className="space-y-1 text-sm">
                         <p className="text-slate-300">
-                          <span className="text-slate-400">Movie:</span> {selectedMovie.title}
+                          <span className="text-slate-400">Movie:</span>{" "}
+                          {selectedMovie.title}
                         </p>
                         <p className="text-slate-300">
-                          <span className="text-slate-400">Screen:</span> {selectedScreen.name}
+                          <span className="text-slate-400">Screen:</span>{" "}
+                          {selectedScreen.name}
                         </p>
                         <p className="text-slate-300">
-                          <span className="text-slate-400">Duration:</span> {selectedMovie.duration} minutes
+                          <span className="text-slate-400">Duration:</span>{" "}
+                          {selectedMovie.duration} minutes
                         </p>
                         <p className="text-slate-300">
-                          <span className="text-slate-400">Available Seats:</span> {formData.available_seats}
+                          <span className="text-slate-400">
+                            Available Seats:
+                          </span>{" "}
+                          {formData.available_seats}
                         </p>
                         {formData.end_time && (
                           <p className="text-slate-300">
-                            <span className="text-slate-400">End Time:</span> {formatShowtimeTime(formData.end_time)}
+                            <span className="text-slate-400">End Time:</span>{" "}
+                            {formatShowtimeTime(formData.end_time)}
                           </p>
                         )}
                       </div>
@@ -1241,7 +1401,12 @@ const Showtimes = () => {
                   </label>
                   <select
                     value={formData.status || ShowtimeStatusValues.SCHEDULED}
-                    onChange={(e) => handleFormChange('status', e.target.value as ShowtimeStatus)}
+                    onChange={(e) =>
+                      handleFormChange(
+                        "status",
+                        e.target.value as ShowtimeStatus
+                      )
+                    }
                     className="w-full bg-slate-700/50 border border-slate-600 rounded-lg px-4 py-2 text-white focus:border-orange-500 focus:outline-none"
                     disabled={isSubmitting}
                   >
@@ -1249,10 +1414,14 @@ const Showtimes = () => {
                       {getShowtimeStatusDisplay(ShowtimeStatusValues.SCHEDULED)}
                     </option>
                     <option value={ShowtimeStatusValues.BOOKING_OPEN}>
-                      {getShowtimeStatusDisplay(ShowtimeStatusValues.BOOKING_OPEN)}
+                      {getShowtimeStatusDisplay(
+                        ShowtimeStatusValues.BOOKING_OPEN
+                      )}
                     </option>
                     <option value={ShowtimeStatusValues.BOOKING_CLOSED}>
-                      {getShowtimeStatusDisplay(ShowtimeStatusValues.BOOKING_CLOSED)}
+                      {getShowtimeStatusDisplay(
+                        ShowtimeStatusValues.BOOKING_CLOSED
+                      )}
                     </option>
                     <option value={ShowtimeStatusValues.CANCELLED}>
                       {getShowtimeStatusDisplay(ShowtimeStatusValues.CANCELLED)}
@@ -1321,7 +1490,9 @@ const Showtimes = () => {
                     Delete Showtime
                   </h3>
                   <p className="text-slate-300 mb-4">
-                    Are you sure you want to delete the showtime for "{showtimeToDelete.movie}"? This action cannot be undone and will permanently remove the showtime.
+                    Are you sure you want to delete the showtime for "
+                    {showtimeToDelete.movie}"? This action cannot be undone and
+                    will permanently remove the showtime.
                   </p>
                 </div>
               </div>
@@ -1376,15 +1547,20 @@ const Showtimes = () => {
                 <X size={24} />
               </button>
             </div>
-            
+
             <form onSubmit={handleUpdateShowtime} className="p-6 space-y-6">
               {/* Error Messages */}
               {formErrors.length > 0 && (
                 <div className="bg-red-500/20 border border-red-500/30 p-4 rounded-lg">
                   <div className="flex items-start">
-                    <AlertTriangle size={20} className="text-red-400 mr-2 mt-0.5 flex-shrink-0" />
+                    <AlertTriangle
+                      size={20}
+                      className="text-red-400 mr-2 mt-0.5 flex-shrink-0"
+                    />
                     <div>
-                      <p className="text-red-300 font-medium mb-2">Please fix the following errors:</p>
+                      <p className="text-red-300 font-medium mb-2">
+                        Please fix the following errors:
+                      </p>
                       <ul className="list-disc list-inside text-red-300 text-sm space-y-1">
                         {formErrors.map((error, index) => (
                           <li key={index}>{error}</li>
@@ -1400,35 +1576,51 @@ const Showtimes = () => {
                 <div className="space-y-4">
                   <div>
                     <label className="block text-slate-300 text-sm font-medium mb-2">
-                      Selected Movie <span className="text-slate-400">(Cannot be changed)</span>
+                      Selected Movie{" "}
+                      <span className="text-slate-400">
+                        (Cannot be changed)
+                      </span>
                     </label>
                     <div className="bg-slate-700/30 rounded-lg border border-slate-600 p-4">
                       {selectedMovie ? (
                         <div className="flex items-center">
-                          <img 
-                            src={selectedMovie.poster_url} 
+                          <img
+                            src={selectedMovie.poster_url}
                             alt={selectedMovie.title}
                             className="w-12 h-16 object-cover rounded mr-3"
                             onError={(e) => {
-                              e.currentTarget.src = '/placeholder-movie.jpg';
+                              e.currentTarget.src = "/placeholder-movie.jpg";
                             }}
                           />
                           <div className="flex-1">
-                            <h4 className="text-white font-medium">{selectedMovie.title}</h4>
-                            <p className="text-slate-400 text-sm">{formatMovieDuration(selectedMovie.duration)}</p>
-                            <p className="text-slate-400 text-xs">{selectedMovie.genre.join(', ')}</p>
+                            <h4 className="text-white font-medium">
+                              {selectedMovie.title}
+                            </h4>
+                            <p className="text-slate-400 text-sm">
+                              {formatMovieDuration(selectedMovie.duration)}
+                            </p>
+                            <p className="text-slate-400 text-xs">
+                              {selectedMovie.genre.join(", ")}
+                            </p>
                             <div className="flex items-center gap-2 mt-1">
-                              <span className={`px-2 py-1 rounded text-xs ${getMovieStatusColor(selectedMovie.status)}`}>
+                              <span
+                                className={`px-2 py-1 rounded text-xs ${getMovieStatusColor(
+                                  selectedMovie.status
+                                )}`}
+                              >
                                 {getMovieStatusDisplay(selectedMovie.status)}
                               </span>
                               <span className="text-slate-400 text-xs">
-                                ⭐ {selectedMovie.average_rating.toFixed(1)} ({selectedMovie.ratings_count})
+                                ⭐ {selectedMovie.average_rating.toFixed(1)} (
+                                {selectedMovie.ratings_count})
                               </span>
                             </div>
                           </div>
                         </div>
                       ) : (
-                        <p className="text-slate-400">Loading movie information...</p>
+                        <p className="text-slate-400">
+                          Loading movie information...
+                        </p>
                       )}
                     </div>
                   </div>
@@ -1444,15 +1636,17 @@ const Showtimes = () => {
                           key={screen._id}
                           onClick={() => handleScreenSelect(screen)}
                           className={`p-3 cursor-pointer rounded-lg border transition-colors ${
-                            selectedScreen?._id === screen._id 
-                              ? 'bg-orange-500/20 border-orange-500/30 text-orange-400' 
-                              : 'bg-slate-700/30 border-slate-600 text-slate-300 hover:bg-slate-600/30'
+                            selectedScreen?._id === screen._id
+                              ? "bg-orange-500/20 border-orange-500/30 text-orange-400"
+                              : "bg-slate-700/30 border-slate-600 text-slate-300 hover:bg-slate-600/30"
                           }`}
                         >
                           <div className="flex items-center justify-between">
                             <div>
                               <h4 className="font-medium">{screen.name}</h4>
-                              <p className="text-sm opacity-70">Capacity: {screen.capacity} seats</p>
+                              <p className="text-sm opacity-70">
+                                Capacity: {screen.capacity} seats
+                              </p>
                             </div>
                             <MonitorPlay size={20} />
                           </div>
@@ -1471,7 +1665,9 @@ const Showtimes = () => {
                     <input
                       type="date"
                       value={showDate}
-                      onChange={(e) => handleDateTimeChange(e.target.value, showTime)}
+                      onChange={(e) =>
+                        handleDateTimeChange(e.target.value, showTime)
+                      }
                       min={getMinDate()}
                       className="w-full bg-slate-700/50 border border-slate-600 rounded-lg px-4 py-2 text-white focus:border-orange-500 focus:outline-none"
                       disabled={isSubmitting}
@@ -1484,13 +1680,17 @@ const Showtimes = () => {
                     </label>
                     <select
                       value={showTime}
-                      onChange={(e) => handleDateTimeChange(showDate, e.target.value)}
+                      onChange={(e) =>
+                        handleDateTimeChange(showDate, e.target.value)
+                      }
                       className="w-full bg-slate-700/50 border border-slate-600 rounded-lg px-4 py-2 text-white focus:border-orange-500 focus:outline-none"
                       disabled={isSubmitting}
                     >
                       <option value="">Select time</option>
                       {timeSlots.map((time) => (
-                        <option key={time} value={time}>{time}</option>
+                        <option key={time} value={time}>
+                          {time}
+                        </option>
                       ))}
                     </select>
                   </div>
@@ -1500,16 +1700,20 @@ const Showtimes = () => {
                     <label className="block text-slate-300 text-sm font-medium">
                       Ticket Pricing <span className="text-red-400">*</span>
                     </label>
-                    
+
                     <div>
-                      <label className="block text-slate-400 text-xs mb-1">Regular Seats</label>
+                      <label className="block text-slate-400 text-xs mb-1">
+                        Regular Seats
+                      </label>
                       <input
                         type="number"
                         value={formData.price.regular}
-                        onChange={(e) => handleFormChange('price', { 
-                          ...formData.price, 
-                          regular: parseInt(e.target.value) || 0 
-                        })}
+                        onChange={(e) =>
+                          handleFormChange("price", {
+                            ...formData.price,
+                            regular: parseInt(e.target.value) || 0,
+                          })
+                        }
                         min="0"
                         className="w-full bg-slate-700/50 border border-slate-600 rounded-lg px-4 py-2 text-white focus:border-orange-500 focus:outline-none"
                         disabled={isSubmitting}
@@ -1518,14 +1722,18 @@ const Showtimes = () => {
                     </div>
 
                     <div>
-                      <label className="block text-slate-400 text-xs mb-1">Premium Seats</label>
+                      <label className="block text-slate-400 text-xs mb-1">
+                        Premium Seats
+                      </label>
                       <input
                         type="number"
                         value={formData.price.premium}
-                        onChange={(e) => handleFormChange('price', { 
-                          ...formData.price, 
-                          premium: parseInt(e.target.value) || 0 
-                        })}
+                        onChange={(e) =>
+                          handleFormChange("price", {
+                            ...formData.price,
+                            premium: parseInt(e.target.value) || 0,
+                          })
+                        }
                         min="0"
                         className="w-full bg-slate-700/50 border border-slate-600 rounded-lg px-4 py-2 text-white focus:border-orange-500 focus:outline-none"
                         disabled={isSubmitting}
@@ -1535,14 +1743,18 @@ const Showtimes = () => {
 
                     {formData.price.vip !== undefined && (
                       <div>
-                        <label className="block text-slate-400 text-xs mb-1">VIP Seats</label>
+                        <label className="block text-slate-400 text-xs mb-1">
+                          VIP Seats
+                        </label>
                         <input
                           type="number"
                           value={formData.price.vip || 0}
-                          onChange={(e) => handleFormChange('price', { 
-                            ...formData.price, 
-                            vip: parseInt(e.target.value) || 0 
-                          })}
+                          onChange={(e) =>
+                            handleFormChange("price", {
+                              ...formData.price,
+                              vip: parseInt(e.target.value) || 0,
+                            })
+                          }
                           min="0"
                           className="w-full bg-slate-700/50 border border-slate-600 rounded-lg px-4 py-2 text-white focus:border-orange-500 focus:outline-none"
                           disabled={isSubmitting}
@@ -1555,23 +1767,32 @@ const Showtimes = () => {
                   {/* Summary */}
                   {selectedMovie && selectedScreen && showDate && showTime && (
                     <div className="bg-slate-700/30 p-4 rounded-lg">
-                      <h4 className="text-white font-medium mb-2">Showtime Summary</h4>
+                      <h4 className="text-white font-medium mb-2">
+                        Showtime Summary
+                      </h4>
                       <div className="space-y-1 text-sm">
                         <p className="text-slate-300">
-                          <span className="text-slate-400">Movie:</span> {selectedMovie.title}
+                          <span className="text-slate-400">Movie:</span>{" "}
+                          {selectedMovie.title}
                         </p>
                         <p className="text-slate-300">
-                          <span className="text-slate-400">Screen:</span> {selectedScreen.name}
+                          <span className="text-slate-400">Screen:</span>{" "}
+                          {selectedScreen.name}
                         </p>
                         <p className="text-slate-300">
-                          <span className="text-slate-400">Duration:</span> {selectedMovie.duration} minutes
+                          <span className="text-slate-400">Duration:</span>{" "}
+                          {selectedMovie.duration} minutes
                         </p>
                         <p className="text-slate-300">
-                          <span className="text-slate-400">Available Seats:</span> {formData.available_seats}
+                          <span className="text-slate-400">
+                            Available Seats:
+                          </span>{" "}
+                          {formData.available_seats}
                         </p>
                         {formData.end_time && (
                           <p className="text-slate-300">
-                            <span className="text-slate-400">End Time:</span> {formatShowtimeTime(formData.end_time)}
+                            <span className="text-slate-400">End Time:</span>{" "}
+                            {formatShowtimeTime(formData.end_time)}
                           </p>
                         )}
                       </div>
@@ -1588,7 +1809,12 @@ const Showtimes = () => {
                   </label>
                   <select
                     value={formData.status || ShowtimeStatusValues.SCHEDULED}
-                    onChange={(e) => handleFormChange('status', e.target.value as ShowtimeStatus)}
+                    onChange={(e) =>
+                      handleFormChange(
+                        "status",
+                        e.target.value as ShowtimeStatus
+                      )
+                    }
                     className="w-full bg-slate-700/50 border border-slate-600 rounded-lg px-4 py-2 text-white focus:border-orange-500 focus:outline-none"
                     disabled={isSubmitting}
                   >
@@ -1596,10 +1822,14 @@ const Showtimes = () => {
                       {getShowtimeStatusDisplay(ShowtimeStatusValues.SCHEDULED)}
                     </option>
                     <option value={ShowtimeStatusValues.BOOKING_OPEN}>
-                      {getShowtimeStatusDisplay(ShowtimeStatusValues.BOOKING_OPEN)}
+                      {getShowtimeStatusDisplay(
+                        ShowtimeStatusValues.BOOKING_OPEN
+                      )}
                     </option>
                     <option value={ShowtimeStatusValues.BOOKING_CLOSED}>
-                      {getShowtimeStatusDisplay(ShowtimeStatusValues.BOOKING_CLOSED)}
+                      {getShowtimeStatusDisplay(
+                        ShowtimeStatusValues.BOOKING_CLOSED
+                      )}
                     </option>
                     <option value={ShowtimeStatusValues.CANCELLED}>
                       {getShowtimeStatusDisplay(ShowtimeStatusValues.CANCELLED)}
@@ -1657,7 +1887,9 @@ const Showtimes = () => {
             exit={{ opacity: 0, scale: 0.9 }}
           >
             <div className="sticky top-0 bg-slate-800 border-b border-slate-700 p-6 flex justify-between items-center">
-              <h3 className="text-2xl font-bold text-white">Showtime Details</h3>
+              <h3 className="text-2xl font-bold text-white">
+                Showtime Details
+              </h3>
               <button
                 onClick={closeModals}
                 className="text-slate-400 hover:text-white transition-colors"
@@ -1665,21 +1897,27 @@ const Showtimes = () => {
                 <X size={24} />
               </button>
             </div>
-            
+
             <div className="p-6">
               <div className="space-y-6">
                 {/* Movie Info */}
                 <div className="flex items-start space-x-4">
-                  <img 
-                    src={selectedShowtime.movie?.poster_url || '/placeholder-movie.jpg'} 
-                    alt={selectedShowtime.movie?.title || 'Movie'}
+                  <img
+                    src={
+                      selectedShowtime.movie?.poster_url ||
+                      "/placeholder-movie.jpg"
+                    }
+                    alt={selectedShowtime.movie?.title || "Movie"}
                     className="w-20 h-28 object-cover rounded-lg"
                   />
                   <div className="flex-1">
-                    <h4 className="text-xl font-bold text-white mb-2">{selectedShowtime.movie?.title}</h4>
+                    <h4 className="text-xl font-bold text-white mb-2">
+                      {selectedShowtime.movie?.title}
+                    </h4>
                     <div className="space-y-1 text-sm">
                       <p className="text-slate-300">
-                        <span className="text-slate-400">Duration:</span> {selectedShowtime.movie?.duration} minutes
+                        <span className="text-slate-400">Duration:</span>{" "}
+                        {selectedShowtime.movie?.duration} minutes
                       </p>
                     </div>
                   </div>
@@ -1700,10 +1938,14 @@ const Showtimes = () => {
                       <div className="flex items-center text-slate-300">
                         <Clock size={16} className="mr-2 text-slate-400" />
                         <span className="text-slate-400 mr-2">Time:</span>
-                        {formatShowtimeTime(selectedShowtime.start_time)} - {formatShowtimeTime(selectedShowtime.end_time)}
+                        {formatShowtimeTime(selectedShowtime.start_time)} -{" "}
+                        {formatShowtimeTime(selectedShowtime.end_time)}
                       </div>
                       <div className="flex items-center text-slate-300">
-                        <MonitorPlay size={16} className="mr-2 text-slate-400" />
+                        <MonitorPlay
+                          size={16}
+                          className="mr-2 text-slate-400"
+                        />
                         <span className="text-slate-400 mr-2">Screen:</span>
                         {selectedShowtime.screen?.name}
                       </div>
@@ -1722,29 +1964,38 @@ const Showtimes = () => {
                       </div>
                       <div className="flex items-center text-slate-300">
                         <Users size={16} className="mr-2 text-slate-400" />
-                        <span className="text-slate-400 mr-2">Total Capacity:</span>
+                        <span className="text-slate-400 mr-2">
+                          Total Capacity:
+                        </span>
                         {selectedShowtime.screen?.capacity} seats
                       </div>
-                      {selectedShowtime.booked_seats && selectedShowtime.booked_seats.length > 0 && (
-                        <div className="flex items-center text-amber-400">
-                          <Users size={16} className="mr-2" />
-                          <span className="text-slate-400 mr-2">Booked:</span>
-                          {selectedShowtime.booked_seats.length} seats
-                        </div>
-                      )}
+                      {selectedShowtime.booked_seats &&
+                        selectedShowtime.booked_seats.length > 0 && (
+                          <div className="flex items-center text-amber-400">
+                            <Users size={16} className="mr-2" />
+                            <span className="text-slate-400 mr-2">Booked:</span>
+                            {selectedShowtime.booked_seats.length} seats
+                          </div>
+                        )}
                       <div className="space-y-2">
                         <div className="flex justify-between text-slate-300">
                           <span className="text-slate-400">Regular:</span>
-                          <span>{formatPrice(selectedShowtime.price.regular)}</span>
+                          <span>
+                            {formatPrice(selectedShowtime.price.regular)}
+                          </span>
                         </div>
                         <div className="flex justify-between text-slate-300">
                           <span className="text-slate-400">Premium:</span>
-                          <span>{formatPrice(selectedShowtime.price.premium)}</span>
+                          <span>
+                            {formatPrice(selectedShowtime.price.premium)}
+                          </span>
                         </div>
                         {selectedShowtime.price.vip && (
                           <div className="flex justify-between text-slate-300">
                             <span className="text-slate-400">VIP:</span>
-                            <span>{formatPrice(selectedShowtime.price.vip)}</span>
+                            <span>
+                              {formatPrice(selectedShowtime.price.vip)}
+                            </span>
                           </div>
                         )}
                       </div>
@@ -1758,39 +2009,47 @@ const Showtimes = () => {
                     <div className="flex items-center gap-4">
                       <div className="flex items-center">
                         <span className="text-slate-400 mr-2">Status:</span>
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getShowtimeStatusColor(selectedShowtime.status)}`}>
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs font-medium ${getShowtimeStatusColor(
+                            selectedShowtime.status
+                          )}`}
+                        >
                           {getShowtimeStatusDisplay(selectedShowtime.status)}
                         </span>
                       </div>
-                      
+
                       {hasBookings(selectedShowtime) && (
                         <div className="flex items-center text-amber-400">
                           <Users size={16} className="mr-1" />
-                          <span className="text-sm font-medium">Has Active Bookings</span>
+                          <span className="text-sm font-medium">
+                            Has Active Bookings
+                          </span>
                         </div>
                       )}
-                      
+
                       {!canModifyShowtime(selectedShowtime) && (
                         <div className="flex items-center text-red-400">
                           <AlertTriangle size={16} className="mr-1" />
-                          <span className="text-sm font-medium">Cannot Edit/Delete</span>
+                          <span className="text-sm font-medium">
+                            Cannot Edit/Delete
+                          </span>
                         </div>
                       )}
                     </div>
-                    
+
                     <div className="flex gap-2">
                       <button
                         onClick={() => handleEditShowtime(selectedShowtime)}
                         className={`px-4 py-2 rounded-lg font-medium transition-colors flex items-center ${
                           canModifyShowtime(selectedShowtime)
-                            ? 'bg-orange-500 hover:bg-orange-600 text-white'
-                            : 'bg-gray-500/50 text-gray-400 cursor-not-allowed'
+                            ? "bg-orange-500 hover:bg-orange-600 text-white"
+                            : "bg-gray-500/50 text-gray-400 cursor-not-allowed"
                         }`}
                         disabled={!canModifyShowtime(selectedShowtime)}
                         title={
-                          !canModifyShowtime(selectedShowtime) 
-                            ? 'Cannot edit showtime with existing bookings or past showtimes'
-                            : 'Edit showtime'
+                          !canModifyShowtime(selectedShowtime)
+                            ? "Cannot edit showtime with existing bookings or past showtimes"
+                            : "Edit showtime"
                         }
                       >
                         <Edit size={16} className="mr-2" />
@@ -1804,7 +2063,6 @@ const Showtimes = () => {
           </motion.div>
         </div>
       )}
-
     </div>
   );
 };

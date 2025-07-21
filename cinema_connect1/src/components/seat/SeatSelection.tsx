@@ -51,6 +51,7 @@ export default function SeatSelection({
     isExpired,
     updateSeats,
     updateTotalAmount,
+    updateBookingId,
     extendExpiration,
   } = useSeatPersistence();
 
@@ -64,9 +65,14 @@ export default function SeatSelection({
       body: ReqBodyMultipleSeatLock;
     }) => bookingApi.deletedShowtimeBySeatLocked(showtime, body),
 
-    onSuccess: () => {
-      toast.success("Đã hủy giữ ghế thành công!");
-      
+    onSuccess: (data) => {
+
+      toast.success(
+        `Đã hủy ghế ${(data?.data?.result as any)?.deleted_seats[0].seat_row}${
+          (data?.data?.result as any)?.deleted_seats[0].seat_number
+        } thành công!`
+      );
+
       // Delay refresh to allow server to process the unlock
       setTimeout(() => {
         fetchSeatData();
@@ -124,6 +130,10 @@ export default function SeatSelection({
           // Auto-select seats locked by current user
           if (user && seat.user_id === user._id) {
             userLockedSeats.push(key);
+            // Update bookingId from locked seat if it exists
+            if (seat.booking_id) {
+              updateBookingId(seat.booking_id);
+            }
           }
         });
 
@@ -201,7 +211,7 @@ export default function SeatSelection({
           ],
         },
       });
-      
+
       return; // Exit early to prevent duplicate state updates
     }
 
@@ -229,7 +239,9 @@ export default function SeatSelection({
 
   const handleCheckout = () => {
     requireAuth(() => {
-      navigate(`/checkout?screenId=${seatData?.screenId}`);
+      navigate(
+        `/checkout?movieId=${seatData?.movieId}&screenId=${seatData?.screenId}`
+      );
     });
   };
 
@@ -391,6 +403,7 @@ export default function SeatSelection({
                   `}
                   >
                     <span className="text-xs sm:text-sm font-extrabold">
+                      {seat.row}
                       {seat.number}
                     </span>
                   </motion.button>

@@ -89,7 +89,6 @@ const TicketVerification: React.FC = () => {
           config,
           (decodedText: string) => {
             if (decodedText && decodedText !== lastScannedCode) {
-              console.log("QR Code detected:", decodedText);
               setLastScannedCode(decodedText);
 
               // Show visual feedback
@@ -123,7 +122,6 @@ const TicketVerification: React.FC = () => {
             config,
             (decodedText: string) => {
               if (decodedText && decodedText !== lastScannedCode) {
-                console.log("QR Code detected:", decodedText);
                 setLastScannedCode(decodedText);
 
                 // Show visual feedback
@@ -155,15 +153,7 @@ const TicketVerification: React.FC = () => {
       setTimeout(() => {
         const videoElement = element.querySelector("video");
         if (videoElement) {
-          console.log("✅ Video element found and should be visible");
-          console.log(
-            "Video dimensions:",
-            videoElement.videoWidth,
-            "x",
-            videoElement.videoHeight
-          );
-          console.log("Video playing:", !videoElement.paused);
-
+        
           // Force video to be visible
           videoElement.style.display = "block";
           videoElement.style.width = "100%";
@@ -172,21 +162,15 @@ const TicketVerification: React.FC = () => {
 
           // Add event listeners for debugging
           videoElement.addEventListener("loadedmetadata", () => {
-            console.log("📹 Video metadata loaded:", {
-              width: videoElement.videoWidth,
-              height: videoElement.videoHeight,
-              duration: videoElement.duration,
-            });
+       
           });
         } else {
-          console.warn("❌ Video element not found after scanner start");
           setError("Video element not created. Try refreshing the page.");
         }
       }, 500);
 
       setCameraStatus("active");
       setIsScanning(true);
-      console.log("QR Scanner started successfully");
     } catch (err) {
       console.error("Error accessing camera:", err);
       setCameraStatus("error");
@@ -284,7 +268,6 @@ const TicketVerification: React.FC = () => {
     try {
       const result = await verifyTicketCode(ticketCode.trim());
       setScanResult(result.result);
-      console.log("Ticket verification result:", result);
 
       // Check if ticket is valid (confirmed status and completed payment)
       const isValid =
@@ -292,10 +275,10 @@ const TicketVerification: React.FC = () => {
         result.result.payment_status === "completed";
 
       if (isValid) {
-        toast.success("✅ Valid Ticket - Allow Entry!");
+        toast.success("Valid Ticket - Allow Entry!");
         playSound(true);
       } else {
-        toast.error("❌ Invalid Ticket - Deny Entry!");
+        toast.error("Invalid Ticket - Deny Entry!");
         playSound(false);
       }
 
@@ -308,7 +291,7 @@ const TicketVerification: React.FC = () => {
     } catch (err: any) {
       const errorMessage = err.message || "Failed to verify ticket";
       setError(errorMessage);
-      toast.error(`❌ ${errorMessage}`);
+      toast.error(`${errorMessage}`);
       playSound(false);
 
       // Auto-clear error after 5 seconds
@@ -345,7 +328,6 @@ const TicketVerification: React.FC = () => {
 
   // Component mount and cleanup effect
   useEffect(() => {
-    console.log("TicketVerification component mounted");
 
     // Check if getUserMedia is supported
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -354,7 +336,6 @@ const TicketVerification: React.FC = () => {
     }
 
     return () => {
-      console.log("TicketVerification component unmounting");
       stopCamera();
     };
   }, []);

@@ -18,6 +18,7 @@ import type {
   PaymentListResponse,
 } from "../types/Admin.type";
 import { getAuthToken } from "./user.api";
+import type { addConciergeType, RegisterResponse } from "../types";
 
 const BASE_URL = "https://bookmovie-5n6n.onrender.com";
 
@@ -708,6 +709,86 @@ export const verifyTicketCode = async (
     const response = await adminApi.post(`/admin/verify-ticket`, {
       ticket_code: ticketCode,
     });
+    return response.data;
+  } catch (error) {
+    throw handleAdminError(error);
+  }
+};
+
+export const addConcierge = async (userData: addConciergeType) => {
+  try {
+    const adminApi = createAdminRequest();
+    const response = await adminApi.post<RegisterResponse>(
+      `/admin/add/register/Concierge`,
+      userData
+    );
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      // Check if it's a network error or server error
+      if (error.code === "NETWORK_ERROR" || !error.response) {
+        throw new Error(
+          "Network error. Please check your internet connection."
+        );
+      }
+
+      // Handle different status codes
+      const status = error.response?.status;
+      const message = error.response?.data?.message;
+
+      if (status === 400) {
+        throw new Error(
+          message || "Invalid registration data. Please check your information."
+        );
+      } else if (status === 409) {
+        throw new Error(
+          message || "Email already exists. Please use a different email."
+        );
+      } else if (status === 500) {
+        throw new Error("Server error. Please try again later.");
+      } else {
+        throw new Error(
+          message || "Failed to send verification email. Please try again."
+        );
+      }
+    }
+    throw new Error("Failed to send verification email. Please try again.");
+  }
+};
+export const getAllConcierge = async (params?: {
+  page?: number;
+  limit?: number;
+  search?: string;
+}): Promise<{
+  message: string;
+  result: {
+    concierges: Array<{
+      _id: string;
+      email: string;
+      name: string;
+      phone: string;
+      avatar: string;
+      created_at: string;
+      updated_at: string;
+    }>;
+    total: number;
+    page: number;
+    limit: number;
+    total_pages: number;
+  };
+}> => {
+  try {
+    const adminApi = createAdminRequest();
+    const queryParams = new URLSearchParams();
+
+    if (params?.page) queryParams.append("page", params.page.toString());
+    if (params?.limit) queryParams.append("limit", params.limit.toString());
+    if (params?.search) queryParams.append("search", params.search);
+
+    const url = `/admin/concierge/all/tk/get${
+      queryParams.toString() ? `?${queryParams.toString()}` : ""
+    }`;
+    const response = await adminApi.get(url);
     return response.data;
   } catch (error) {
     throw handleAdminError(error);

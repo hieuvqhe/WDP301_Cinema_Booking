@@ -181,14 +181,35 @@ export const updateMovieFeatureStatus = async (
 // Get movies by status
 export const getMoviesByStatus = async (
   status: "now_showing" | "coming_soon" | "ended",
-  limit?: number
+  limit?: number,
+  pages?: number
 ): Promise<Movie[]> => {
   try {
     const response = await getAllMovies({
+      page: pages,
       status,
       limit,
       sortBy: "release_date",
       sortOrder: "desc",
+    });
+    return response.result.movies;
+  } catch (error) {
+    throw handleMovieError(error);
+  }
+};
+
+// Get popular movies (sorted by rating)
+export const getPopularMovies = async (
+  limit = 10,
+  pages: number
+): Promise<Movie[]> => {
+  try {
+    const response = await getAllMovies({
+      page: pages,
+      sortBy: "average_rating",
+      sortOrder: "desc",
+      limit,
+      status: "now_showing",
     });
     return response.result.movies;
   } catch (error) {
@@ -235,24 +256,7 @@ export const getMoviesByGenre = async (
   }
 };
 
-// Get popular movies (sorted by rating)
-export const getPopularMovies = async (
-  limit = 10,
-  pages: number
-): Promise<Movie[]> => {
-  try {
-    const response = await getAllMovies({
-      page: pages,
-      sortBy: "average_rating",
-      sortOrder: "desc",
-      limit,
-      status: "now_showing",
-    });
-    return response.result.movies;
-  } catch (error) {
-    throw handleMovieError(error);
-  }
-};
+
 
 // Get latest movies
 export const getLatestMovies = async (limit = 10): Promise<Movie[]> => {

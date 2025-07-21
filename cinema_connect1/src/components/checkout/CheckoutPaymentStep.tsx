@@ -3,9 +3,6 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
-  CreditCard,
-  Smartphone,
-  Wallet,
   Shield,
   ArrowRight,
   CheckCircle,
@@ -39,34 +36,12 @@ const CheckoutPaymentStep: React.FC<CheckoutPaymentStepProps> = ({
 
   const paymentMethods = [
     {
-      id: "vnpay" as PaymentMethod,
-      name: "VNPay",
-      description: "Secure payment via VNPay gateway",
-      icon: Smartphone,
-      color: "from-blue-500 to-blue-600",
-      popular: true,
-    },
-    {
       id: "sepay" as PaymentMethod,
       name: "Sepay Bank Transfer",
       description: "Instant bank transfer with automatic verification",
       icon: Building2,
       color: "from-emerald-500 to-emerald-600",
       new: true,
-    },
-    {
-      id: "credit_card" as PaymentMethod,
-      name: "Credit Card",
-      description: "Visa, Mastercard, JCB",
-      icon: CreditCard,
-      color: "from-purple-500 to-purple-600",
-    },
-    {
-      id: "wallet" as PaymentMethod,
-      name: "Digital Wallet",
-      description: "MoMo, ZaloPay, ShopeePay",
-      icon: Wallet,
-      color: "from-green-500 to-green-600",
     },
   ];
 
@@ -131,21 +106,12 @@ const CheckoutPaymentStep: React.FC<CheckoutPaymentStepProps> = ({
                 }`}
                 onClick={() => setSelectedPaymentMethod(method.id)}
               >
-                {method.popular && (
-                  <span
-                    className="absolute -top-2 left-4 px-2 py-1 bg-gradient-to-r from-orange-500 to-red-500 
-                                 text-white text-xs font-semibold rounded-full"
-                  >
-                    POPULAR
-                  </span>
-                )}
-
                 {method.new && (
                   <span
                     className="absolute -top-2 left-4 px-2 py-1 bg-gradient-to-r from-emerald-500 to-emerald-600 
                                  text-white text-xs font-semibold rounded-full"
                   >
-                    NEW
+                    POPULAR
                   </span>
                 )}
 

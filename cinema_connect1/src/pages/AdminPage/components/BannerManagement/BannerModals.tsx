@@ -1,39 +1,44 @@
-import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { 
-  X, 
-  Save, 
-  Upload, 
-  Search, 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import React, { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import {
+  X,
+  Save,
+  Upload,
+  Search,
   Film,
   ExternalLink,
   Loader2,
   Image as ImageIcon,
   Trash2,
-  RefreshCw
-} from 'lucide-react';
-import type { Banner, CreateBannerRequest, UpdateBannerRequest } from '../../../../types/Banner.type';
-import type { Movie } from '../../../../types/Movie.type';
-import { createBanner, updateBanner } from '../../../../apis/banner.api';
-import { getAllMovies, searchMovies } from '../../../../apis/movie.api';
-import mediasApi from '../../../../apis/medias.api';
+  RefreshCw,
+} from "lucide-react";
+import type {
+  Banner,
+  CreateBannerRequest,
+  UpdateBannerRequest,
+} from "../../../../types/Banner.type";
+import type { Movie } from "../../../../types/Movie.type";
+import { createBanner, updateBanner } from "../../../../apis/banner.api";
+import { getAllMovies, searchMovies } from "../../../../apis/movie.api";
+import mediasApi from "../../../../apis/medias.api";
 
 // Banner Status and Type Constants
 const BannerStatus = {
-  ACTIVE: 'active' as const,        // Banner đang hoạt động
-  INACTIVE: 'inactive' as const,    // Banner tạm dừng
-  SCHEDULED: 'scheduled' as const   // Banner được lên lịch
+  ACTIVE: "active" as const, // Banner đang hoạt động
+  INACTIVE: "inactive" as const, // Banner tạm dừng
+  SCHEDULED: "scheduled" as const, // Banner được lên lịch
 } as const;
 
 const BannerTypes = {
-  HOME_SLIDER: 'home_slider' as const,      // Banner slider trang chủ
-  PROMOTION: 'promotion' as const,          // Banner khuyến mãi
-  ANNOUNCEMENT: 'announcement' as const,    // Banner thông báo
-  MOVIE_PROMOTION: 'movie_promotion' as const // Banner quảng cáo phim
+  HOME_SLIDER: "home_slider" as const, // Banner slider trang chủ
+  PROMOTION: "promotion" as const, // Banner khuyến mãi
+  ANNOUNCEMENT: "announcement" as const, // Banner thông báo
+  MOVIE_PROMOTION: "movie_promotion" as const, // Banner quảng cáo phim
 } as const;
 
-type BannerStatusType = typeof BannerStatus[keyof typeof BannerStatus];
-type BannerTypeType = typeof BannerTypes[keyof typeof BannerTypes];
+type BannerStatusType = (typeof BannerStatus)[keyof typeof BannerStatus];
+type BannerTypeType = (typeof BannerTypes)[keyof typeof BannerTypes];
 
 // File Upload Component
 interface ImageUploadProps {
@@ -41,13 +46,16 @@ interface ImageUploadProps {
   currentImage?: string;
 }
 
-const ImageUpload: React.FC<ImageUploadProps> = ({ onImageUploaded, currentImage }) => {
+const ImageUpload: React.FC<ImageUploadProps> = ({
+  onImageUploaded,
+  currentImage,
+}) => {
   const [isUploading, setIsUploading] = useState(false);
-  const [previewUrl, setPreviewUrl] = useState<string>(currentImage || '');
+  const [previewUrl, setPreviewUrl] = useState<string>(currentImage || "");
 
   // Update preview when currentImage changes (for edit mode)
   useEffect(() => {
-    setPreviewUrl(currentImage || '');
+    setPreviewUrl(currentImage || "");
   }, [currentImage]);
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -55,14 +63,12 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onImageUploaded, currentImage
     if (!file) return;
 
     // Validate file type
-    if (!file.type.startsWith('image/')) {
-      console.log('Please select an image file');
+    if (!file.type.startsWith("image/")) {
       return;
     }
 
     // Validate file size (5MB limit)
     if (file.size > 5 * 1024 * 1024) {
-      console.log('File size must be less than 5MB');
       return;
     }
 
@@ -71,7 +77,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onImageUploaded, currentImage
       // Upload to server first
       const response = await mediasApi.uploadImages(file);
       const imageUrl = response.data.result[0].url;
-      
+
       // Create preview after successful upload
       const reader = new FileReader();
       reader.onload = (e) => {
@@ -81,13 +87,12 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onImageUploaded, currentImage
 
       // Notify parent component
       onImageUploaded(imageUrl);
-      console.log('Image uploaded successfully:', imageUrl);
     } catch (error) {
-      console.error('Failed to upload image:', error);
+      console.error("Failed to upload image:", error);
       // Reset preview on error
-      setPreviewUrl(currentImage || '');
+      setPreviewUrl(currentImage || "");
       // Reset input
-      e.target.value = '';
+      e.target.value = "";
     } finally {
       setIsUploading(false);
     }
@@ -98,7 +103,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onImageUploaded, currentImage
       <label className="block text-sm font-medium text-gray-300">
         Banner Image *
       </label>
-      
+
       <div className="relative">
         <input
           type="file"
@@ -108,11 +113,11 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onImageUploaded, currentImage
           id="image-upload"
           disabled={isUploading}
         />
-        
+
         <label
           htmlFor="image-upload"
           className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-600 rounded-lg cursor-pointer hover:bg-gray-700/50 transition-colors ${
-            isUploading ? 'opacity-50 cursor-not-allowed' : ''
+            isUploading ? "opacity-50 cursor-not-allowed" : ""
           }`}
         >
           {previewUrl ? (
@@ -161,9 +166,12 @@ interface MovieSelectionProps {
   selectedMovie?: Movie | null;
 }
 
-const MovieSelection: React.FC<MovieSelectionProps> = ({ onMovieSelected, selectedMovie }) => {
+const MovieSelection: React.FC<MovieSelectionProps> = ({
+  onMovieSelected,
+  selectedMovie,
+}) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const [movies, setMovies] = useState<Movie[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -187,10 +195,10 @@ const MovieSelection: React.FC<MovieSelectionProps> = ({ onMovieSelected, select
   const loadMovies = async () => {
     setIsLoading(true);
     try {
-      const response = await getAllMovies({ status: 'now_showing' });
+      const response = await getAllMovies({ status: "now_showing" });
       setMovies(response.result.movies);
     } catch (error) {
-      console.error('Failed to load movies:', error);
+      console.error("Failed to load movies:", error);
       setMovies([]);
     } finally {
       setIsLoading(false);
@@ -203,7 +211,7 @@ const MovieSelection: React.FC<MovieSelectionProps> = ({ onMovieSelected, select
       const moviesData = await searchMovies(searchTerm);
       setMovies(moviesData);
     } catch (error) {
-      console.error('Failed to search movies:', error);
+      console.error("Failed to search movies:", error);
       setMovies([]);
     } finally {
       setIsLoading(false);
@@ -213,7 +221,7 @@ const MovieSelection: React.FC<MovieSelectionProps> = ({ onMovieSelected, select
   const handleMovieSelect = (movie: Movie) => {
     onMovieSelected(movie);
     setIsOpen(false);
-    setSearchTerm('');
+    setSearchTerm("");
   };
 
   const clearSelection = (e: React.MouseEvent) => {
@@ -233,7 +241,7 @@ const MovieSelection: React.FC<MovieSelectionProps> = ({ onMovieSelected, select
       <label className="block text-sm font-medium text-gray-300">
         Link to Movie (Optional)
       </label>
-      
+
       {selectedMovie ? (
         <div className="flex items-center space-x-3 p-3 bg-gray-700 rounded-lg">
           <img
@@ -243,9 +251,7 @@ const MovieSelection: React.FC<MovieSelectionProps> = ({ onMovieSelected, select
           />
           <div className="flex-1">
             <h4 className="text-white font-medium">{selectedMovie.title}</h4>
-            <p className="text-gray-400 text-sm">
-              /movies/{selectedMovie._id}
-            </p>
+            <p className="text-gray-400 text-sm">/movies/{selectedMovie._id}</p>
           </div>
           <button
             type="button"
@@ -270,7 +276,10 @@ const MovieSelection: React.FC<MovieSelectionProps> = ({ onMovieSelected, select
             <div className="absolute top-full left-0 right-0 mt-1 bg-gray-700 border border-gray-600 rounded-md shadow-lg z-10 max-h-64 overflow-hidden">
               <div className="p-3 border-b border-gray-600">
                 <div className="relative">
-                  <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                  <Search
+                    size={16}
+                    className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                  />
                   <input
                     type="text"
                     value={searchTerm}
@@ -300,14 +309,18 @@ const MovieSelection: React.FC<MovieSelectionProps> = ({ onMovieSelected, select
                         className="w-8 h-10 object-cover rounded"
                       />
                       <div>
-                        <div className="text-white font-medium text-sm">{movie.title}</div>
-                        <div className="text-gray-400 text-xs">{movie.genre?.join(', ')}</div>
+                        <div className="text-white font-medium text-sm">
+                          {movie.title}
+                        </div>
+                        <div className="text-gray-400 text-xs">
+                          {movie.genre?.join(", ")}
+                        </div>
                       </div>
                     </button>
                   ))
                 ) : (
                   <div className="p-4 text-center text-gray-400">
-                    {searchTerm ? 'No movies found' : 'No movies available'}
+                    {searchTerm ? "No movies found" : "No movies available"}
                   </div>
                 )}
               </div>
@@ -329,33 +342,35 @@ interface CreateBannerModalProps {
 export const CreateBannerModal: React.FC<CreateBannerModalProps> = ({
   isOpen,
   onClose,
-  onSuccess
+  onSuccess,
 }) => {
   const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    image_url: '',
-    link_url: '',
+    title: "",
+    description: "",
+    image_url: "",
+    link_url: "",
     type: BannerTypes.HOME_SLIDER as BannerTypeType,
     position: 1,
     status: BannerStatus.ACTIVE as BannerStatusType,
-    start_date: '',
-    end_date: ''
+    start_date: "",
+    end_date: "",
   });
   const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (selectedMovie) {
-      setFormData(prev => ({ ...prev, link_url: `/movies/${selectedMovie._id}` }));
+      setFormData((prev) => ({
+        ...prev,
+        link_url: `/movies/${selectedMovie._id}`,
+      }));
     }
   }, [selectedMovie]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.title || !formData.image_url) {
-      console.log('Please fill in all required fields');
       return;
     }
 
@@ -370,45 +385,47 @@ export const CreateBannerModal: React.FC<CreateBannerModalProps> = ({
         position: formData.position,
         is_active: formData.status === BannerStatus.ACTIVE,
         start_date: formData.start_date,
-        end_date: formData.end_date
+        end_date: formData.end_date,
       };
 
       await createBanner(bannerData);
-      console.log('Banner created successfully');
       onSuccess();
       onClose();
       // Reset form
       setFormData({
-        title: '',
-        description: '',
-        image_url: '',
-        link_url: '',
+        title: "",
+        description: "",
+        image_url: "",
+        link_url: "",
         type: BannerTypes.HOME_SLIDER as BannerTypeType,
         position: 1,
         status: BannerStatus.ACTIVE as BannerStatusType,
-        start_date: '',
-        end_date: ''
+        start_date: "",
+        end_date: "",
       });
       setSelectedMovie(null);
     } catch (error) {
-      console.error('Failed to create banner:', error);
+      console.error("Failed to create banner:", error);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleInputChange = (field: string, value: string | number | boolean) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+  const handleInputChange = (
+    field: string,
+    value: string | number | boolean
+  ) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleImageUploaded = (imageUrl: string) => {
-    setFormData(prev => ({ ...prev, image_url: imageUrl }));
+    setFormData((prev) => ({ ...prev, image_url: imageUrl }));
   };
 
   const handleMovieSelected = (movie: Movie | null) => {
     setSelectedMovie(movie);
     if (!movie) {
-      setFormData(prev => ({ ...prev, link_url: '' }));
+      setFormData((prev) => ({ ...prev, link_url: "" }));
     }
   };
 
@@ -440,7 +457,7 @@ export const CreateBannerModal: React.FC<CreateBannerModalProps> = ({
             <input
               type="text"
               value={formData.title}
-              onChange={(e) => handleInputChange('title', e.target.value)}
+              onChange={(e) => handleInputChange("title", e.target.value)}
               className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Enter banner title"
               required
@@ -453,7 +470,7 @@ export const CreateBannerModal: React.FC<CreateBannerModalProps> = ({
             </label>
             <textarea
               value={formData.description}
-              onChange={(e) => handleInputChange('description', e.target.value)}
+              onChange={(e) => handleInputChange("description", e.target.value)}
               className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Enter banner description"
               rows={3}
@@ -471,7 +488,7 @@ export const CreateBannerModal: React.FC<CreateBannerModalProps> = ({
             </label>
             <select
               value={formData.type}
-              onChange={(e) => handleInputChange('type', e.target.value)}
+              onChange={(e) => handleInputChange("type", e.target.value)}
               className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="home_slider">Home Slider</option>
@@ -487,7 +504,9 @@ export const CreateBannerModal: React.FC<CreateBannerModalProps> = ({
             <input
               type="number"
               value={formData.position}
-              onChange={(e) => handleInputChange('position', parseInt(e.target.value))}
+              onChange={(e) =>
+                handleInputChange("position", parseInt(e.target.value))
+              }
               className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
               min="1"
             />
@@ -505,11 +524,16 @@ export const CreateBannerModal: React.FC<CreateBannerModalProps> = ({
                 Custom Link (Optional)
               </label>
               <div className="relative">
-                <ExternalLink size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <ExternalLink
+                  size={16}
+                  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                />
                 <input
                   type="text"
                   value={formData.link_url}
-                  onChange={(e) => handleInputChange('link_url', e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("link_url", e.target.value)
+                  }
                   className="w-full pl-10 pr-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="Enter custom link URL"
                 />
@@ -525,7 +549,9 @@ export const CreateBannerModal: React.FC<CreateBannerModalProps> = ({
               <input
                 type="datetime-local"
                 value={formData.start_date}
-                onChange={(e) => handleInputChange('start_date', e.target.value)}
+                onChange={(e) =>
+                  handleInputChange("start_date", e.target.value)
+                }
                 className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
@@ -536,7 +562,7 @@ export const CreateBannerModal: React.FC<CreateBannerModalProps> = ({
               <input
                 type="datetime-local"
                 value={formData.end_date}
-                onChange={(e) => handleInputChange('end_date', e.target.value)}
+                onChange={(e) => handleInputChange("end_date", e.target.value)}
                 className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
@@ -548,7 +574,7 @@ export const CreateBannerModal: React.FC<CreateBannerModalProps> = ({
             </label>
             <select
               value={formData.status}
-              onChange={(e) => handleInputChange('status', e.target.value)}
+              onChange={(e) => handleInputChange("status", e.target.value)}
               className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value={BannerStatus.ACTIVE}>Active</option>
@@ -601,18 +627,18 @@ export const EditBannerModal: React.FC<EditBannerModalProps> = ({
   isOpen,
   onClose,
   onSuccess,
-  banner
+  banner,
 }) => {
   const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    image_url: '',
-    link_url: '',
+    title: "",
+    description: "",
+    image_url: "",
+    link_url: "",
     type: BannerTypes.HOME_SLIDER as BannerTypeType,
     position: 1,
     status: BannerStatus.ACTIVE as BannerStatusType,
-    start_date: '',
-    end_date: ''
+    start_date: "",
+    end_date: "",
   });
   const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -621,26 +647,33 @@ export const EditBannerModal: React.FC<EditBannerModalProps> = ({
     if (banner) {
       // Map banner.status to our status, fallback to checking is_active for backward compatibility
       let mappedStatus: BannerStatusType = BannerStatus.INACTIVE;
-      if (banner.status === 'active' || (banner.status !== 'inactive' && banner.is_active)) {
+      if (
+        banner.status === "active" ||
+        (banner.status !== "inactive" && banner.is_active)
+      ) {
         mappedStatus = BannerStatus.ACTIVE;
-      } else if ((banner.status as string) === 'scheduled') {
+      } else if ((banner.status as string) === "scheduled") {
         mappedStatus = BannerStatus.SCHEDULED;
       }
 
       setFormData({
         title: banner.title,
-        description: banner.description || '',
+        description: banner.description || "",
         image_url: banner.image_url,
-        link_url: banner.link_url || '',
+        link_url: banner.link_url || "",
         type: banner.type as BannerTypeType,
         position: banner.position,
         status: mappedStatus,
-        start_date: banner.start_date ? new Date(banner.start_date).toISOString().slice(0, 16) : '',
-        end_date: banner.end_date ? new Date(banner.end_date).toISOString().slice(0, 16) : ''
+        start_date: banner.start_date
+          ? new Date(banner.start_date).toISOString().slice(0, 16)
+          : "",
+        end_date: banner.end_date
+          ? new Date(banner.end_date).toISOString().slice(0, 16)
+          : "",
       });
 
       // Check if link_url is a movie link
-      if (banner.link_url && banner.link_url.startsWith('/movies/')) {
+      if (banner.link_url && banner.link_url.startsWith("/movies/")) {
         // You might want to fetch movie details here if needed
       }
     }
@@ -648,15 +681,17 @@ export const EditBannerModal: React.FC<EditBannerModalProps> = ({
 
   useEffect(() => {
     if (selectedMovie) {
-      setFormData(prev => ({ ...prev, link_url: `/movies/${selectedMovie._id}` }));
+      setFormData((prev) => ({
+        ...prev,
+        link_url: `/movies/${selectedMovie._id}`,
+      }));
     }
   }, [selectedMovie]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!banner || !formData.title || !formData.image_url) {
-      console.log('Please fill in all required fields');
       return;
     }
 
@@ -671,32 +706,34 @@ export const EditBannerModal: React.FC<EditBannerModalProps> = ({
         position: formData.position,
         is_active: formData.status === BannerStatus.ACTIVE,
         start_date: formData.start_date,
-        end_date: formData.end_date
+        end_date: formData.end_date,
       };
 
       await updateBanner(banner._id, updateData);
-      console.log('Banner updated successfully');
       onSuccess();
       onClose();
     } catch (error) {
-      console.error('Failed to update banner:', error);
+      console.error("Failed to update banner:", error);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleInputChange = (field: string, value: string | number | boolean) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+  const handleInputChange = (
+    field: string,
+    value: string | number | boolean
+  ) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleImageUploaded = (imageUrl: string) => {
-    setFormData(prev => ({ ...prev, image_url: imageUrl }));
+    setFormData((prev) => ({ ...prev, image_url: imageUrl }));
   };
 
   const handleMovieSelected = (movie: Movie | null) => {
     setSelectedMovie(movie);
     if (!movie) {
-      setFormData(prev => ({ ...prev, link_url: '' }));
+      setFormData((prev) => ({ ...prev, link_url: "" }));
     }
   };
 
@@ -728,7 +765,7 @@ export const EditBannerModal: React.FC<EditBannerModalProps> = ({
             <input
               type="text"
               value={formData.title}
-              onChange={(e) => handleInputChange('title', e.target.value)}
+              onChange={(e) => handleInputChange("title", e.target.value)}
               className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Enter banner title"
               required
@@ -741,7 +778,7 @@ export const EditBannerModal: React.FC<EditBannerModalProps> = ({
             </label>
             <textarea
               value={formData.description}
-              onChange={(e) => handleInputChange('description', e.target.value)}
+              onChange={(e) => handleInputChange("description", e.target.value)}
               className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Enter banner description"
               rows={3}
@@ -759,7 +796,7 @@ export const EditBannerModal: React.FC<EditBannerModalProps> = ({
             </label>
             <select
               value={formData.type}
-              onChange={(e) => handleInputChange('type', e.target.value)}
+              onChange={(e) => handleInputChange("type", e.target.value)}
               className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="home_slider">Home Slider</option>
@@ -775,7 +812,9 @@ export const EditBannerModal: React.FC<EditBannerModalProps> = ({
             <input
               type="number"
               value={formData.position}
-              onChange={(e) => handleInputChange('position', parseInt(e.target.value))}
+              onChange={(e) =>
+                handleInputChange("position", parseInt(e.target.value))
+              }
               className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
               min="1"
             />
@@ -793,11 +832,16 @@ export const EditBannerModal: React.FC<EditBannerModalProps> = ({
                 Custom Link (Optional)
               </label>
               <div className="relative">
-                <ExternalLink size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <ExternalLink
+                  size={16}
+                  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                />
                 <input
                   type="text"
                   value={formData.link_url}
-                  onChange={(e) => handleInputChange('link_url', e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("link_url", e.target.value)
+                  }
                   className="w-full pl-10 pr-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="Enter custom link URL"
                 />
@@ -813,7 +857,9 @@ export const EditBannerModal: React.FC<EditBannerModalProps> = ({
               <input
                 type="datetime-local"
                 value={formData.start_date}
-                onChange={(e) => handleInputChange('start_date', e.target.value)}
+                onChange={(e) =>
+                  handleInputChange("start_date", e.target.value)
+                }
                 className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
@@ -824,7 +870,7 @@ export const EditBannerModal: React.FC<EditBannerModalProps> = ({
               <input
                 type="datetime-local"
                 value={formData.end_date}
-                onChange={(e) => handleInputChange('end_date', e.target.value)}
+                onChange={(e) => handleInputChange("end_date", e.target.value)}
                 className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
@@ -836,7 +882,7 @@ export const EditBannerModal: React.FC<EditBannerModalProps> = ({
             </label>
             <select
               value={formData.status}
-              onChange={(e) => handleInputChange('status', e.target.value)}
+              onChange={(e) => handleInputChange("status", e.target.value)}
               className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value={BannerStatus.ACTIVE}>Active</option>
@@ -887,7 +933,7 @@ interface PreviewBannerModalProps {
 export const PreviewBannerModal: React.FC<PreviewBannerModalProps> = ({
   isOpen,
   onClose,
-  banner
+  banner,
 }) => {
   if (!isOpen || !banner) return null;
 
@@ -928,7 +974,9 @@ export const PreviewBannerModal: React.FC<PreviewBannerModalProps> = ({
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
               <span className="text-gray-400">Type:</span>
-              <span className="ml-2 text-white capitalize">{banner.type.replace('_', ' ')}</span>
+              <span className="ml-2 text-white capitalize">
+                {banner.type.replace("_", " ")}
+              </span>
             </div>
             <div>
               <span className="text-gray-400">Position:</span>
@@ -936,13 +984,19 @@ export const PreviewBannerModal: React.FC<PreviewBannerModalProps> = ({
             </div>
             <div>
               <span className="text-gray-400">Status:</span>
-              <span className={`ml-2 ${banner.is_active ? 'text-green-400' : 'text-red-400'}`}>
-                {banner.is_active ? 'Active' : 'Inactive'}
+              <span
+                className={`ml-2 ${
+                  banner.is_active ? "text-green-400" : "text-red-400"
+                }`}
+              >
+                {banner.is_active ? "Active" : "Inactive"}
               </span>
             </div>
             <div>
               <span className="text-gray-400">Link:</span>
-              <span className="ml-2 text-blue-400">{banner.link_url || 'No link'}</span>
+              <span className="ml-2 text-blue-400">
+                {banner.link_url || "No link"}
+              </span>
             </div>
           </div>
         </div>
@@ -973,7 +1027,7 @@ export const DeleteBannerModal: React.FC<DeleteBannerModalProps> = ({
   onClose,
   onConfirm,
   banner,
-  isDeleting
+  isDeleting,
 }) => {
   if (!isOpen || !banner) return null;
 
@@ -991,7 +1045,9 @@ export const DeleteBannerModal: React.FC<DeleteBannerModalProps> = ({
           </div>
           <div>
             <h2 className="text-xl font-bold text-white">Delete Banner</h2>
-            <p className="text-slate-400 text-sm">This action cannot be undone</p>
+            <p className="text-slate-400 text-sm">
+              This action cannot be undone
+            </p>
           </div>
         </div>
 
@@ -1008,9 +1064,11 @@ export const DeleteBannerModal: React.FC<DeleteBannerModalProps> = ({
                 </div>
               )}
               <div className="flex-1 min-w-0">
-                <h3 className="text-white font-medium truncate">{banner.title}</h3>
+                <h3 className="text-white font-medium truncate">
+                  {banner.title}
+                </h3>
                 <p className="text-slate-400 text-sm">
-                  {banner.type.replace('_', ' ')} • Position #{banner.position}
+                  {banner.type.replace("_", " ")} • Position #{banner.position}
                 </p>
                 {banner.description && (
                   <p className="text-slate-500 text-sm mt-1 line-clamp-2">
@@ -1020,9 +1078,10 @@ export const DeleteBannerModal: React.FC<DeleteBannerModalProps> = ({
               </div>
             </div>
           </div>
-          
+
           <p className="text-slate-300 mt-4">
-            Are you sure you want to delete "<span className="font-medium text-white">{banner.title}</span>"?
+            Are you sure you want to delete "
+            <span className="font-medium text-white">{banner.title}</span>"?
           </p>
         </div>
 

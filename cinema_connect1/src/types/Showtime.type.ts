@@ -78,4 +78,5 @@ export interface LockedSeat {
   expires_at: string;
   user_id: string;
   showtime_id: string;
+  booking_id: string;
 }

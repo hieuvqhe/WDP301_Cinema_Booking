@@ -227,7 +227,7 @@ const ProfilePage = () => {
   }
 
   return (
-    <div className="relative min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-gray-300 overflow-x-hidden">
+    <div className="relative min-h-screen bg-gradient-to-br from-slate-900 via-primary/40 to-slate-900 text-gray-300 overflow-x-hidden">
       {/* Background Elements - matching MovieDetailPage design */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-20 left-10 w-72 h-72 bg-purple-500/10 rounded-full blur-3xl" />
@@ -242,11 +242,11 @@ const ProfilePage = () => {
           className="bg-white/10 backdrop-blur-lg rounded-3xl shadow-xl border border-white/20 overflow-hidden"
         >
           {/* Header */}
-          <div className="bg-gradient-to-r from-[#a640ef] to-[#9a979c] p-8">
-            <div className="flex items-center justify-between">
+          <div className="bg-gradient-to-r from-primary to-gray-600 p-8">
+            <div className="md:flex md:flex-row flex-col items-center justify-between gap-3">
               <h1 className="text-3xl font-bold text-white">My Profile</h1>
               {!isEditing ? (
-                <div className="flex gap-3">
+                <div className="flex gap-3 mt-3">
                   <motion.button
                     onClick={() => setIsChangingPassword(true)}
                     whileHover={{ scale: 1.05 }}
@@ -269,7 +269,7 @@ const ProfilePage = () => {
                   </motion.button>
                 </div>
               ) : (
-                <div className="flex gap-2">
+                <div className="flex gap-2 mt-3">
                   <motion.button
                     onClick={handleSaveProfile}
                     disabled={loading}

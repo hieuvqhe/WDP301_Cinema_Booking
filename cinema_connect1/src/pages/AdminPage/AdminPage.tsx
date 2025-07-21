@@ -14,6 +14,7 @@ import {
   TicketVerification,
 } from "./components";
 import { PaymentManagement } from "../../components/admin/PaymentManagement";
+import ConciergeManagement from "./components/ConciergeManagement";
 
 const AdminPage = () => {
   const navigate = useNavigate();
@@ -48,6 +49,8 @@ const AdminPage = () => {
         return <PaymentManagement />;
       case "ticket-verification":
         return <TicketVerification />;
+      case "add-concierge-qr":
+        return <ConciergeManagement />;
       default:
         return <Dashboard />;
     }

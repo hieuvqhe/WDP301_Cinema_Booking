@@ -19,10 +19,7 @@ config()
 const isRender = process.env.RENDER === 'true' || process.env.RENDER_SERVICE_ID
 const PORT = process.env.PORT || 5001
 
-console.log('🚀 Starting server...')
-console.log(`   Environment: ${process.env.NODE_ENV}`)
-console.log(`   Platform: Render.com = ${isRender ? 'Yes' : 'No'}`)
-console.log(`   Port: ${PORT}`)
+
 
 // Database connection với retry cho Render
 const connectWithRetry = async (retries = 5) => {

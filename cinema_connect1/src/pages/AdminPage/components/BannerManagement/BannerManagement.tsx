@@ -1,35 +1,30 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Image,
-  Plus,
-  ToggleRight,
-  Calendar,
-  ExternalLink,
-} from 'lucide-react';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import React, { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Image, Plus, ToggleRight, Calendar, ExternalLink } from "lucide-react";
 
 // Import APIs and types
 import {
   getAllBannersAdmin,
   toggleBannerStatus,
   deleteBanner,
-} from '../../../../apis/banner.api';
+} from "../../../../apis/banner.api";
 
 import type {
   Banner,
   BannerQueryParams,
   GetBannersResponse,
-} from '../../../../types/Banner.type';
+} from "../../../../types/Banner.type";
 
 // Import components (will create these)
-import { BannerTable } from './BannerTable';
-import { BannerFilters } from './BannerFilters';
+import { BannerTable } from "./BannerTable";
+import { BannerFilters } from "./BannerFilters";
 import {
   CreateBannerModal,
   EditBannerModal,
   PreviewBannerModal,
   DeleteBannerModal,
-} from './BannerModals';
+} from "./BannerModals";
 
 export const BannerManagement: React.FC = () => {
   // State management
@@ -46,11 +41,11 @@ export const BannerManagement: React.FC = () => {
   const [itemsPerPage] = useState(10);
 
   // Filters
-  const [searchTerm, setSearchTerm] = useState('');
-  const [typeFilter, setTypeFilter] = useState<string>('');
-  const [statusFilter, setStatusFilter] = useState<string>('');
-  const [sortBy, setSortBy] = useState<string>('created_at');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [typeFilter, setTypeFilter] = useState<string>("");
+  const [statusFilter, setStatusFilter] = useState<string>("");
+  const [sortBy, setSortBy] = useState<string>("created_at");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
   // Modals
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -75,7 +70,7 @@ export const BannerManagement: React.FC = () => {
 
       // Add filters if they exist
       if (typeFilter) params.type = typeFilter as any;
-      if (statusFilter !== '') params.is_active = statusFilter === 'true';
+      if (statusFilter !== "") params.is_active = statusFilter === "true";
 
       const response: GetBannersResponse = await getAllBannersAdmin(params);
 
@@ -88,8 +83,8 @@ export const BannerManagement: React.FC = () => {
         setTotalBanners(response.result.banners.length);
       }
     } catch (err) {
-      console.error('Error fetching banners:', err);
-      setError(err instanceof Error ? err.message : 'Failed to fetch banners');
+      console.error("Error fetching banners:", err);
+      setError(err instanceof Error ? err.message : "Failed to fetch banners");
     } finally {
       setLoading(false);
     }
@@ -102,10 +97,14 @@ export const BannerManagement: React.FC = () => {
       return;
     }
 
-    const filtered = banners.filter(banner =>
-      banner.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (banner.description && banner.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      banner.type.toLowerCase().includes(searchTerm.toLowerCase())
+    const filtered = banners.filter(
+      (banner) =>
+        banner.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (banner.description &&
+          banner.description
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase())) ||
+        banner.type.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     setFilteredBanners(filtered);
@@ -117,19 +116,21 @@ export const BannerManagement: React.FC = () => {
   }, [currentPage, typeFilter, statusFilter, sortBy, sortOrder]);
 
   // Handle banner status toggle
-  const handleToggleStatus = async (bannerId: string, currentStatus: boolean) => {
+  const handleToggleStatus = async (
+    bannerId: string,
+    currentStatus: boolean
+  ) => {
     try {
       await toggleBannerStatus(bannerId, !currentStatus);
-      console.log(`Banner ${!currentStatus ? 'activated' : 'deactivated'} successfully`);
       fetchBanners(); // Refresh data
     } catch (err) {
-      console.error('Error toggling banner status:', err);
+      console.error("Error toggling banner status:", err);
     }
   };
 
   // Handle banner deletion
   const handleDeleteBanner = (bannerId: string) => {
-    const banner = banners.find(b => b._id === bannerId);
+    const banner = banners.find((b) => b._id === bannerId);
     if (banner) {
       setBannerToDelete(banner);
       setShowDeleteModal(true);
@@ -139,16 +140,15 @@ export const BannerManagement: React.FC = () => {
   // Confirm banner deletion
   const confirmDeleteBanner = async () => {
     if (!bannerToDelete) return;
-    
+
     try {
       setIsDeleting(true);
       await deleteBanner(bannerToDelete._id);
-      console.log('Banner deleted successfully');
       setShowDeleteModal(false);
       setBannerToDelete(null);
       fetchBanners(); // Refresh data
     } catch (err) {
-      console.error('Error deleting banner:', err);
+      console.error("Error deleting banner:", err);
     } finally {
       setIsDeleting(false);
     }
@@ -163,20 +163,20 @@ export const BannerManagement: React.FC = () => {
   // Handle sort change
   const handleSortChange = (field: string) => {
     if (sortBy === field) {
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
     } else {
       setSortBy(field);
-      setSortOrder('asc');
+      setSortOrder("asc");
     }
   };
 
   // Reset filters
   const resetFilters = () => {
-    setSearchTerm('');
-    setTypeFilter('');
-    setStatusFilter('');
-    setSortBy('created_at');
-    setSortOrder('desc');
+    setSearchTerm("");
+    setTypeFilter("");
+    setStatusFilter("");
+    setSortBy("created_at");
+    setSortOrder("desc");
     setCurrentPage(1);
   };
 
@@ -216,7 +216,9 @@ export const BannerManagement: React.FC = () => {
         className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"
       >
         <div>
-          <h1 className="text-3xl font-bold text-white mb-2">Banner Management</h1>
+          <h1 className="text-3xl font-bold text-white mb-2">
+            Banner Management
+          </h1>
           <p className="text-slate-400">
             Manage website banners, promotions, and announcements
           </p>
@@ -231,33 +233,32 @@ export const BannerManagement: React.FC = () => {
           Create Banner
         </motion.button>
       </motion.div>
-
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         {[
           {
-            label: 'Total Banners',
+            label: "Total Banners",
             value: totalBanners,
             icon: Image,
-            color: 'from-blue-500 to-cyan-500',
+            color: "from-blue-500 to-cyan-500",
           },
           {
-            label: 'Active Banners',
-            value: banners.filter(b => b.is_active).length,
+            label: "Active Banners",
+            value: banners.filter((b) => b.is_active).length,
             icon: ToggleRight,
-            color: 'from-green-500 to-emerald-500',
+            color: "from-green-500 to-emerald-500",
           },
           {
-            label: 'Home Sliders',
-            value: banners.filter(b => b.type === 'home_slider').length,
+            label: "Home Sliders",
+            value: banners.filter((b) => b.type === "home_slider").length,
             icon: Calendar,
-            color: 'from-orange-500 to-amber-500',
+            color: "from-orange-500 to-amber-500",
           },
           {
-            label: 'Promotions',
-            value: banners.filter(b => b.type === 'promotion').length,
+            label: "Promotions",
+            value: banners.filter((b) => b.type === "promotion").length,
             icon: ExternalLink,
-            color: 'from-purple-500 to-pink-500',
+            color: "from-purple-500 to-pink-500",
           },
         ].map((stat, index) => (
           <motion.div
@@ -269,8 +270,12 @@ export const BannerManagement: React.FC = () => {
           >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-slate-400 text-sm font-medium">{stat.label}</p>
-                <p className="text-2xl font-bold text-white mt-1">{stat.value}</p>
+                <p className="text-slate-400 text-sm font-medium">
+                  {stat.label}
+                </p>
+                <p className="text-2xl font-bold text-white mt-1">
+                  {stat.value}
+                </p>
               </div>
               <div className={`bg-gradient-to-r ${stat.color} p-3 rounded-xl`}>
                 <stat.icon size={24} className="text-white" />
@@ -279,7 +284,6 @@ export const BannerManagement: React.FC = () => {
           </motion.div>
         ))}
       </div>
-
       {/* Filters */}
       <BannerFilters
         searchTerm={searchTerm}
@@ -290,24 +294,23 @@ export const BannerManagement: React.FC = () => {
         onStatusFilterChange={setStatusFilter}
         onResetFilters={resetFilters}
       />
-
-      {/* Banner Table */}        <BannerTable
-          banners={filteredBanners}
-          loading={loading}
-          error={error}
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={setCurrentPage}
-          sortBy={sortBy}
-          sortOrder={sortOrder}
-          onSortChange={handleSortChange}
-          onToggleStatus={handleToggleStatus}
-          onEdit={handleEdit}
-          onDelete={handleDeleteBanner}
-          onPreview={handlePreview}
-          onRefresh={fetchBanners}
-        />
-
+      {/* Banner Table */}{" "}
+      <BannerTable
+        banners={filteredBanners}
+        loading={loading}
+        error={error}
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+        sortBy={sortBy}
+        sortOrder={sortOrder}
+        onSortChange={handleSortChange}
+        onToggleStatus={handleToggleStatus}
+        onEdit={handleEdit}
+        onDelete={handleDeleteBanner}
+        onPreview={handlePreview}
+        onRefresh={fetchBanners}
+      />
       {/* Modals */}
       <AnimatePresence>
         {showCreateModal && (

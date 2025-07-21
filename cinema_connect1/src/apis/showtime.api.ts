@@ -110,7 +110,6 @@ export const getShowtimeByMovieId = async (
     const res = await showtimeApi.get<any>("", {
       params: { movie_id },
     });
-    console.log("Showtime by movie_id response:", res.data);
 
     let showtimes: Showtime[] = [];
     if (res.data.showtimes) showtimes = res.data.showtimes;

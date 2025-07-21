@@ -27,7 +27,6 @@ const PaymentSuccess: React.FC = () => {
   const [isCopied, setIsCopied] = useState(false);
 
   const bookingId = searchParams.get("bookingId");
-  console.log("Booking ID from URL:", bookingId);
 
   // Fetch booking data
   const { data: bookingDatas, isLoading: isLoadingBooking } = useQuery({

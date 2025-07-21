@@ -192,7 +192,6 @@ export const getEnrichedBookingDetails = async (bookingId: string): Promise<Book
     if (!userDetails && booking.user_id) {
       try {
         const userResponse = await getUserProfileById(booking.user_id);
-        console.log('Fetched user details:', userResponse); // Debug log
         userDetails = {
           _id: userResponse._id,
           email: userResponse.email,
