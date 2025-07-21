@@ -5,7 +5,8 @@ import TrailerSection from "../../components/movies/TrailerSection/TrailerSectio
 
 const Home = () => {
   return (
-    <div>
+    <div className="">
+      {/* min-h-screen bg-gradient-to-br from-slate-900 via-primary/40 to-slate-900 py-8 */}
       <HeroSection />
       <FeaturedSection />
       <TrailerSection />

@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+// /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { getScreenById } from "../../apis/screen.api";
@@ -29,6 +29,7 @@ export default function SeatLayout() {
             showtimeId: parsed.showtimeId,
             totalAmount: 0,
             theaterId: parsed.theaterId,
+            bookingId: parsed.bookingId
           });
         }
       }
@@ -84,13 +85,13 @@ export default function SeatLayout() {
     fetchScreen();
   }, [screenId]);
 
-  const formatTime = (sec: number) => {
-    const m = Math.floor(sec / 60)
-      .toString()
-      .padStart(2, "0");
-    const s = (sec % 60).toString().padStart(2, "0");
-    return `${m}:${s}`;
-  };
+  // const formatTime = (sec: number) => {
+  //   const m = Math.floor(sec / 60)
+  //     .toString()
+  //     .padStart(2, "0");
+  //   const s = (sec % 60).toString().padStart(2, "0");
+  //   return `${m}:${s}`;
+  // };
 
   if (loading)
     return (
@@ -111,11 +112,7 @@ export default function SeatLayout() {
       <div className="bg-[#1E1E1E] rounded-3xl shadow-xl p-8">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold text-center">{screen.name}</h1>
-          {secondsLeft !== null && (
-            <div className="text-lg font-semibold text-red-400">
-              Thời gian giữ ghế: {formatTime(secondsLeft)}
-            </div>
-          )}
+          
         </div>
         <SeatSelection
           seatLayout={screen.seat_layout}

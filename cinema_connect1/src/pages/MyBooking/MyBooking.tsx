@@ -413,7 +413,7 @@ const MyBooking: React.FC = () => {
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              className="bg-white rounded-2xl p-6 max-w-5xl w-full mx-4"
+              className=""
               onClick={(e) => e.stopPropagation()}
             >
               <div>
@@ -425,17 +425,18 @@ const MyBooking: React.FC = () => {
                     qrData={qrData.qr_code}
                     ticketCode={selectedTicket}
                     bookingData={bookingData}
+                    handleClose={() => setSelectedTicket(null)}
                   />
                 </div>
 
-                <div className="flex w-full justify-center gap-2">
+                {/* <div className="flex w-full justify-center gap-2">
                   <button
                     onClick={() => setSelectedTicket(null)}
                     className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors"
                   >
                     Close
                   </button>
-                </div>
+                </div> */}
               </div>
             </motion.div>
           </motion.div>

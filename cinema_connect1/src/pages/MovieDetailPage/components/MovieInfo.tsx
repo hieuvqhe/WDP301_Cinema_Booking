@@ -6,8 +6,6 @@ import CastList from "./CastList";
 import type { GetTheatersResponse } from "../../../types/Theater.type";
 import type { Showtime } from "../../../types/Showtime.type";
 import TheaterShowtime from "./TheaterShowtime";
-import LoginModal from "../../../components/user/LoginModal";
-import { useState } from "react";
 
 type Props = {
   movie: Movie;
@@ -30,7 +28,6 @@ export default function MovieInfo({
   handleBookSeats,
   userId,
 }: Props) {
-  const [isLoginForm, setIsLoginForm] = useState(false);
 
   const fadeUp = {
     hidden: { opacity: 0, y: 40 },
@@ -42,106 +39,109 @@ export default function MovieInfo({
   };
 
   return (
-    <motion.div
-      className="md:col-span-2"
-      initial="hidden"
-      animate="visible"
-      exit="hidden"
-      variants={{
-        hidden: {},
-        visible: { transition: { staggerChildren: 0.05 } },
-      }}
-    >
-      <motion.h1
-        variants={fadeUp}
-        custom={0}
-        className="text-4xl font-bold mb-2"
-      >
-        {movie.title}
-      </motion.h1>
-
-      <motion.p variants={fadeUp} custom={1} className="mb-1">
-        Đạo diễn: {movie.director}
-      </motion.p>
-      <motion.p variants={fadeUp} custom={2} className="mb-1">
-        Ngôn ngữ: {getCountryDisplay(movie.language)}
-      </motion.p>
-      <motion.p variants={fadeUp} custom={3} className="mb-1">
-        Ngày phát hành:{" "}
-        {new Date(movie.release_date).toLocaleDateString("vi-VN")}
-      </motion.p>
-      <motion.p variants={fadeUp} custom={4} className="mb-1">
-        Thời lượng: {movie.duration} phút
-      </motion.p>
-      <motion.p variants={fadeUp} custom={5} className="mb-1">
-        Thể loại: {movie.genre.map((genre: any) => 
-          typeof genre === 'string' ? genre : genre.name
-        ).join(", ")}
-      </motion.p>
-
+    <div>
       <motion.div
-        variants={fadeUp}
-        custom={6}
-        className="flex items-center mb-2"
+        className="md:col-span-2"
+        initial="hidden"
+        animate="visible"
+        exit="hidden"
+        variants={{
+          hidden: {},
+          visible: { transition: { staggerChildren: 0.05 } },
+        }}
       >
-        {[...Array(5)].map((_, i) => (
-          <FaStar
-            key={i}
-            className={`mr-1 ${
-              i < Math.round((movie.average_rating || 0) / 2)
-                ? "text-yellow-400"
-                : "text-gray-600"
-            }`}
+        <motion.h1
+          variants={fadeUp}
+          custom={0}
+          className="text-4xl font-bold mb-2"
+        >
+          {movie.title}
+        </motion.h1>
+
+        <motion.p variants={fadeUp} custom={1} className="mb-1">
+          Đạo diễn: {movie.director}
+        </motion.p>
+        <motion.p variants={fadeUp} custom={2} className="mb-1">
+          Ngôn ngữ: {getCountryDisplay(movie.language)}
+        </motion.p>
+        <motion.p variants={fadeUp} custom={3} className="mb-1">
+          Ngày phát hành:{" "}
+          {new Date(movie.release_date).toLocaleDateString("vi-VN")}
+        </motion.p>
+        <motion.p variants={fadeUp} custom={4} className="mb-1">
+          Thời lượng: {movie.duration} phút
+        </motion.p>
+        <motion.p variants={fadeUp} custom={5} className="mb-1">
+          Thể loại:{" "}
+          {movie.genre
+            .map((genre: any) =>
+              typeof genre === "string" ? genre : genre.name
+            )
+            .join(", ")}
+        </motion.p>
+
+        <motion.div
+          variants={fadeUp}
+          custom={6}
+          className="flex items-center mb-2"
+        >
+          {[...Array(5)].map((_, i) => (
+            <FaStar
+              key={i}
+              className={`mr-1 ${
+                i < Math.round((movie.average_rating || 0) / 2)
+                  ? "text-yellow-400"
+                  : "text-gray-600"
+              }`}
+            />
+          ))}
+          <span className="ml-2">({movie.average_rating}/10)</span>
+          <span className="ml-2 text-sm text-gray-400">
+            ({movie.ratings_count} đánh giá)
+          </span>
+        </motion.div>
+
+        <motion.p variants={fadeUp} custom={7} className="mb-4">
+          {movie.description}
+        </motion.p>
+
+        <motion.div variants={fadeUp} custom={8}>
+          <CastList movie={movie} />
+        </motion.div>
+
+        <motion.div variants={fadeUp} custom={9}>
+          <TheaterShowtime
+            theater={theater}
+            selectedInfo={selectedInfo}
+            setSelectedInfo={setSelectedInfo}
+            showtimes={showtimes}
+            fetchShowtimesByTheater={fetchShowtimesByTheater}
           />
-        ))}
-        <span className="ml-2">({movie.average_rating}/10)</span>
-        <span className="ml-2 text-sm text-gray-400">
-          ({movie.ratings_count} đánh giá)
-        </span>
+        </motion.div>
+
+        <motion.div
+          variants={fadeUp}
+          custom={10}
+          className="mt-4 flex justify-end"
+        >
+          {userId ? (
+            <button
+              onClick={handleBookSeats}
+              disabled={!selectedInfo.showtimeId}
+              className="px-4 py-2 text-xs text-white bg-primary hover:bg-primary-dull transition rounded-full font-medium cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Tiếp theo
+            </button>
+          ) : (
+            <button
+              className="px-4 py-2 text-xs text-white bg-red-500  transition rounded-full font-medium"
+              disabled
+            >
+              Đăng nhập để đặt vé
+            </button>
+          )}
+        </motion.div>
       </motion.div>
-
-      <motion.p variants={fadeUp} custom={7} className="mb-4">
-        {movie.description}
-      </motion.p>
-
-      <motion.div variants={fadeUp} custom={8}>
-        <CastList movie={movie} />
-      </motion.div>
-
-      <motion.div variants={fadeUp} custom={9}>
-        <TheaterShowtime
-          theater={theater}
-          selectedInfo={selectedInfo}
-          setSelectedInfo={setSelectedInfo}
-          showtimes={showtimes}
-          fetchShowtimesByTheater={fetchShowtimesByTheater}
-        />
-      </motion.div>
-
-      <motion.div
-        variants={fadeUp}
-        custom={10}
-        className="mt-4 flex justify-end"
-      >
-        {userId ? (
-          <button
-            onClick={handleBookSeats}
-            disabled={!selectedInfo.showtimeId}
-            className="px-4 py-2 text-xs text-white bg-primary hover:bg-primary-dull transition rounded-full font-medium cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Tiếp theo
-          </button>
-        ) : (
-          <button
-            onClick={() => setIsLoginForm(true)}
-            className="px-4 py-2 text-xs text-white bg-red-500 hover:bg-red-600 transition rounded-full font-medium cursor-pointer"
-          >
-            Đăng nhập để đặt vé
-          </button>
-        )}
-      </motion.div>
-
-      {isLoginForm && <LoginModal isFormOpen={setIsLoginForm} />}
-    </motion.div>
+    </div>
   );
 }

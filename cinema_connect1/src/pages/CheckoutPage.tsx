@@ -449,14 +449,14 @@ export default function CheckoutPage() {
         <div className="absolute bottom-20 right-10 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl" />
       </div>
 
-      <div className="relative z-10 container mx-auto px-4 max-w-4xl">
+      <div className="relative z-10 container mx-auto px-4 max-w-4xl mt-20">
         {/* Header with Back Button */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex items-center justify-between mb-8"
+          className="mb-8"
         >
-          <div className="flex items-center">
+          <div className="flex items-center justify-between mb-5">
             <button
               onClick={() => navigate(-1)}
               className="flex items-center gap-2 text-gray-300 hover:text-white transition-colors mr-4"
@@ -464,31 +464,33 @@ export default function CheckoutPage() {
               <ArrowLeft className="h-5 w-5" />
               Back
             </button>
-            <h1 className="text-3xl font-bold text-white">
-              Complete Your Booking
-            </h1>
+
+            <motion.button
+              onClick={handleCancelLockedSeats}
+              disabled={deletedLockedSeatsMutation.isPending}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors disabled:opacity-50"
+            >
+              {deletedLockedSeatsMutation.isPending ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+                  Canceling...
+                </>
+              ) : (
+                <>
+                  <AlertTriangle className="h-4 w-4" />
+                  Cancel Seats
+                </>
+              )}
+            </motion.button>
           </div>
 
           {/* Cancel locked seats button */}
-          <motion.button
-            onClick={handleCancelLockedSeats}
-            disabled={deletedLockedSeatsMutation.isPending}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors disabled:opacity-50"
-          >
-            {deletedLockedSeatsMutation.isPending ? (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
-                Canceling...
-              </>
-            ) : (
-              <>
-                <AlertTriangle className="h-4 w-4" />
-                Cancel Seats
-              </>
-            )}
-          </motion.button>
+
+          <h1 className="text-3xl font-bold text-white">
+            Complete Your Booking
+          </h1>
         </motion.div>
 
         {/* Steps Indicator */}
