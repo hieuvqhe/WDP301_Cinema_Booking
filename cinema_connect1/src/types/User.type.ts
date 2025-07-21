@@ -62,6 +62,14 @@ export interface addConciergeType {
   email: string;
   password: string;
 }
+export interface updateConciergeType {
+  name?: string;
+  email?: string;
+  password?: string;
+  date_of_birth?: string;
+  address?: Address;
+  phone?: string;
+}
 export interface OtpRegisterType {
   email: string;
   otpVerify: string;

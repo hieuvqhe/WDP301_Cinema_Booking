@@ -16,11 +16,14 @@ import {
   Search,
   Trash2,
   Edit,
-  Calendar,
-  Phone,
 } from "lucide-react";
-import { addConcierge, getAllConcierge } from "../../../../apis/admin.api";
-import type { addConciergeType } from "../../../../types";
+import {
+  addConcierge,
+  getAllConcierge,
+  updateConcierge,
+  deleteConcierge,
+} from "../../../../apis/admin.api";
+import type { addConciergeType, updateConciergeType } from "../../../../types";
 import { toast } from "sonner";
 
 // Password generation utility functions
@@ -106,6 +109,7 @@ type CreationMode = "auto" | "semi-auto" | "manual";
 export default function ConciergeManagement() {
   const [creationMode, setCreationMode] = useState<CreationMode>("auto");
   const [formData, setFormData] = useState({
+    name: "",
     email: "",
     password: "",
   });
@@ -117,11 +121,14 @@ export default function ConciergeManagement() {
     isValid: false,
     errors: [],
   });
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState<string | undefined>(undefined);
   const [currentPage, setCurrentPage] = useState(1);
   const [showForm, setShowForm] = useState(false);
   const [batchCount, setBatchCount] = useState(1);
   const [isBatchCreating, setIsBatchCreating] = useState(false);
+  const [editingConcierge, setEditingConcierge] = useState<any>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [conciergeToDelete, setConciergeToDelete] = useState<any>(null);
 
   const queryClient = useQueryClient();
 
@@ -143,6 +150,39 @@ export default function ConciergeManagement() {
     },
   });
 
+  const updateConciergeMutation = useMutation({
+    mutationFn: async ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: updateConciergeType;
+    }) => updateConcierge(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["concierges"] });
+      toast.success("Cập nhật nhân viên thành công!");
+      setEditingConcierge(null);
+      setFormData({ name: "", email: "", password: "" });
+      setPasswordValidation({ isValid: false, errors: [] });
+    },
+    onError: (error: any) => {
+      toast.error(`Lỗi cập nhật: ${error.message}`);
+    },
+  });
+
+  const deleteConciergeMutation = useMutation({
+    mutationFn: async (id: string) => deleteConcierge(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["concierges"] });
+      toast.success("Xóa nhân viên thành công!");
+      setShowDeleteModal(false);
+      setConciergeToDelete(null);
+    },
+    onError: (error: any) => {
+      toast.error(`Lỗi xóa nhân viên: ${error.message}`);
+    },
+  });
+
   const handlePasswordChange = (password: string) => {
     setFormData((prev) => ({ ...prev, password }));
     setPasswordValidation(validatePassword(password));
@@ -151,9 +191,10 @@ export default function ConciergeManagement() {
   const generateAutoCredentials = () => {
     const username = generateUsername();
     const email = `${username}@cinema.com`;
+    const name = username.charAt(0).toUpperCase() + username.slice(1);
     const password = generateSecurePassword();
 
-    setFormData({ email, password });
+    setFormData({ name, email, password });
     setPasswordValidation(validatePassword(password));
   };
 
@@ -210,34 +251,78 @@ export default function ConciergeManagement() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!passwordValidation.isValid) {
-      toast.error("Vui lòng kiểm tra lại mật khẩu");
-      return;
-    }
+    if (editingConcierge) {
+      // Update mode
+      const updateData: updateConciergeType = {
+        email: formData.email,
+        name: formData.name,
+      };
 
-    try {
-      await addConciergeMutation.mutateAsync(formData, {
-        onSuccess: () => {
-          toast.success("Thêm nhân viên thành công!");
-          setFormData({ email: "", password: "" });
-          setPasswordValidation({ isValid: false, errors: [] });
-          setShowForm(false);
-        },
-        onError: (error: any) => {
-          toast.error(`Lỗi: ${error.message}`);
-        },
+      // Only include password if it's provided and valid
+      if (formData.password && passwordValidation.isValid) {
+        updateData.password = formData.password;
+      } else if (formData.password && !passwordValidation.isValid) {
+        toast.error("Vui lòng kiểm tra lại mật khẩu");
+        return;
+      }
+
+      updateConciergeMutation.mutate({
+        id: editingConcierge._id,
+        data: updateData,
       });
-    } catch (error) {
-      console.error("Error adding concierge:", error);
+    } else {
+      // Create mode
+      if (!passwordValidation.isValid) {
+        toast.error("Vui lòng kiểm tra lại mật khẩu");
+        return;
+      }
+
+      try {
+        await addConciergeMutation.mutateAsync(formData, {
+          onSuccess: () => {
+            toast.success("Thêm nhân viên thành công!");
+            setFormData({ name: "", email: "", password: "" });
+            setPasswordValidation({ isValid: false, errors: [] });
+            setShowForm(false);
+          },
+          onError: (error: any) => {
+            toast.error(`Lỗi: ${error.message}`);
+          },
+        });
+      } catch (error) {
+        console.error("Error adding concierge:", error);
+      }
     }
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("vi-VN", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
+  const handleEdit = (concierge: any) => {
+    setEditingConcierge(concierge);
+    setFormData({
+      name: concierge.name || "",
+      email: concierge.email,
+      password: "",
     });
+    setPasswordValidation({ isValid: true, errors: [] }); // Allow update without password change
+    setCreationMode("manual");
+    setShowForm(true);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingConcierge(null);
+    setFormData({ name: "", email: "", password: "" });
+    setPasswordValidation({ isValid: false, errors: [] });
+    setShowForm(false);
+  };
+
+  const handleDeleteClick = (concierge: any) => {
+    setConciergeToDelete(concierge);
+    setShowDeleteModal(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (conciergeToDelete) {
+      deleteConciergeMutation.mutateAsync(conciergeToDelete._id);
+    }
   };
 
   const handlePageChange = (page: number) => {
@@ -275,11 +360,21 @@ export default function ConciergeManagement() {
           {/* Action Buttons */}
           <div className="flex gap-3">
             <button
-              onClick={() => setShowForm(!showForm)}
+              onClick={() =>
+                showForm
+                  ? editingConcierge
+                    ? handleCancelEdit()
+                    : setShowForm(false)
+                  : setShowForm(true)
+              }
               className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
             >
               <Plus className="h-5 w-5" />
-              {showForm ? "Ẩn form" : "Thêm nhân viên"}
+              {showForm
+                ? editingConcierge
+                  ? "Hủy chỉnh sửa"
+                  : "Ẩn form"
+                : "Thêm nhân viên"}
             </button>
           </div>
         </div>
@@ -357,29 +452,32 @@ export default function ConciergeManagement() {
                         <h3 className="font-semibold text-white">
                           {concierge.name || "Chưa cập nhật"}
                         </h3>
+
                         <div className="flex items-center gap-4 text-sm text-gray-400">
                           <div className="flex items-center gap-1">
                             <Mail className="h-4 w-4" />
                             <span>{concierge.email}</span>
                           </div>
-                          {concierge.phone && (
-                            <div className="flex items-center gap-1">
-                              <Phone className="h-4 w-4" />
-                              <span>{concierge.phone}</span>
-                            </div>
-                          )}
-                          <div className="flex items-center gap-1">
-                            <Calendar className="h-4 w-4" />
-                            <span>Tạo: {formatDate(concierge.created_at)}</span>
-                          </div>
+                          <h3 className="flex items-center gap-1">
+                            <Lock className="inline h-4 w-4" />
+                            {concierge.password || "Chưa cập nhật"}
+                          </h3>
                         </div>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <button className="p-2 text-gray-400 hover:text-blue-400 hover:bg-slate-600 rounded-lg transition-colors">
+                      <button
+                        onClick={() => handleEdit(concierge)}
+                        className="p-2 text-gray-400 hover:text-blue-400 hover:bg-slate-600 rounded-lg transition-colors"
+                        title="Chỉnh sửa"
+                      >
                         <Edit className="h-4 w-4" />
                       </button>
-                      <button className="p-2 text-gray-400 hover:text-red-400 hover:bg-slate-600 rounded-lg transition-colors">
+                      <button
+                        onClick={() => handleDeleteClick(concierge)}
+                        className="p-2 text-gray-400 hover:text-red-400 hover:bg-slate-600 rounded-lg transition-colors"
+                        title="Xóa"
+                      >
                         <Trash2 className="h-4 w-4" />
                       </button>
                     </div>
@@ -415,76 +513,110 @@ export default function ConciergeManagement() {
         )}
       </motion.div>
 
+      {/* Add/Edit Modal */}
       {showForm && (
-        <>
-          {/* Creation Mode Selection */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50"
+        >
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="bg-slate-800/50 backdrop-blur-lg rounded-xl border border-slate-700 p-6 mb-6"
+            initial={{ scale: 0.95, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.95, opacity: 0 }}
+            className="bg-slate-800 border border-slate-700 rounded-xl p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto"
           >
-            <h2 className="text-lg font-semibold text-white mb-4">
-              Chọn phương thức tạo tài khoản
-            </h2>
-            <div className="grid md:grid-cols-3 gap-4">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-blue-600/20 rounded-full">
+                  {editingConcierge ? (
+                    <Edit className="h-6 w-6 text-blue-400" />
+                  ) : (
+                    <Plus className="h-6 w-6 text-blue-400" />
+                  )}
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-white">
+                    {editingConcierge
+                      ? "Chỉnh sửa nhân viên"
+                      : "Thêm nhân viên mới"}
+                  </h3>
+                  <p className="text-gray-400 text-sm">
+                    {editingConcierge
+                      ? "Cập nhật thông tin nhân viên"
+                      : "Tạo tài khoản mới cho nhân viên quét QR"}
+                  </p>
+                </div>
+              </div>
               <button
-                onClick={() => setCreationMode("auto")}
-                className={`p-4 rounded-lg border-2 transition-all ${
-                  creationMode === "auto"
-                    ? "border-blue-500 bg-blue-500/20 text-blue-300"
-                    : "border-slate-600 hover:border-slate-500 text-gray-300"
-                }`}
+                onClick={() =>
+                  editingConcierge ? handleCancelEdit() : setShowForm(false)
+                }
+                className="p-2 text-gray-400 hover:text-white hover:bg-slate-700 rounded-lg transition-colors"
               >
-                <Shuffle className="h-6 w-6 mx-auto mb-2" />
-                <h3 className="font-medium">Tự động hoàn toàn</h3>
-                <p className="text-sm text-gray-400 mt-1">
-                  Tự động tạo email và mật khẩu
-                </p>
-              </button>
-
-              <button
-                onClick={() => setCreationMode("semi-auto")}
-                className={`p-4 rounded-lg border-2 transition-all ${
-                  creationMode === "semi-auto"
-                    ? "border-blue-500 bg-blue-500/20 text-blue-300"
-                    : "border-slate-600 hover:border-slate-500 text-gray-300"
-                }`}
-              >
-                <User className="h-6 w-6 mx-auto mb-2" />
-                <h3 className="font-medium">Bán tự động</h3>
-                <p className="text-sm text-gray-400 mt-1">
-                  Tự nhập email, tự động tạo mật khẩu
-                </p>
-              </button>
-
-              <button
-                onClick={() => setCreationMode("manual")}
-                className={`p-4 rounded-lg border-2 transition-all ${
-                  creationMode === "manual"
-                    ? "border-blue-500 bg-blue-500/20 text-blue-300"
-                    : "border-slate-600 hover:border-slate-500 text-gray-300"
-                }`}
-              >
-                <Lock className="h-6 w-6 mx-auto mb-2" />
-                <h3 className="font-medium">Thủ công</h3>
-                <p className="text-sm text-gray-400 mt-1">
-                  Tự nhập cả email và mật khẩu
-                </p>
+                <X className="h-5 w-5" />
               </button>
             </div>
-          </motion.div>
 
-          {/* Form */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="bg-slate-800/50 backdrop-blur-lg rounded-xl border border-slate-700 p-6"
-          >
+            {/* Creation Mode Selection - Only show for new accounts */}
+            {!editingConcierge && (
+              <div className="mb-6">
+                <h4 className="text-md font-semibold text-white mb-4">
+                  Chọn phương thức tạo tài khoản
+                </h4>
+                <div className="grid md:grid-cols-3 gap-4">
+                  <button
+                    onClick={() => setCreationMode("auto")}
+                    className={`p-4 rounded-lg border-2 transition-all ${
+                      creationMode === "auto"
+                        ? "border-blue-500 bg-blue-500/20 text-blue-300"
+                        : "border-slate-600 hover:border-slate-500 text-gray-300"
+                    }`}
+                  >
+                    <Shuffle className="h-6 w-6 mx-auto mb-2" />
+                    <h3 className="font-medium">Tự động hoàn toàn</h3>
+                    <p className="text-sm text-gray-400 mt-1">
+                      Tự động tạo email và mật khẩu
+                    </p>
+                  </button>
+
+                  <button
+                    onClick={() => setCreationMode("semi-auto")}
+                    className={`p-4 rounded-lg border-2 transition-all ${
+                      creationMode === "semi-auto"
+                        ? "border-blue-500 bg-blue-500/20 text-blue-300"
+                        : "border-slate-600 hover:border-slate-500 text-gray-300"
+                    }`}
+                  >
+                    <User className="h-6 w-6 mx-auto mb-2" />
+                    <h3 className="font-medium">Bán tự động</h3>
+                    <p className="text-sm text-gray-400 mt-1">
+                      Tự nhập email, tự động tạo mật khẩu
+                    </p>
+                  </button>
+
+                  <button
+                    onClick={() => setCreationMode("manual")}
+                    className={`p-4 rounded-lg border-2 transition-all ${
+                      creationMode === "manual"
+                        ? "border-blue-500 bg-blue-500/20 text-blue-300"
+                        : "border-slate-600 hover:border-slate-500 text-gray-300"
+                    }`}
+                  >
+                    <Lock className="h-6 w-6 mx-auto mb-2" />
+                    <h3 className="font-medium">Thủ công</h3>
+                    <p className="text-sm text-gray-400 mt-1">
+                      Tự nhập cả email và mật khẩu
+                    </p>
+                  </button>
+                </div>
+              </div>
+            )}
+
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Auto Generation for Mode 1 */}
-              {creationMode === "auto" && (
+              {/* Auto Generation for Mode 1 - Only for new accounts */}
+              {!editingConcierge && creationMode === "auto" && (
                 <div className="space-y-6">
                   {/* Single Account Generation */}
                   <div className="text-center">
@@ -563,22 +695,47 @@ export default function ConciergeManagement() {
                         email: e.target.value,
                       }))
                     }
-                    disabled={creationMode === "auto"}
+                    disabled={!editingConcierge && creationMode === "auto"}
                     className="w-full pl-10 pr-4 py-3 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-slate-700/30 disabled:text-gray-400"
                     placeholder="staff@cinema.com"
                     required
                   />
                 </div>
               </div>
-
+              {/* Name Input */}
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Tên nhân viên
+                </label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <input
+                    type="text"
+                    value={formData.name}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        name: e.target.value,
+                      }))
+                    }
+                    disabled={!editingConcierge && creationMode === "auto"}
+                    className="w-full pl-10 pr-4 py-3 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-slate-700/30 disabled:text-gray-400"
+                    placeholder="Tên nhân viên"
+                    required
+                  />
+                </div>
+              </div>
               {/* Password Input */}
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <label className="block text-sm font-medium text-gray-300">
-                    Mật khẩu
+                    {editingConcierge
+                      ? "Mật khẩu mới (để trống nếu không đổi)"
+                      : "Mật khẩu"}
                   </label>
                   {(creationMode === "semi-auto" ||
-                    creationMode === "manual") && (
+                    creationMode === "manual" ||
+                    editingConcierge) && (
                     <button
                       type="button"
                       onClick={generateAutoPassword}
@@ -595,10 +752,14 @@ export default function ConciergeManagement() {
                     type={showPassword ? "text" : "password"}
                     value={formData.password}
                     onChange={(e) => handlePasswordChange(e.target.value)}
-                    disabled={creationMode === "auto"}
+                    disabled={!editingConcierge && creationMode === "auto"}
                     className="w-full pl-10 pr-12 py-3 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-slate-700/30 disabled:text-gray-400"
-                    placeholder="Mật khẩu tối thiểu 10 ký tự"
-                    required
+                    placeholder={
+                      editingConcierge
+                        ? "Nhập mật khẩu mới..."
+                        : "Mật khẩu tối thiểu 10 ký tự"
+                    }
+                    required={!editingConcierge}
                   />
                   <button
                     type="button"
@@ -651,29 +812,132 @@ export default function ConciergeManagement() {
                 )}
               </div>
 
-              {/* Submit Button */}
-              <div className="flex justify-end">
+              {/* Submit Buttons */}
+              <div className="flex gap-3 justify-end">
+                <button
+                  type="button"
+                  onClick={() =>
+                    editingConcierge ? handleCancelEdit() : setShowForm(false)
+                  }
+                  className="px-4 py-2 text-gray-300 hover:text-white hover:bg-slate-700 rounded-lg transition-colors"
+                >
+                  Hủy
+                </button>
                 <button
                   type="submit"
                   disabled={
-                    !passwordValidation.isValid ||
-                    addConciergeMutation.isPending
+                    (editingConcierge
+                      ? formData.password
+                        ? !passwordValidation.isValid
+                        : false
+                      : !passwordValidation.isValid) ||
+                    addConciergeMutation.isPending ||
+                    updateConciergeMutation.isPending
                   }
                   className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
-                  {addConciergeMutation.isPending ? (
+                  {addConciergeMutation.isPending ||
+                  updateConciergeMutation.isPending ? (
                     <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : editingConcierge ? (
+                    <Edit className="h-5 w-5" />
                   ) : (
                     <Plus className="h-5 w-5" />
                   )}
-                  {addConciergeMutation.isPending
-                    ? "Đang thêm..."
+                  {addConciergeMutation.isPending ||
+                  updateConciergeMutation.isPending
+                    ? editingConcierge
+                      ? "Đang cập nhật..."
+                      : "Đang thêm..."
+                    : editingConcierge
+                    ? "Cập nhật nhân viên"
                     : "Thêm nhân viên"}
                 </button>
               </div>
             </form>
           </motion.div>
-        </>
+        </motion.div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && conciergeToDelete && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50"
+        >
+          <motion.div
+            initial={{ scale: 0.95, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.95, opacity: 0 }}
+            className="bg-slate-800 border border-slate-700 rounded-xl p-6 max-w-md w-full mx-4"
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-3 bg-red-600/20 rounded-full">
+                <Trash2 className="h-6 w-6 text-red-400" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-white">
+                  Xác nhận xóa nhân viên
+                </h3>
+                <p className="text-gray-400 text-sm">
+                  Hành động này không thể hoàn tác
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-slate-700/30 rounded-lg p-4 mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
+                  <User className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <p className="text-white font-medium">
+                    {conciergeToDelete.name || "Chưa cập nhật"}
+                  </p>
+                  <p className="text-gray-400 text-sm">
+                    {conciergeToDelete.email}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <p className="text-gray-300 mb-6">
+              Bạn có chắc chắn muốn xóa nhân viên này? Tất cả dữ liệu liên quan
+              sẽ bị xóa vĩnh viễn.
+            </p>
+
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setConciergeToDelete(null);
+                }}
+                className="px-4 py-2 text-gray-300 hover:text-white hover:bg-slate-700 rounded-lg transition-colors"
+              >
+                Hủy
+              </button>
+              <button
+                onClick={handleConfirmDelete}
+                disabled={deleteConciergeMutation.isPending}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {deleteConciergeMutation.isPending ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Đang xóa...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="h-4 w-4" />
+                    Xóa nhân viên
+                  </>
+                )}
+              </button>
+            </div>
+          </motion.div>
+        </motion.div>
       )}
     </div>
   );

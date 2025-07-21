@@ -136,10 +136,7 @@ const Navbar = () => {
       case "staff":
         return [...baseItems, { title: "Partner Dashboard", link: "/partner" }];
       case "customer":
-        return [
-          ...baseItems,
-          { title: "My Bookings", link: "/my-bookings" },
-        ];
+        return [...baseItems, { title: "My Bookings", link: "/my-bookings" }];
       default:
         return [...baseItems];
     }
@@ -354,7 +351,6 @@ const Navbar = () => {
                               key={index}
                               href="#"
                               className={`block px-4 py-2 text-sm transition-all duration-200 `}
-                              onClick={item.action}
                             >
                               {item.title}
                             </a>
@@ -571,7 +567,6 @@ const Navbar = () => {
                           key={index}
                           href="#"
                           className={`block px-4 py-2 text-sm transition-all duration-200 `}
-                          onClick={item.action}
                         >
                           {item.title}
                         </a>

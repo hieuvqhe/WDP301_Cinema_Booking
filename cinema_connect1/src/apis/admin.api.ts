@@ -18,7 +18,11 @@ import type {
   PaymentListResponse,
 } from "../types/Admin.type";
 import { getAuthToken } from "./user.api";
-import type { addConciergeType, RegisterResponse } from "../types";
+import type {
+  addConciergeType,
+  RegisterResponse,
+  updateConciergeType,
+} from "../types";
 
 const BASE_URL = "https://bookmovie-5n6n.onrender.com";
 
@@ -766,6 +770,7 @@ export const getAllConcierge = async (params?: {
       _id: string;
       email: string;
       name: string;
+      password: string;
       phone: string;
       avatar: string;
       created_at: string;
@@ -789,6 +794,45 @@ export const getAllConcierge = async (params?: {
       queryParams.toString() ? `?${queryParams.toString()}` : ""
     }`;
     const response = await adminApi.get(url);
+    return response.data;
+  } catch (error) {
+    throw handleAdminError(error);
+  }
+};
+
+export const updateConcierge = async (
+  conciergeId: string,
+  userData: updateConciergeType
+): Promise<{
+  message: string;
+  result: {
+    concierge_id: string;
+  };
+}> => {
+  try {
+    const adminApi = createAdminRequest();
+    const response = await adminApi.put(
+      `/admin/concierge/update/${conciergeId}`,
+      userData
+    );
+    return response.data;
+  } catch (error) {
+    throw handleAdminError(error);
+  }
+};
+export const deleteConcierge = async (
+  conciergeId: string
+): Promise<{
+  message: string;
+  result: {
+    concierge_id: string;
+  };
+}> => {
+  try {
+    const adminApi = createAdminRequest();
+    const response = await adminApi.delete(
+      `/admin/concierge/deleted/${conciergeId}`
+    );
     return response.data;
   } catch (error) {
     throw handleAdminError(error);

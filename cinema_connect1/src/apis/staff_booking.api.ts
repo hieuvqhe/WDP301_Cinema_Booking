@@ -1,8 +1,9 @@
-import axios from 'axios';
-import { getAuthToken } from './user.api';
-import { getUserProfileById } from './user.api';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import axios from "axios";
+import { getAuthToken } from "./user.api";
+import { getUserProfileById } from "./user.api";
 
-const BASE_URL = 'https://bookmovie-5n6n.onrender.com';
+const BASE_URL = "https://bookmovie-5n6n.onrender.com";
 
 // Create authenticated axios instance for staff requests
 const createStaffRequest = () => {
@@ -11,8 +12,8 @@ const createStaffRequest = () => {
     baseURL: BASE_URL,
     headers: {
       Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    }
+      "Content-Type": "application/json",
+    },
   });
 };
 
@@ -21,22 +22,22 @@ const handleStaffError = (error: unknown): Error => {
   if (axios.isAxiosError(error)) {
     const status = error.response?.status;
     const message = error.response?.data?.message;
-    
+
     if (status === 401) {
-      throw new Error('Unauthorized. Please login as staff.');
+      throw new Error("Unauthorized. Please login as staff.");
     } else if (status === 403) {
-      throw new Error('Access denied. Staff privileges required.');
+      throw new Error("Access denied. Staff privileges required.");
     } else if (status === 404) {
-      throw new Error(message || 'Resource not found.');
+      throw new Error(message || "Resource not found.");
     } else if (status === 400) {
-      throw new Error(message || 'Invalid request data.');
+      throw new Error(message || "Invalid request data.");
     } else if (status === 500) {
-      throw new Error('Server error. Please try again later.');
+      throw new Error("Server error. Please try again later.");
     } else {
-      throw new Error(message || 'Request failed.');
+      throw new Error(message || "Request failed.");
     }
   }
-  throw new Error('Network error. Please check your connection.');
+  throw new Error("Network error. Please check your connection.");
 };
 
 // Booking types
@@ -114,8 +115,8 @@ export interface Booking {
   total_amount: number;
   booking_time: string;
   ticket_code: string;
-  status: 'confirmed' | 'cancelled' | 'pending';
-  payment_status: 'paid' | 'failed' | 'pending';
+  status: "confirmed" | "cancelled" | "pending";
+  payment_status: "paid" | "failed" | "pending";
   created_at: string;
   updated_at: string;
 }
@@ -152,17 +153,17 @@ export interface BookingDetailResponse {
 export const getTheaterBookings = async (
   page: number = 1,
   limit: number = 20,
-  status?: 'confirmed' | 'cancelled' | 'pending',
-  paymentStatus?: 'paid' | 'failed' | 'pending'
+  status?: "confirmed" | "cancelled" | "pending",
+  paymentStatus?: "paid" | "failed" | "pending"
 ): Promise<BookingListResponse> => {
   try {
     const staffApi = createStaffRequest();
     const params: Record<string, any> = { page, limit };
-    
+
     if (status) params.status = status;
     if (paymentStatus) params.payment_status = paymentStatus;
-    
-    const response = await staffApi.get('/staff/bookings', { params });
+
+    const response = await staffApi.get("/staff/bookings", { params });
     return response.data;
   } catch (error) {
     throw handleStaffError(error);
@@ -170,7 +171,9 @@ export const getTheaterBookings = async (
 };
 
 // Get specific booking details by ID
-export const getBookingById = async (bookingId: string): Promise<BookingDetailResponse> => {
+export const getBookingById = async (
+  bookingId: string
+): Promise<BookingDetailResponse> => {
   try {
     const staffApi = createStaffRequest();
     const response = await staffApi.get(`/staff/bookings/${bookingId}`);
@@ -181,12 +184,14 @@ export const getBookingById = async (bookingId: string): Promise<BookingDetailRe
 };
 
 // Get enriched booking details with all related information
-export const getEnrichedBookingDetails = async (bookingId: string): Promise<BookingWithDetails> => {
+export const getEnrichedBookingDetails = async (
+  bookingId: string
+): Promise<BookingWithDetails> => {
   try {
     // Get basic booking details
     const bookingResponse = await getBookingById(bookingId);
     const booking = bookingResponse.result;
-    
+
     // If the booking already has detailed information, try to enhance with user data
     let userDetails = booking.user;
     if (!userDetails && booking.user_id) {
@@ -205,17 +210,17 @@ export const getEnrichedBookingDetails = async (bookingId: string): Promise<Book
           bio: userResponse.bio,
           cover_photo: userResponse.cover_photo,
           location: userResponse.location,
-          website: userResponse.website
+          website: userResponse.website,
         };
       } catch (error) {
-        console.warn('Failed to fetch user details:', error);
+        console.warn("Failed to fetch user details:", error);
       }
     }
-    
+
     // Return the enriched booking with user data
     return {
       ...booking,
-      user: userDetails
+      user: userDetails,
     };
   } catch (error) {
     throw handleStaffError(error);
@@ -227,24 +232,28 @@ export const getEnrichedBookingDetails = async (bookingId: string): Promise<Book
 // ===============================
 
 // Helper function to validate booking status
-export const isValidBookingStatus = (status: string): status is 'confirmed' | 'cancelled' | 'pending' => {
-  return ['confirmed', 'cancelled', 'pending'].includes(status);
+export const isValidBookingStatus = (
+  status: string
+): status is "confirmed" | "cancelled" | "pending" => {
+  return ["confirmed", "cancelled", "pending"].includes(status);
 };
 
 // Helper function to validate payment status
-export const isValidPaymentStatus = (status: string): status is 'paid' | 'failed' | 'pending' => {
-  return ['paid', 'failed', 'pending'].includes(status);
+export const isValidPaymentStatus = (
+  status: string
+): status is "paid" | "failed" | "pending" => {
+  return ["paid", "failed", "pending"].includes(status);
 };
 
 // Helper function to get booking status display text
 export const getBookingStatusDisplay = (status: string): string => {
   switch (status) {
-    case 'confirmed':
-      return 'Confirmed';
-    case 'cancelled':
-      return 'Cancelled';
-    case 'pending':
-      return 'Pending';
+    case "confirmed":
+      return "Confirmed";
+    case "cancelled":
+      return "Cancelled";
+    case "pending":
+      return "Pending";
     default:
       return status;
   }
@@ -253,12 +262,12 @@ export const getBookingStatusDisplay = (status: string): string => {
 // Helper function to get payment status display text
 export const getPaymentStatusDisplay = (status: string): string => {
   switch (status) {
-    case 'paid':
-      return 'Paid';
-    case 'failed':
-      return 'Failed';
-    case 'pending':
-      return 'Pending';
+    case "paid":
+      return "Paid";
+    case "failed":
+      return "Failed";
+    case "pending":
+      return "Pending";
     default:
       return status;
   }
@@ -267,12 +276,12 @@ export const getPaymentStatusDisplay = (status: string): string => {
 // Helper function to format booking time
 export const formatBookingTime = (dateString: string): string => {
   const date = new Date(dateString);
-  return date.toLocaleString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
+  return date.toLocaleString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
   });
 };
 
@@ -280,19 +289,19 @@ export const formatBookingTime = (dateString: string): string => {
 export const formatShowtime = (startTime: string, endTime: string): string => {
   const start = new Date(startTime);
   const end = new Date(endTime);
-  
-  const startFormatted = start.toLocaleString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
+
+  const startFormatted = start.toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
   });
-  
-  const endFormatted = end.toLocaleString('en-US', {
-    hour: '2-digit',
-    minute: '2-digit'
+
+  const endFormatted = end.toLocaleString("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
   });
-  
+
   return `${startFormatted} - ${endFormatted}`;
 };
 
@@ -303,26 +312,26 @@ export const getTotalSeatsCount = (seats: BookingSeat[]): number => {
 
 // Helper function to format seats display
 export const formatSeatsDisplay = (seats: BookingSeat[]): string => {
-  return seats.map(seat => `${seat.row}${seat.number}`).join(', ');
+  return seats.map((seat) => `${seat.row}${seat.number}`).join(", ");
 };
 
 // Helper function to format price
 export const formatPrice = (amount: number): string => {
-  return new Intl.NumberFormat('vi-VN', {
-    style: 'currency',
-    currency: 'VND'
+  return new Intl.NumberFormat("vi-VN", {
+    style: "currency",
+    currency: "VND",
   }).format(amount);
 };
 
 // Helper function to get seat type display
 export const getSeatTypeDisplay = (type: string): string => {
   switch (type) {
-    case 'regular':
-      return 'Regular';
-    case 'vip':
-      return 'VIP';
-    case 'premium':
-      return 'Premium';
+    case "regular":
+      return "Regular";
+    case "vip":
+      return "VIP";
+    case "premium":
+      return "Premium";
     default:
       return type;
   }
@@ -344,5 +353,5 @@ export const getUserContactInfo = (user: BookingUser): string => {
   const contacts = [];
   if (user.email) contacts.push(user.email);
   if (user.phone) contacts.push(user.phone);
-  return contacts.join(' • ');
+  return contacts.join(" • ");
 };
