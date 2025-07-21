@@ -124,6 +124,7 @@ const Navbar = () => {
     const baseItems = [
       { title: "Home", link: "/" },
       { title: "Movies", link: "/movies" },
+      
     ];
 
     if (!user) {
@@ -154,6 +155,18 @@ const Navbar = () => {
         link: "",
         action: () => logout(),
       },
+      {
+          title: "Profile",
+          link: "/profile",
+        },
+        {
+          title: "Payment History",
+          link: "/payment-history",
+        },
+        {
+          title: "My Bookings",
+          link: "/my-bookings",
+        },
     ];
 
     if (user?.role === "customer") {
