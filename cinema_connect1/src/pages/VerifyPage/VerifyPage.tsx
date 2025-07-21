@@ -87,10 +87,7 @@ const VerifyPage = () => {
   const handleResendOtp = async () => {
     const emailToUse = email || tempEmail;
     
-    console.log('Resend OTP - Email from URL:', email);
-    console.log('Resend OTP - TempEmail from store:', tempEmail);
-    console.log('Resend OTP - Email to use:', emailToUse);
-    
+
     if (!emailToUse) {
       toast.error('Email address is missing');
       return;

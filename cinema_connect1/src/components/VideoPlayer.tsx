@@ -17,9 +17,7 @@ const VideoPlayer = ({
 }: VideoPlayerProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isPlaying, setIsPlaying] = useState(false);
-
-  console.log(isPlaying);
+  const [, setIsPlaying] = useState(false);
 
   useEffect(() => {
     if (videoRef.current) {
@@ -42,7 +40,6 @@ const VideoPlayer = ({
         hls.attachMedia(video);
 
         hls.on(Hls.Events.MANIFEST_PARSED, () => {
-          console.log("Video is ready to play");
           setIsLoading(false);
         });
 

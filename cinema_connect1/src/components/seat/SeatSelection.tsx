@@ -66,7 +66,6 @@ export default function SeatSelection({
     }) => bookingApi.deletedShowtimeBySeatLocked(showtime, body),
 
     onSuccess: (data) => {
-      console.log(data);
 
       toast.success(
         `Đã hủy ghế ${(data?.data?.result as any)?.deleted_seats[0].seat_row}${

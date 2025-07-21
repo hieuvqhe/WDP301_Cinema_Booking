@@ -39,7 +39,6 @@ const MyBooking: React.FC = () => {
     sort_order: "desc",
   });
   const [bookingData, setBookingData] = useState<any>(null);
-  console.log("bookingData", bookingData);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [showFilters, setShowFilters] = useState(false);

@@ -38,7 +38,7 @@ const TicketQRSection: React.FC<TicketQRSectionProps> = ({
   qrData,
   ticketCode,
   bookingData,
-  handleClose
+  handleClose,
 }) => {
   const formatDateTime = (dateString: string) => {
     const date = new Date(dateString);
@@ -59,13 +59,11 @@ const TicketQRSection: React.FC<TicketQRSectionProps> = ({
   const getQRData = () => {
     // Ưu tiên ticketCode trước
     if (ticketCode && ticketCode.trim()) {
-      console.log("Using ticketCode for QR:", ticketCode);
       return ticketCode.trim();
     }
 
     // Fallback: sử dụng qrData nếu có
     if (qrData && qrData.trim()) {
-      console.log("Using provided qrData:", qrData);
       return qrData.trim();
     }
 
@@ -116,18 +114,13 @@ const TicketQRSection: React.FC<TicketQRSectionProps> = ({
     ? formatDateTime(bookingData.showtime.start_time)
     : null;
 
-  // Debug info - simplified
-  React.useEffect(() => {
-    console.log("=== QR DEBUG INFO ===");
-    console.log("ticketCode:", ticketCode);
-    console.log("finalQRData:", finalQRData);
-    console.log("QR ready:", !!finalQRData);
-  }, [ticketCode, finalQRData]);
-
   return (
     <div className="bg-white rounded-xl p-6 border border-gray-200 w-full max-w-4xl mx-auto shadow-lg">
       <div className="flex justify-end text-black ">
-        <FaTimes onClick={() => handleClose()} className="hover:scale-150 transition-all duration-300 cursor-pointer" />
+        <FaTimes
+          onClick={() => handleClose()}
+          className="hover:scale-150 transition-all duration-300 cursor-pointer"
+        />
       </div>
 
       <div className="flex items-center justify-center gap-2 mb-6">

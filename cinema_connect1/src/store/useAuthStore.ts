@@ -39,12 +39,9 @@ export const useAuthStore = create<AuthState>()(
         tempEmail: null,
         
         register: async (userData: RegisterUserType) => {
-          console.log("Register function called with:", userData);
           set({ isLoading: true, error: null });
           try {
-            console.log("About to call registerUser API...");
-            const response = await registerUser(userData);
-            console.log("Registration API response:", response);
+            await registerUser(userData);
             // Store the email for later use in OTP verification
             set({ tempEmail: userData.email, isLoading: false });
             return true;

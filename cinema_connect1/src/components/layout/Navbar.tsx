@@ -169,7 +169,6 @@ const Navbar = () => {
         {
           title: "My Bookings",
           link: "/my-bookings",
-          action: () => console.log("My Bookings"),
         },
         ...baseActions,
       ];

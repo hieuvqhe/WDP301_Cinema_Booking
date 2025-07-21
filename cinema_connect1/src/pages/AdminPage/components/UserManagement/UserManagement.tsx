@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -51,7 +52,6 @@ export const UserManagement = () => {
       };
       
       const response = await getAllUsers(params);
-      console.log('Users API Response:', response); // Debug log
       
       if (response?.result?.users) {
         setUsers(response.result.users);

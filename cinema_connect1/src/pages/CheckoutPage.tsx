@@ -258,23 +258,19 @@ export default function CheckoutPage() {
   // Helper function to check if BOTH selected-movie-info AND seat-locked exist for the current showtimeId
   const checkExistingBooking = (showtimeId: string) => {
     try {
-      console.log("Checking existing booking for showtimeId:", showtimeId);
 
       // Check for selected-movie-info data
       const selectedMovieInfo = localStorage.getItem("selected-movie-info");
       let hasSelectedMovieInfo = false;
       if (selectedMovieInfo) {
         const parsedData = JSON.parse(selectedMovieInfo);
-        console.log("Parsed selected-movie-info data:", parsedData.showtimeId);
         if (parsedData.showtimeId === showtimeId) {
-          console.log("Found matching selected-movie-info data");
           hasSelectedMovieInfo = true;
         }
       }
 
       // Only return true if BOTH exist
       const bothExist = hasSelectedMovieInfo;
-      console.log("Both seat-locked and selected-movie-info exist:", bothExist);
       return bothExist;
     } catch (error) {
       console.error("Error checking existing booking data:", error);
@@ -313,56 +309,40 @@ export default function CheckoutPage() {
       // Check if existing booking data exists for this showtimeId
 
       const hasExistingBooking = checkExistingBooking(bookingInfo.showtimeId);
-      console.log("hasExistingBooking:", hasExistingBooking);
 
       let response;
       let newBookingId;
 
       if (hasExistingBooking) {
         // Both selected-movie-info AND seat-locked exist, use updateBooking
-        console.log(
-          "Both selected-movie-info and seat-locked exist, using updateBooking"
-        );
-
+      
         // Get existing booking ID from seat-locked data (preferred) or selected-movie-info
         let existingBookingId = null;
 
         // Fallback to selected-movie-info if no bookingId in seat-locked
         if (!existingBookingId) {
           const selectedMovieInfo = localStorage.getItem("selected-movie-info");
-          console.log("selectedMovieInfo:", selectedMovieInfo);
           if (selectedMovieInfo) {
             const parsedData = JSON.parse(selectedMovieInfo);
             existingBookingId = parsedData.bookingId;
-            console.log(
-              "existingBookingId from selected-movie-info:",
-              existingBookingId
-            );
+           
           }
         }
 
         if (existingBookingId) {
-          console.log("Using updateBooking with bookingId:", existingBookingId);
           response = await updateBookingMutation.mutateAsync({
             bookingId: existingBookingId,
             data: bookingData,
           });
           newBookingId = existingBookingId;
         } else {
-          console.log(
-            "ERROR: Both localStorage items exist but no bookingId found!"
-          );
-          console.log(
-            "This should not happen - bookingId should exist in localStorage"
-          );
+         
           // Fallback to createBooking
           response = await createBookingMutation.mutateAsync(bookingData, {});
           newBookingId = response.data.result.booking._id;
         }
       } else {
-        console.log(
-          "Either selected-movie-info or seat-locked missing, using createBooking"
-        );
+      
         // Use createBooking if either or both localStorage items are missing
         response = await createBookingMutation.mutateAsync(bookingData);
         newBookingId = response.data.result.booking._id;

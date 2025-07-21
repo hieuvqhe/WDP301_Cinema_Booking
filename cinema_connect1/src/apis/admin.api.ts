@@ -717,8 +717,9 @@ export const verifyTicketCode = async (
 
 export const addConcierge = async (userData: addConciergeType) => {
   try {
-    const response = await axios.post<RegisterResponse>(
-      `${BASE_URL}/add/register/Concierge`,
+    const adminApi = createAdminRequest();
+    const response = await adminApi.post<RegisterResponse>(
+      `/admin/add/register/Concierge`,
       userData
     );
     return response.data;
@@ -752,5 +753,44 @@ export const addConcierge = async (userData: addConciergeType) => {
       }
     }
     throw new Error("Failed to send verification email. Please try again.");
+  }
+};
+export const getAllConcierge = async (params?: {
+  page?: number;
+  limit?: number;
+  search?: string;
+}): Promise<{
+  message: string;
+  result: {
+    concierges: Array<{
+      _id: string;
+      email: string;
+      name: string;
+      phone: string;
+      avatar: string;
+      created_at: string;
+      updated_at: string;
+    }>;
+    total: number;
+    page: number;
+    limit: number;
+    total_pages: number;
+  };
+}> => {
+  try {
+    const adminApi = createAdminRequest();
+    const queryParams = new URLSearchParams();
+
+    if (params?.page) queryParams.append("page", params.page.toString());
+    if (params?.limit) queryParams.append("limit", params.limit.toString());
+    if (params?.search) queryParams.append("search", params.search);
+
+    const url = `/admin/concierge/all/tk/get${
+      queryParams.toString() ? `?${queryParams.toString()}` : ""
+    }`;
+    const response = await adminApi.get(url);
+    return response.data;
+  } catch (error) {
+    throw handleAdminError(error);
   }
 };

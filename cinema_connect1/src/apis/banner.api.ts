@@ -70,7 +70,6 @@ export const getHomeSliderBanners = async (): Promise<Banner[]> => {
     const bannerApi = createPublicBannerRequest();
     const response = await bannerApi.get('/banners/home-slider');
     
-    console.log('Banner API response:', response.data);
     
     // API trả về { message: string, result: Banner[] } - không phải result.banners
     const banners = response.data.result || [];

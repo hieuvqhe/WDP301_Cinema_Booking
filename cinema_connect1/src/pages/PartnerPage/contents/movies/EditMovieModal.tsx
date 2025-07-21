@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { motion } from 'framer-motion';
 import { 
   AlertCircle, 
@@ -182,7 +183,6 @@ const EditMovieModal: React.FC<EditMovieModalProps> = ({
       // Upload to server
       const response = await mediasApi.uploadImages(file);
       
-      console.log('Upload response:', response.data); // Debug log
       
       // Check if response is successful and has the expected structure
       // API response: { message: "Upload success", result: [{ url: "...", type: 0 }] }
@@ -235,7 +235,6 @@ const EditMovieModal: React.FC<EditMovieModalProps> = ({
       // Upload to server using HLS
       const response = await mediasApi.uploadVideoHLS(file);
       
-      console.log('Upload response:', response.data); // Debug log
       
       // Check if response is successful and has the expected structure
       // API response: { message: "Upload success", result: [{ url: "...", type: 2 }] }
