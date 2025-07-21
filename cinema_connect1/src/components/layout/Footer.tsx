@@ -5,7 +5,7 @@ const Footer = () => {
         <div className="md:max-w-96">
           <img
             className="w-14 h-auto"
-            src="logo.png"
+            src="https://movie-store-wdp301.s3.ap-southeast-1.amazonaws.com/Images/2e128e74a80867df70af3c302.jpg"
             alt="logo"
           />
           <p className="mt-6 text-sm">

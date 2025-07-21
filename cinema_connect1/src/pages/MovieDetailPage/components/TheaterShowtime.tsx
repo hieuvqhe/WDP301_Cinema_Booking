@@ -7,6 +7,8 @@ type Props = {
   theater: GetTheatersResponse | null;
   showtimes: Showtime[];
   fetchShowtimesByTheater: (id: string) => void;
+  isLoadingTheaters: boolean;
+  isLoadingShowtimes: boolean;
 };
 
 export default function TheaterShowtime({
@@ -15,12 +17,27 @@ export default function TheaterShowtime({
   theater,
   showtimes,
   fetchShowtimesByTheater,
+  isLoadingTheaters,
+  isLoadingShowtimes,
 }: Props) {
+  // Lọc ra các rạp có lịch chiếu (theater đã được filter từ API)
+  const availableTheaters = theater?.result?.theaters || [];
+
+  // Component loading spinner
+  const LoadingSpinner = () => (
+    <div className="flex items-center justify-center py-4">
+      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+      <span className="ml-2 text-gray-400">Đang tải...</span>
+    </div>
+  );
+
   return (
     <>
       <h2 className="text-2xl font-bold mb-4">Rạp</h2>
       <div className="mb-4">
-        {theater?.result?.theaters?.length ? (
+        {isLoadingTheaters ? (
+          <LoadingSpinner />
+        ) : availableTheaters.length ? (
           <select
             className="bg-[#2A2A2A] text-gray-300 px-4 py-2 rounded-lg border border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary transition"
             value={selectedInfo.theaterId || ""}
@@ -32,24 +49,28 @@ export default function TheaterShowtime({
                 showtimeId: null,
                 screenId: null,
               }));
-              fetchShowtimesByTheater(selectedId);
+              if (selectedId) {
+                fetchShowtimesByTheater(selectedId);
+              }
             }}
           >
             <option value="">-- Chọn rạp --</option>
-            {theater.result.theaters.map((t) => (
+            {availableTheaters.map((t) => (
               <option key={t._id} value={t._id}>
-                {t.name}
+                {t.name} - {t.location}
               </option>
             ))}
           </select>
         ) : (
-          <div className="text-gray-400">Chưa có rạp nào.</div>
+          <div className="text-gray-400">Chưa có rạp nào có lịch chiếu cho phim này.</div>
         )}
       </div>
 
       <h2 className="text-2xl font-bold mb-4">Suất chiếu</h2>
       <div className="mb-4">
-        {showtimes.length ? (
+        {isLoadingShowtimes ? (
+          <LoadingSpinner />
+        ) : showtimes.length ? (
           <div className="flex flex-wrap gap-2">
             {showtimes.map((showtime) => {
               const isSelected = selectedInfo.showtimeId === showtime._id;
@@ -81,8 +102,10 @@ export default function TheaterShowtime({
               );
             })}
           </div>
+        ) : selectedInfo.theaterId ? (
+          <div className="text-gray-400">Chưa có suất chiếu nào cho rạp này.</div>
         ) : (
-          <div className="text-gray-400">Chưa có suất chiếu nào.</div>
+          <div className="text-gray-400">Vui lòng chọn rạp để xem suất chiếu.</div>
         )}
       </div>
     </>

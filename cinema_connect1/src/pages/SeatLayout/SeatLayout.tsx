@@ -111,11 +111,11 @@ export default function SeatLayout() {
       <div className="bg-[#1E1E1E] rounded-3xl shadow-xl p-8">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold text-center">{screen.name}</h1>
-          {secondsLeft !== null && (
+          {/* {secondsLeft !== null && (
             <div className="text-lg font-semibold text-red-400">
               Thời gian giữ ghế: {formatTime(secondsLeft)}
             </div>
-          )}
+          )} */}
         </div>
         <SeatSelection
           seatLayout={screen.seat_layout}
