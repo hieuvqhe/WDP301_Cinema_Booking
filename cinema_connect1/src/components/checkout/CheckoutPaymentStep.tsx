@@ -226,7 +226,7 @@ const CheckoutPaymentStep: React.FC<CheckoutPaymentStepProps> = ({
       {/* Payment Button */}
       <motion.button
         onClick={handlePayment}
-        disabled={isProcessing || createPaymentMutation.isPending}
+        disabled={isProcessing || createPaymentMutation.isPending || selectedPaymentMethod !== 'sepay'}
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         className="w-full py-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-semibold rounded-xl 
