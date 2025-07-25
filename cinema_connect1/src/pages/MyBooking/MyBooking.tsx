@@ -84,10 +84,14 @@ const MyBooking: React.FC = () => {
     const hoursUntilShow =
       (showTime.getTime() - now.getTime()) / (1000 * 60 * 60);
 
+    // Ẩn nút cancel nếu QR code đang được hiển thị
+    const isQRVisible = selectedTicket === booking.ticket_code;
+
     return (
       booking.status === "confirmed" &&
       booking.payment_status === "completed" &&
-      hoursUntilShow > 2
+      hoursUntilShow > 2 &&
+      !isQRVisible // Thêm điều kiện này để ẩn nút cancel khi QR đang hiển thị
     );
   };
 
