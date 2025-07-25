@@ -942,63 +942,39 @@ export default function SeatSelection({
       >
         <h3 className="font-bold text-xl mb-6 text-center text-gray-200 flex items-center justify-center gap-2">
           <span className="w-4 h-4 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full"></span>
-          Seat note
+          Chú thích ghế ngồi
         </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
           {[
             [
-              "Regular",
+              "Ghế thường",
               "bg-gradient-to-r from-blue-500 to-blue-600",
-              "Regular Seat",
+              "Ghế tiêu chuẩn",
             ],
             [
-              "Premium",
+              "Ghế VIP",
               "bg-gradient-to-r from-purple-500 to-purple-600",
-              "Premium Seat",
+              "Ghế cao cấp",
             ],
             [
-              "Recliner",
-              "bg-gradient-to-r from-pink-500 to-pink-600",
-              "Recliner Seat",
-            ],
-            [
-              "Couple",
-              "bg-gradient-to-r from-yellow-500 to-orange-500",
-              "Couple Seat",
-            ],
-            [
-              "Selected",
-
+              "Đã chọn",
               "bg-gradient-to-r from-green-500 to-green-600",
-              "You have selected",
+              "Ghế bạn đã chọn",
             ],
             [
-              "Booked",
-
-              "Đang được đặt",
+              "Đang chọn",
               "bg-gradient-to-r from-yellow-500 to-orange-500",
-              "Người khác đang chọn",
+              "Ghế đang được chọn bởi người khác",
             ],
             [
-              "Ghế đã đặt",
+              "Đã đặt",
               "bg-gradient-to-r from-red-500 to-red-600",
-              "Unavailable",
+              "Ghế đã có người đặt",
             ],
             [
-              "Your Seat",
-              "bg-gradient-to-r from-green-400 to-emerald-500",
-              "Temporarily locked by you",
-            ],
-            [
-              "Locked by Others",
-              "bg-gradient-to-r from-yellow-500 to-orange-500",
-              "Being selected by someone else",
-            ],
-            [
-              "Unavailable",
-
+              "Không khả dụng",
               "bg-gradient-to-r from-gray-500 to-gray-600",
-              "Broken Seat",
+              "Ghế hỏng hoặc bị khóa",
             ],
           ].map(([type, color, description], i) => (
             <motion.div
