@@ -356,17 +356,23 @@ const Navbar = () => {
                               key={index}
                               to={item.link}
                               className={`block px-4 py-2 text-sm transition-all duration-200 `}
+                              onClick={() => setIsOpen(false)}
                             >
                               {item.title}
                             </Link>
                           ) : (
-                            <a
+                            <button
                               key={index}
-                              href="#"
-                              className={`block px-4 py-2 text-sm transition-all duration-200 `}
+                              onClick={() => {
+                                if (item.action) {
+                                  item.action();
+                                }
+                                setIsOpen(false);
+                              }}
+                              className={`block px-4 py-2 text-sm transition-all duration-200 text-left w-full`}
                             >
                               {item.title}
-                            </a>
+                            </button>
                           )
                         )}
                       </div>
@@ -576,13 +582,17 @@ const Navbar = () => {
                           {item.title}
                         </Link>
                       ) : (
-                        <a
+                        <button
                           key={index}
-                          href="#"
-                          className={`block px-4 py-2 text-sm transition-all duration-200 `}
+                          onClick={() => {
+                            if (item.action) {
+                              item.action();
+                            }
+                          }}
+                          className={`block px-4 py-2 text-sm transition-all duration-200 text-left w-full hover:bg-gray-700`}
                         >
                           {item.title}
-                        </a>
+                        </button>
                       )
                     )}
                   </div>
