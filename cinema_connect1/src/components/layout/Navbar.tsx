@@ -152,18 +152,6 @@ const Navbar = () => {
         link: "",
         action: () => logout(),
       },
-      {
-          title: "Profile",
-          link: "/profile",
-        },
-        {
-          title: "Payment History",
-          link: "/payment-history",
-        },
-        {
-          title: "My Bookings",
-          link: "/my-bookings",
-        },
     ];
 
     if (user?.role === "customer") {
@@ -184,7 +172,14 @@ const Navbar = () => {
       ];
     }
 
-    return baseActions;
+    // For admin and staff roles
+    return [
+      {
+        title: "Profile",
+        link: "/profile",
+      },
+      ...baseActions,
+    ];
   };
 
   const userQuickAccess = getUserQuickAccess();
@@ -364,7 +359,7 @@ const Navbar = () => {
                             <button
                               key={index}
                               onClick={() => {
-                                if (item.action) {
+                                if ('action' in item && item.action) {
                                   item.action();
                                 }
                                 setIsOpen(false);
@@ -585,7 +580,7 @@ const Navbar = () => {
                         <button
                           key={index}
                           onClick={() => {
-                            if (item.action) {
+                            if ('action' in item && item.action) {
                               item.action();
                             }
                           }}

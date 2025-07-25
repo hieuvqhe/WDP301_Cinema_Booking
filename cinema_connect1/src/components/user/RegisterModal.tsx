@@ -127,10 +127,8 @@ const RegisterModal = ({ isFormOpen, onSwitchToLogin }: RegisterModalProps) => {
       newErrors.name = "Name must be at least 2 characters long";
     } else if (trimmedName.length > 50) {
       newErrors.name = "Name must be less than 50 characters";
-    } else if (!/^[a-zA-ZÀ-ÿ\s]+$/.test(trimmedName)) {
+    } else if (!/^[a-zA-ZÀ-ÿĂăÂâÊêÔôƠơƯưĐđàáảãạầấẩẫậằắẳẵặèéẻẽẹềếểễệìíỉĩịòóỏõọồốổỗộờớởỡợùúủũụừứửữựỳýỷỹỵ\s]+$/.test(trimmedName)) {
       newErrors.name = "Name can only contain letters and spaces";
-    } else if (/^\s|\s$/.test(formData.name)) {
-      newErrors.name = "Name cannot start or end with spaces";
     } else if (/\s{2,}/.test(trimmedName)) {
       newErrors.name = "Name cannot contain multiple consecutive spaces";
     }
@@ -140,8 +138,6 @@ const RegisterModal = ({ isFormOpen, onSwitchToLogin }: RegisterModalProps) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!trimmedEmail) {
       newErrors.email = "Email is required";
-    } else if (/^\s|\s$/.test(formData.email)) {
-      newErrors.email = "Email cannot start or end with spaces";
     } else if (/\s/.test(trimmedEmail)) {
       newErrors.email = "Email cannot contain spaces";
     } else if (!emailRegex.test(trimmedEmail)) {
@@ -154,8 +150,6 @@ const RegisterModal = ({ isFormOpen, onSwitchToLogin }: RegisterModalProps) => {
     const password = formData.password;
     if (!password) {
       newErrors.password = "Password is required";
-    } else if (/^\s|\s$/.test(password)) {
-      newErrors.password = "Password cannot start or end with spaces";
     } else if (password.length < 8) {
       newErrors.password = "Password must be at least 8 characters long";
     } else if (password.length > 128) {
@@ -199,8 +193,6 @@ const RegisterModal = ({ isFormOpen, onSwitchToLogin }: RegisterModalProps) => {
     const trimmedPhone = formData.phone.trim();
     if (!trimmedPhone) {
       newErrors.phone = "Phone number is required";
-    } else if (/^\s|\s$/.test(formData.phone)) {
-      newErrors.phone = "Phone number cannot start or end with spaces";
     } else if (!/^[\+]?[0-9\s\-\(\)]{10,15}$/.test(trimmedPhone)) {
       newErrors.phone = "Please enter a valid phone number (10-15 digits)";
     }
@@ -209,8 +201,6 @@ const RegisterModal = ({ isFormOpen, onSwitchToLogin }: RegisterModalProps) => {
     const trimmedStreet = formData.address.street.trim();
     if (!trimmedStreet) {
       newErrors["address.street"] = "Street address is required";
-    } else if (/^\s|\s$/.test(formData.address.street)) {
-      newErrors["address.street"] = "Street address cannot start or end with spaces";
     } else if (trimmedStreet.length < 5) {
       newErrors["address.street"] = "Street address must be at least 5 characters long";
     } else if (trimmedStreet.length > 100) {
@@ -220,9 +210,7 @@ const RegisterModal = ({ isFormOpen, onSwitchToLogin }: RegisterModalProps) => {
     const trimmedCity = formData.address.city.trim();
     if (!trimmedCity) {
       newErrors["address.city"] = "City is required";
-    } else if (/^\s|\s$/.test(formData.address.city)) {
-      newErrors["address.city"] = "City cannot start or end with spaces";
-    } else if (!/^[a-zA-ZÀ-ÿ\s\-\.]+$/.test(trimmedCity)) {
+    } else if (!/^[a-zA-ZÀ-ÿĂăÂâÊêÔôƠơƯưĐđàáảãạầấẩẫậằắẳẵặèéẻẽẹềếểễệìíỉĩịòóỏõọồốổỗộờớởỡợùúủũụừứửữựỳýỷỹỵ\s\-\.]+$/.test(trimmedCity)) {
       newErrors["address.city"] = "City can only contain letters, spaces, hyphens, and periods";
     } else if (trimmedCity.length < 2) {
       newErrors["address.city"] = "City name must be at least 2 characters long";
@@ -231,9 +219,7 @@ const RegisterModal = ({ isFormOpen, onSwitchToLogin }: RegisterModalProps) => {
     const trimmedCountry = formData.address.country.trim();
     if (!trimmedCountry) {
       newErrors["address.country"] = "Country is required";
-    } else if (/^\s|\s$/.test(formData.address.country)) {
-      newErrors["address.country"] = "Country cannot start or end with spaces";
-    } else if (!/^[a-zA-ZÀ-ÿ\s\-\.]+$/.test(trimmedCountry)) {
+    } else if (!/^[a-zA-ZÀ-ÿĂăÂâÊêÔôƠơƯưĐđàáảãạầấẩẫậằắẳẵặèéẻẽẹềếểễệìíỉĩịòóỏõọồốổỗộờớởỡợùúủũụừứửữựỳýỷỹỵ\s\-\.]+$/.test(trimmedCountry)) {
       newErrors["address.country"] = "Country can only contain letters, spaces, hyphens, and periods";
     } else if (trimmedCountry.length < 2) {
       newErrors["address.country"] = "Country name must be at least 2 characters long";
@@ -241,13 +227,13 @@ const RegisterModal = ({ isFormOpen, onSwitchToLogin }: RegisterModalProps) => {
 
     // Validate state (optional but if provided, should be valid)
     const trimmedState = formData.address.state.trim();
-    if (trimmedState && !/^[a-zA-ZÀ-ÿ\s\-\.]+$/.test(trimmedState)) {
+    if (trimmedState && trimmedState.length > 0 && !/^[a-zA-ZÀ-ÿĂăÂâÊêÔôƠơƯưĐđàáảãạầấẩẫậằắẳẵặèéẻẽẹềếểễệìíỉĩịòóỏõọồốổỗộờớởỡợùúủũụừứửữựỳýỷỹỵ\s\-\.]+$/.test(trimmedState)) {
       newErrors["address.state"] = "State can only contain letters, spaces, hyphens, and periods";
     }
 
     // Validate zip code (optional but if provided, should be valid)
     const trimmedZipCode = formData.address.zipCode.trim();
-    if (trimmedZipCode && !/^[a-zA-Z0-9\s\-]{3,10}$/.test(trimmedZipCode)) {
+    if (trimmedZipCode && trimmedZipCode.length > 0 && !/^[a-zA-Z0-9\s\-]{3,10}$/.test(trimmedZipCode)) {
       newErrors["address.zipCode"] = "Please enter a valid zip code";
     }
 
@@ -258,7 +244,14 @@ const RegisterModal = ({ isFormOpen, onSwitchToLogin }: RegisterModalProps) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!validateForm()) {
+    const validationResult = validateForm();
+    console.log("Validation result:", validationResult);
+    console.log("Current errors:", errors);
+    console.log("Form data:", formData);
+    console.log("State value:", `"${formData.address.state}"`);
+    console.log("State length:", formData.address.state.length);
+
+    if (!validationResult) {
       toast.error("Please fix form errors before submitting");
       return;
     }
@@ -303,10 +296,8 @@ const RegisterModal = ({ isFormOpen, onSwitchToLogin }: RegisterModalProps) => {
         basicInfoErrors.name = "Name must be at least 2 characters long";
       } else if (trimmedName.length > 50) {
         basicInfoErrors.name = "Name must be less than 50 characters";
-      } else if (!/^[a-zA-ZÀ-ÿ\s]+$/.test(trimmedName)) {
+      } else if (!/^[a-zA-ZÀ-ÿĂăÂâÊêÔôƠơƯưĐđàáảãạầấẩẫậằắẳẵặèéẻẽẹềếểễệìíỉĩịòóỏõọồốổỗộờớởỡợùúủũụừứửữựỳýỷỹỵ\s]+$/.test(trimmedName)) {
         basicInfoErrors.name = "Name can only contain letters and spaces";
-      } else if (/^\s|\s$/.test(formData.name)) {
-        basicInfoErrors.name = "Name cannot start or end with spaces";
       } else if (/\s{2,}/.test(trimmedName)) {
         basicInfoErrors.name = "Name cannot contain multiple consecutive spaces";
       }
@@ -316,8 +307,6 @@ const RegisterModal = ({ isFormOpen, onSwitchToLogin }: RegisterModalProps) => {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!trimmedEmail) {
         basicInfoErrors.email = "Email is required";
-      } else if (/^\s|\s$/.test(formData.email)) {
-        basicInfoErrors.email = "Email cannot start or end with spaces";
       } else if (/\s/.test(trimmedEmail)) {
         basicInfoErrors.email = "Email cannot contain spaces";
       } else if (!emailRegex.test(trimmedEmail)) {
@@ -330,8 +319,6 @@ const RegisterModal = ({ isFormOpen, onSwitchToLogin }: RegisterModalProps) => {
       const password = formData.password;
       if (!password) {
         basicInfoErrors.password = "Password is required";
-      } else if (/^\s|\s$/.test(password)) {
-        basicInfoErrors.password = "Password cannot start or end with spaces";
       } else if (password.length < 8) {
         basicInfoErrors.password = "Password must be at least 8 characters long";
       } else if (password.length > 128) {
@@ -641,9 +628,15 @@ const RegisterModal = ({ isFormOpen, onSwitchToLogin }: RegisterModalProps) => {
                       name="address.state"
                       value={formData.address.state}
                       onChange={handleChange}
+                      onBlur={handleBlur}
                       placeholder="State"
-                      className="w-full px-4 py-2 border border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-gray-700 text-white"
+                      className={`w-full px-4 py-2 border ${
+                        errors["address.state"] ? "border-red-500" : "border-gray-600"
+                      } rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-gray-700 text-white`}
                     />
+                    {errors["address.state"] && (
+                      <p className="mt-1 text-sm text-red-500">{errors["address.state"]}</p>
+                    )}
                   </div>
                 </div>
 
@@ -684,9 +677,15 @@ const RegisterModal = ({ isFormOpen, onSwitchToLogin }: RegisterModalProps) => {
                       name="address.zipCode"
                       value={formData.address.zipCode}
                       onChange={handleChange}
+                      onBlur={handleBlur}
                       placeholder="Zip code"
-                      className="w-full px-4 py-2 border border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-gray-700 text-white"
+                      className={`w-full px-4 py-2 border ${
+                        errors["address.zipCode"] ? "border-red-500" : "border-gray-600"
+                      } rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-gray-700 text-white`}
                     />
+                    {errors["address.zipCode"] && (
+                      <p className="mt-1 text-sm text-red-500">{errors["address.zipCode"]}</p>
+                    )}
                   </div>
                 </div>
 
