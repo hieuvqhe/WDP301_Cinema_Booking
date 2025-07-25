@@ -15,11 +15,13 @@ import {
   Building
 } from 'lucide-react';
 import { checkStaffContract } from '../../../apis/staff.api';
-import type { ContractCheckResponse } from '../../../apis/staff.api';
+import { getMyTheater } from '../../../apis/staff.api';
+import type { ContractCheckResponse, TheaterResponse } from '../../../apis/staff.api';
 import { toast } from 'sonner';
 
 const ContractDetails = () => {
   const [contract, setContract] = useState<ContractCheckResponse | null>(null);
+  const [theater, setTheater] = useState<TheaterResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -31,8 +33,15 @@ const ContractDetails = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await checkStaffContract();
-      setContract(response);
+      
+      // Fetch both contract and theater information
+      const [contractResponse, theaterResponse] = await Promise.all([
+        checkStaffContract(),
+        getMyTheater().catch(() => null) // Handle case where theater doesn't exist yet
+      ]);
+      
+      setContract(contractResponse);
+      setTheater(theaterResponse);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch contract details';
       setError(errorMessage);
@@ -77,10 +86,7 @@ const ContractDetails = () => {
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(amount);
+    return new Intl.NumberFormat('vi-VN').format(amount) + ' VNĐ';
   };
 
   if (loading) {
@@ -187,7 +193,7 @@ const ContractDetails = () => {
         {/* Financial Information */}
         <div className="bg-slate-800/60 backdrop-blur-sm p-6 rounded-xl border border-slate-700/50">
           <h2 className="text-lg font-semibold text-white mb-4 flex items-center">
-            <DollarSign size={20} className="text-orange-400 mr-2" />
+            
             Financial Details
           </h2>
           <div className="space-y-3">
@@ -197,7 +203,7 @@ const ContractDetails = () => {
             </div>
             <div className="flex justify-between">
               <span className="text-slate-400">Currency:</span>
-              <span className="text-white">USD</span>
+              <span className="text-white">VNĐ</span>
             </div>
             <div className="flex justify-between">
               <span className="text-slate-400">Payment Method:</span>
@@ -246,15 +252,60 @@ const ContractDetails = () => {
         <div className="space-y-3">
           <div className="flex justify-between">
             <span className="text-slate-400">Theater Name:</span>
-            <span className="text-white">{contractData.theater_name || 'Not assigned'}</span>
+            <span className="text-white">
+              {theater?.result?.name || contractData.theater_name || 'Not assigned'}
+            </span>
           </div>
           <div className="flex justify-between">
             <span className="text-slate-400">Location:</span>
             <span className="text-white flex items-center">
-              {contractData.theater_location || 'Not specified'}
-              {contractData.theater_location && <MapPin size={14} className="ml-2 text-slate-400" />}
+              {theater?.result?.address || contractData.theater_location || 'Not specified'}
+              {(theater?.result?.address || contractData.theater_location) && (
+                <MapPin size={14} className="ml-2 text-slate-400" />
+              )}
             </span>
           </div>
+          {theater?.result?.city && theater?.result?.state && (
+            <div className="flex justify-between">
+              <span className="text-slate-400">City/State:</span>
+              <span className="text-white">
+                {theater.result.city}, {theater.result.state}
+              </span>
+            </div>
+          )}
+          {theater?.result?.pincode && (
+            <div className="flex justify-between">
+              <span className="text-slate-400">Pincode:</span>
+              <span className="text-white">{theater.result.pincode}</span>
+            </div>
+          )}
+          {theater?.result?.screens !== undefined && (
+            <div className="flex justify-between">
+              <span className="text-slate-400">Number of Screens:</span>
+              <span className="text-white">{theater.result.screens}</span>
+            </div>
+          )}
+          {theater?.result?.description && (
+            <div className="flex justify-between">
+              <span className="text-slate-400">Description:</span>
+              <span className="text-white">{theater.result.description}</span>
+            </div>
+          )}
+          {theater?.result?.amenities && theater.result.amenities.length > 0 && (
+            <div className="mt-4">
+              <span className="text-slate-400 block mb-2">Amenities:</span>
+              <div className="flex flex-wrap gap-2">
+                {theater.result.amenities.map((amenity, index) => (
+                  <span
+                    key={index}
+                    className="px-2 py-1 bg-orange-500/20 text-orange-300 rounded-md text-sm"
+                  >
+                    {amenity}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

@@ -87,7 +87,7 @@ const TheaterForm = ({
                 ? 'border-red-500 focus:border-red-400' 
                 : 'border-slate-600 focus:border-orange-500'
             }`}
-            placeholder="Cinema Name"
+            placeholder="Cinema Name / Rạp Chiếu Phim"
             required
           />
           {formErrors.name && (
@@ -110,7 +110,7 @@ const TheaterForm = ({
                 ? 'border-red-500 focus:border-red-400' 
                 : 'border-slate-600 focus:border-orange-500'
             }`}
-            placeholder="Downtown, City Center"
+            placeholder="Downtown, City Center / Trung tâm thành phố"
             required
           />
           {formErrors.location && (
@@ -135,7 +135,7 @@ const TheaterForm = ({
               ? 'border-red-500 focus:border-red-400' 
               : 'border-slate-600 focus:border-orange-500'
           }`}
-          placeholder="123 Main Street"
+          placeholder="123 Main Street / 123 Đường Chính"
           required
         />
         {formErrors.address && (
@@ -160,7 +160,7 @@ const TheaterForm = ({
                 ? 'border-red-500 focus:border-red-400' 
                 : 'border-slate-600 focus:border-orange-500'
             }`}
-            placeholder="Ha Noi"
+            placeholder="Hà Nội"
             required
           />
           {formErrors.city && (
@@ -183,7 +183,7 @@ const TheaterForm = ({
                 ? 'border-red-500 focus:border-red-400' 
                 : 'border-slate-600 focus:border-orange-500'
             }`}
-            placeholder="Ha Noi"
+            placeholder="Hà Nội"
             required
           />
           {formErrors.state && (
@@ -305,7 +305,7 @@ const TheaterForm = ({
               ? 'border-red-500 focus:border-red-400' 
               : 'border-slate-600 focus:border-orange-500'
           }`}
-          placeholder="Premium cinema experience..."
+          placeholder="Premium cinema experience... / Trải nghiệm rạp chiếu phim cao cấp..."
           required
         />
         {formErrors.description && (
@@ -340,7 +340,7 @@ const TheaterForm = ({
               value={amenityInput}
               onChange={(e) => setAmenityInput(e.target.value)}
               className="flex-1 bg-slate-700/50 border border-slate-600 rounded-lg px-3 py-2 text-white focus:border-orange-500 focus:outline-none"
-              placeholder="Add amenity..."
+              placeholder="Add amenity... / Thêm tiện ích..."
               onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addAmenity(amenityInput))}
             />
             <button
@@ -422,7 +422,10 @@ const TheaterInfo = () => {
   const availableAmenities = [
     'Parking', 'Food Court', 'AC', '3D', 'IMAX', 'Dolby Atmos', 
     'VIP Seats', 'Premium Sound', 'Recliner Seats', '4DX', 
-    'VIP Lounge', 'Concession Stand', 'Bar & Grill'
+    'VIP Lounge', 'Concession Stand', 'Bar & Grill',
+    'Bãi đậu xe', 'Khu ăn uống', 'Điều hòa', 'Ghế VIP', 
+    'Âm thanh cao cấp', 'Ghế nằm', 'Phòng chờ VIP',
+    'Quầy bán đồ ăn', 'WiFi miễn phí', 'Thang máy'
   ];
 
   // Validation patterns
@@ -430,9 +433,9 @@ const TheaterInfo = () => {
     email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
     phone: /^(\+84|0)[3-9]\d{8}$/,
     pincode: /^\d{4,6}$/,
-    name: /^[a-zA-Z0-9\s\-&.()]{2,50}$/,
-    text: /^[a-zA-Z0-9\s\-,.()&]{2,100}$/,
-    description: /^[a-zA-Z0-9\s\-,.()&]{10,500}$/
+    name: /^[a-zA-ZÀ-ỹĐđ0-9\s\-&.()]{2,50}$/,
+    text: /^[a-zA-ZÀ-ỹĐđ0-9\s\-,.()&]{2,100}$/,
+    description: /^[a-zA-ZÀ-ỹĐđ0-9\s\-,.()&!?'"]{10,500}$/
   };
 
   useEffect(() => {
@@ -478,35 +481,35 @@ const TheaterInfo = () => {
         if (!trimmedValue) return 'Theater name is required';
         if (trimmedValue.length < 2) return 'Theater name must be at least 2 characters';
         if (trimmedValue.length > 50) return 'Theater name must be less than 50 characters';
-        if (!validationPatterns.name.test(trimmedValue)) return 'Theater name contains invalid characters';
+        if (!validationPatterns.name.test(trimmedValue)) return 'Theater name contains invalid characters (only Vietnamese, English letters, numbers, spaces, and basic punctuation allowed)';
         return '';
         
       case 'location':
         if (!trimmedValue) return 'Location is required';
         if (trimmedValue.length < 2) return 'Location must be at least 2 characters';
         if (trimmedValue.length > 100) return 'Location must be less than 100 characters';
-        if (!validationPatterns.text.test(trimmedValue)) return 'Location contains invalid characters';
+        if (!validationPatterns.text.test(trimmedValue)) return 'Location contains invalid characters (only Vietnamese, English letters, numbers, spaces, and basic punctuation allowed)';
         return '';
         
       case 'address':
         if (!trimmedValue) return 'Address is required';
         if (trimmedValue.length < 5) return 'Address must be at least 5 characters';
         if (trimmedValue.length > 100) return 'Address must be less than 100 characters';
-        if (!validationPatterns.text.test(trimmedValue)) return 'Address contains invalid characters';
+        if (!validationPatterns.text.test(trimmedValue)) return 'Address contains invalid characters (only Vietnamese, English letters, numbers, spaces, and basic punctuation allowed)';
         return '';
         
       case 'city':
         if (!trimmedValue) return 'City is required';
         if (trimmedValue.length < 2) return 'City must be at least 2 characters';
         if (trimmedValue.length > 50) return 'City must be less than 50 characters';
-        if (!validationPatterns.name.test(trimmedValue)) return 'City contains invalid characters';
+        if (!validationPatterns.name.test(trimmedValue)) return 'City contains invalid characters (only Vietnamese, English letters, numbers, spaces, and basic punctuation allowed)';
         return '';
         
       case 'state':
         if (!trimmedValue) return 'State is required';
         if (trimmedValue.length < 2) return 'State must be at least 2 characters';
         if (trimmedValue.length > 50) return 'State must be less than 50 characters';
-        if (!validationPatterns.name.test(trimmedValue)) return 'State contains invalid characters';
+        if (!validationPatterns.name.test(trimmedValue)) return 'State contains invalid characters (only Vietnamese, English letters, numbers, spaces, and basic punctuation allowed)';
         return '';
         
       case 'pincode':
@@ -528,7 +531,7 @@ const TheaterInfo = () => {
         if (!trimmedValue) return 'Description is required';
         if (trimmedValue.length < 10) return 'Description must be at least 10 characters';
         if (trimmedValue.length > 500) return 'Description must be less than 500 characters';
-        if (!validationPatterns.description.test(trimmedValue)) return 'Description contains invalid characters';
+        if (!validationPatterns.description.test(trimmedValue)) return 'Description contains invalid characters (only Vietnamese, English letters, numbers, spaces, and basic punctuation allowed)';
         return '';
         
       case 'screens':
@@ -642,8 +645,8 @@ const TheaterInfo = () => {
         toast.error('Amenity must be less than 30 characters');
         return;
       }
-      if (!/^[a-zA-Z0-9\s\-&.()]{2,30}$/.test(trimmedAmenity)) {
-        toast.error('Amenity contains invalid characters');
+      if (!/^[a-zA-ZÀ-ỹĐđ0-9\s\-&.()]{2,30}$/.test(trimmedAmenity)) {
+        toast.error('Amenity contains invalid characters (only Vietnamese, English letters, numbers, spaces, and basic punctuation allowed)');
         return;
       }
       

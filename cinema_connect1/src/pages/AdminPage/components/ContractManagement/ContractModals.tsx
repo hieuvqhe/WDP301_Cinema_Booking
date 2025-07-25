@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { X, FileText, User, Calendar, DollarSign, AlertTriangle } from 'lucide-react';
+import { X, FileText, User, Calendar, DollarSign, AlertTriangle, Plus, Gift, Briefcase } from 'lucide-react';
+import { toast } from 'sonner';
 
 type Contract = {
   _id: string;
@@ -64,10 +65,7 @@ interface TerminateContractModalProps {
 
 export const ContractDetailModal = ({ contract, onClose }: ContractDetailModalProps) => {
   const formatSalary = (amount: number) => {
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND'
-    }).format(amount);
+    return new Intl.NumberFormat('vi-VN').format(amount) + ' VNĐ';
   };
 
   const getStatusColor = (status: string) => {
@@ -224,20 +222,178 @@ export const ContractDetailModal = ({ contract, onClose }: ContractDetailModalPr
 export const EditContractModal = ({ contract, onClose, onSave }: EditContractModalProps) => {
   const [formData, setFormData] = useState({
     position: '',
+    customPosition: '',
     salary: contract.salary,
     contract_type: 'full_time' as 'full_time' | 'part_time' | 'contract',
     start_date: contract.start_date.split('T')[0],
     end_date: contract.end_date.split('T')[0],
-    benefits: contract.benefits.join(', '),
+    benefits: contract.benefits || [],
     terms: contract.terms
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [benefitInput, setBenefitInput] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Predefined options
+  const positionOptions = [
+    'Theater Manager',
+    'Assistant Manager', 
+    'Customer Service Representative',
+    'Concession Staff',
+    'Ticket Sales Associate',
+    'Maintenance Technician',
+    'Security Guard',
+    'Cleaning Staff',
+    'Projectionist',
+    'Marketing Coordinator',
+    'Other (Custom)'
+  ];
+
+  const commonBenefits = [
+    'Health Insurance',
+    'Dental Insurance',
+    'Life Insurance',
+    'Paid Time Off',
+    'Sick Leave',
+    'Retirement Plan',
+    'Employee Discounts',
+    'Training & Development',
+    'Flexible Schedule',
+    'Performance Bonuses'
+  ];
+
+  const commonTerms = [
+    'Standard employment terms and conditions apply.',
+    'Employee must maintain professional conduct at all times.',
+    'Regular performance evaluations will be conducted.',
+    'Confidentiality agreement must be signed.',
+    'Probationary period of 90 days applies.',
+    'Notice period of 30 days required for resignation.',
+    'Overtime compensation as per labor laws.',
+    'Employee handbook policies apply.',
+    'Background check required.',
+    'Drug testing may be required.'
+  ];
+
+  // Validation function
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Position validation
+    const finalPosition = formData.position === 'Other (Custom)' ? formData.customPosition : formData.position;
+    if (!finalPosition.trim()) {
+      newErrors.position = 'Position is required';
+    }
+
+    // Salary validation
+    if (!formData.salary || formData.salary <= 0) {
+      newErrors.salary = 'Salary must be greater than 0';
+    } else if (formData.salary < 100000) {
+      newErrors.salary = 'Salary should be at least 100,000 VNĐ';
+    }
+
+    // Date validations
+    const startDate = new Date(formData.start_date);
+    const endDate = new Date(formData.end_date);
+    
+    if (!formData.start_date) {
+      newErrors.start_date = 'Start date is required';
+    }
+
+    if (!formData.end_date) {
+      newErrors.end_date = 'End date is required';
+    } else if (endDate <= startDate) {
+      newErrors.end_date = 'End date must be after start date';
+    }
+
+    // Terms validation
+    if (!formData.terms.trim()) {
+      newErrors.terms = 'Terms and conditions are required';
+    } else if (formData.terms.trim().length < 20) {
+      newErrors.terms = 'Terms and conditions must be at least 20 characters';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onSave(contract._id, {
-      ...formData,
-      benefits: formData.benefits.split(',').map(b => b.trim()).filter(Boolean)
-    });
+    
+    if (!validateForm()) {
+      toast.error('Please fix all form errors before submitting');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const finalPosition = formData.position === 'Other (Custom)' ? formData.customPosition : formData.position;
+      
+      await onSave(contract._id, {
+        position: finalPosition,
+        salary: formData.salary,
+        contract_type: formData.contract_type,
+        start_date: formData.start_date,
+        end_date: formData.end_date,
+        benefits: formData.benefits,
+        terms: formData.terms
+      });
+      
+      toast.success('Contract updated successfully');
+      onClose();
+    } catch (error) {
+      toast.error('Failed to update contract. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddBenefit = () => {
+    if (benefitInput.trim() && !formData.benefits.includes(benefitInput.trim())) {
+      setFormData(prev => ({
+        ...prev,
+        benefits: [...prev.benefits, benefitInput.trim()]
+      }));
+      setBenefitInput('');
+      toast.success('Benefit added successfully');
+    } else if (formData.benefits.includes(benefitInput.trim())) {
+      toast.error('This benefit already exists');
+    }
+  };
+
+  const handleAddCommonBenefit = (benefit: string) => {
+    if (!formData.benefits.includes(benefit)) {
+      setFormData(prev => ({
+        ...prev,
+        benefits: [...prev.benefits, benefit]
+      }));
+      toast.success(`Added "${benefit}" to benefits`);
+    } else {
+      toast.error('This benefit is already added');
+    }
+  };
+
+  const handleRemoveBenefit = (index: number) => {
+    const removedBenefit = formData.benefits[index];
+    setFormData(prev => ({
+      ...prev,
+      benefits: prev.benefits.filter((_, i) => i !== index)
+    }));
+    toast.info(`Removed "${removedBenefit}" from benefits`);
+  };
+
+  const handleAddCommonTerm = (term: string) => {
+    const currentTerms = formData.terms.trim();
+    const newTerm = currentTerms ? `${currentTerms}\n• ${term}` : `• ${term}`;
+    setFormData(prev => ({ ...prev, terms: newTerm }));
+    toast.success('Term added to contract');
+  };
+
+  const formatSalary = (value: number) => {
+    return new Intl.NumberFormat('vi-VN').format(value);
   };
 
   return (
@@ -267,36 +423,94 @@ export const EditContractModal = ({ contract, onClose, onSave }: EditContractMod
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Position */}
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Position</label>
-              <input
-                type="text"
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                <Briefcase className="inline w-4 h-4 mr-1" />
+                Position *
+              </label>
+              <select
                 value={formData.position}
-                onChange={(e) => setFormData({ ...formData, position: e.target.value })}
-                className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-teal-500/50"
-                placeholder="Enter position"
-              />
+                onChange={(e) => {
+                  setFormData(prev => ({ ...prev, position: e.target.value, customPosition: '' }));
+                  if (errors.position) {
+                    setErrors(prev => ({ ...prev, position: '' }));
+                  }
+                }}
+                className={`w-full px-3 py-2 bg-slate-700/50 text-white rounded-lg border ${
+                  errors.position ? 'border-red-500/50' : 'border-slate-600/50'
+                } focus:outline-none focus:ring-2 focus:ring-teal-500/50 transition-all`}
+              >
+                <option value="">Select a position...</option>
+                {positionOptions.map((position) => (
+                  <option key={position} value={position}>
+                    {position}
+                  </option>
+                ))}
+              </select>
+              {formData.position === 'Other (Custom)' && (
+                <input
+                  type="text"
+                  value={formData.customPosition}
+                  onChange={(e) => {
+                    setFormData(prev => ({ ...prev, customPosition: e.target.value }));
+                    if (errors.position) {
+                      setErrors(prev => ({ ...prev, position: '' }));
+                    }
+                  }}
+                  className={`w-full px-3 py-2 bg-slate-700/50 text-white rounded-lg border ${
+                    errors.position ? 'border-red-500/50' : 'border-slate-600/50'
+                  } focus:outline-none focus:ring-2 focus:ring-teal-500/50 transition-all mt-2`}
+                  placeholder="Enter custom position..."
+                />
+              )}
+              {errors.position && (
+                <p className="text-red-400 text-xs mt-1">{errors.position}</p>
+              )}
             </div>
+
+            {/* Salary */}
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Salary</label>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                <DollarSign className="inline w-4 h-4 mr-1" />
+                Salary (VNĐ) *
+              </label>
               <input
                 type="number"
+                min="0"
+                step="50000"
                 value={formData.salary}
-                onChange={(e) => setFormData({ ...formData, salary: Number(e.target.value) })}
-                className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-teal-500/50"
-                required
+                onChange={(e) => {
+                  setFormData(prev => ({ ...prev, salary: Number(e.target.value) }));
+                  if (errors.salary) {
+                    setErrors(prev => ({ ...prev, salary: '' }));
+                  }
+                }}
+                className={`w-full px-3 py-2 bg-slate-700/50 text-white rounded-lg border ${
+                  errors.salary ? 'border-red-500/50' : 'border-slate-600/50'
+                } focus:outline-none focus:ring-2 focus:ring-teal-500/50 transition-all`}
+                placeholder="5,000,000"
               />
+              {formData.salary > 0 && (
+                <p className="text-xs text-gray-400 mt-1">
+                  Formatted: {formatSalary(formData.salary)} VNĐ
+                </p>
+              )}
+              {errors.salary && (
+                <p className="text-red-400 text-xs mt-1">{errors.salary}</p>
+              )}
             </div>
           </div>
 
+          {/* Contract Type */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Contract Type</label>
+            <label className="block text-sm font-medium text-gray-300 mb-2">Contract Type *</label>
             <select
               value={formData.contract_type}
-              onChange={(e) => setFormData({ ...formData, contract_type: e.target.value as any })}
-              className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-teal-500/50"
+              onChange={(e) => setFormData(prev => ({ ...prev, contract_type: e.target.value as any }))}
+              className="w-full px-3 py-2 bg-slate-700/50 text-white rounded-lg border border-slate-600/50 focus:outline-none focus:ring-2 focus:ring-teal-500/50 transition-all"
             >
               <option value="full_time">Full Time</option>
               <option value="part_time">Part Time</option>
@@ -304,49 +518,173 @@ export const EditContractModal = ({ contract, onClose, onSave }: EditContractMod
             </select>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Dates */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Start Date</label>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                <Calendar className="inline w-4 h-4 mr-1" />
+                Start Date *
+              </label>
               <input
                 type="date"
                 value={formData.start_date}
-                onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
-                className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-teal-500/50"
-                required
+                onChange={(e) => {
+                  setFormData(prev => ({ ...prev, start_date: e.target.value }));
+                  if (errors.start_date) {
+                    setErrors(prev => ({ ...prev, start_date: '' }));
+                  }
+                }}
+                className={`w-full px-3 py-2 bg-slate-700/50 text-white rounded-lg border ${
+                  errors.start_date ? 'border-red-500/50' : 'border-slate-600/50'
+                } focus:outline-none focus:ring-2 focus:ring-teal-500/50 transition-all`}
               />
+              {errors.start_date && (
+                <p className="text-red-400 text-xs mt-1">{errors.start_date}</p>
+              )}
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">End Date</label>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                <Calendar className="inline w-4 h-4 mr-1" />
+                End Date *
+              </label>
               <input
                 type="date"
                 value={formData.end_date}
-                onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
-                className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-teal-500/50"
-                required
+                min={formData.start_date}
+                onChange={(e) => {
+                  setFormData(prev => ({ ...prev, end_date: e.target.value }));
+                  if (errors.end_date) {
+                    setErrors(prev => ({ ...prev, end_date: '' }));
+                  }
+                }}
+                className={`w-full px-3 py-2 bg-slate-700/50 text-white rounded-lg border ${
+                  errors.end_date ? 'border-red-500/50' : 'border-slate-600/50'
+                } focus:outline-none focus:ring-2 focus:ring-teal-500/50 transition-all`}
               />
+              {errors.end_date && (
+                <p className="text-red-400 text-xs mt-1">{errors.end_date}</p>
+              )}
             </div>
           </div>
 
+          {/* Benefits */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Benefits (comma separated)</label>
-            <input
-              type="text"
-              value={formData.benefits}
-              onChange={(e) => setFormData({ ...formData, benefits: e.target.value })}
-              className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-teal-500/50"
-              placeholder="Health insurance, Paid leave, etc."
-            />
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              <Gift className="inline w-4 h-4 mr-1" />
+              Benefits
+            </label>
+            
+            {/* Common Benefits */}
+            <div className="mb-3">
+              <p className="text-xs text-gray-400 mb-2">Quick Add:</p>
+              <div className="flex flex-wrap gap-2">
+                {commonBenefits.map((benefit) => (
+                  <button
+                    key={benefit}
+                    type="button"
+                    onClick={() => handleAddCommonBenefit(benefit)}
+                    disabled={formData.benefits.includes(benefit)}
+                    className={`px-2 py-1 rounded text-xs transition-all ${
+                      formData.benefits.includes(benefit)
+                        ? 'bg-gray-600/50 text-gray-400 cursor-not-allowed'
+                        : 'bg-teal-600/20 text-teal-400 border border-teal-500/30 hover:bg-teal-600/30'
+                    }`}
+                  >
+                    <Plus className="inline w-3 h-3 mr-1" />
+                    {benefit}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Custom Benefit Input */}
+            <div className="flex gap-2 mb-2">
+              <input
+                type="text"
+                value={benefitInput}
+                onChange={(e) => setBenefitInput(e.target.value)}
+                className="flex-1 px-3 py-2 bg-slate-700/50 text-white rounded-lg border border-slate-600/50 focus:outline-none focus:ring-2 focus:ring-teal-500/50 transition-all"
+                placeholder="Add custom benefit..."
+                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddBenefit())}
+              />
+              <button
+                type="button"
+                onClick={handleAddBenefit}
+                className="px-4 py-2 bg-teal-600/20 text-teal-400 rounded-lg border border-teal-500/30 hover:bg-teal-600/30 transition-all"
+              >
+                Add
+              </button>
+            </div>
+            
+            {/* Added Benefits */}
+            {formData.benefits.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {formData.benefits.map((benefit, index) => (
+                  <span
+                    key={index}
+                    className="px-3 py-1 bg-teal-500/20 text-teal-400 rounded-full text-sm border border-teal-500/30 flex items-center gap-2"
+                  >
+                    {benefit}
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveBenefit(index)}
+                      className="text-teal-300 hover:text-red-400 transition-colors"
+                    >
+                      <X size={14} />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
 
+          {/* Terms */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Terms & Conditions</label>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              <FileText className="inline w-4 h-4 mr-1" />
+              Terms & Conditions *
+            </label>
+            
+            {/* Common Terms */}
+            <div className="mb-3">
+              <p className="text-xs text-gray-400 mb-2">Quick Add Common Terms:</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-1">
+                {commonTerms.map((term, index) => (
+                  <button
+                    key={index}
+                    type="button"
+                    onClick={() => handleAddCommonTerm(term)}
+                    className="text-left px-2 py-1 rounded text-xs bg-slate-600/20 text-slate-300 hover:bg-slate-600/40 transition-all border border-slate-600/30"
+                  >
+                    <Plus className="inline w-3 h-3 mr-1" />
+                    {term.length > 50 ? `${term.substring(0, 50)}...` : term}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <textarea
               value={formData.terms}
-              onChange={(e) => setFormData({ ...formData, terms: e.target.value })}
-              rows={4}
-              className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-teal-500/50"
-              placeholder="Enter terms and conditions..."
+              onChange={(e) => {
+                setFormData(prev => ({ ...prev, terms: e.target.value }));
+                if (errors.terms) {
+                  setErrors(prev => ({ ...prev, terms: '' }));
+                }
+              }}
+              rows={6}
+              className={`w-full px-3 py-2 bg-slate-700/50 text-white rounded-lg border ${
+                errors.terms ? 'border-red-500/50' : 'border-slate-600/50'
+              } focus:outline-none focus:ring-2 focus:ring-teal-500/50 transition-all`}
+              placeholder="Enter contract terms and conditions..."
             />
+            <div className="flex justify-between items-center mt-1">
+              {errors.terms && (
+                <p className="text-red-400 text-xs">{errors.terms}</p>
+              )}
+              <p className="text-xs text-gray-400 ml-auto">
+                {formData.terms.length} characters (minimum 20)
+              </p>
+            </div>
           </div>
 
           <div className="flex justify-end gap-3 pt-4">
@@ -359,9 +697,10 @@ export const EditContractModal = ({ contract, onClose, onSave }: EditContractMod
             </button>
             <button
               type="submit"
-              className="px-6 py-3 bg-gradient-to-r from-teal-500 to-green-500 text-white rounded-lg hover:from-teal-600 hover:to-green-600 transition-all duration-300"
+              disabled={loading}
+              className="px-6 py-3 bg-gradient-to-r from-teal-500 to-green-500 text-white rounded-lg hover:from-teal-600 hover:to-green-600 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Save Changes
+              {loading ? 'Saving...' : 'Save Changes'}
             </button>
           </div>
         </form>
@@ -372,12 +711,55 @@ export const EditContractModal = ({ contract, onClose, onSave }: EditContractMod
 
 export const TerminateContractModal = ({ contract, onClose, onConfirm }: TerminateContractModalProps) => {
   const [reason, setReason] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const commonReasons = [
+    'Poor performance',
+    'Misconduct',
+    'Violation of company policies',
+    'End of project',
+    'Budget constraints',
+    'Restructuring',
+    'Resignation',
+    'Mutual agreement',
+    'Contract expiration',
+    'Other'
+  ];
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (reason.trim()) {
-      onConfirm(reason);
+    
+    if (!reason.trim()) {
+      setError('Termination reason is required');
+      toast.error('Please provide a reason for termination');
+      return;
     }
+
+    if (reason.trim().length < 10) {
+      setError('Reason must be at least 10 characters');
+      toast.error('Please provide a more detailed reason');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+    
+    try {
+      await onConfirm(reason.trim());
+      toast.success(`Contract for ${contract.staff.name} has been terminated`);
+      onClose();
+    } catch (error) {
+      toast.error('Failed to terminate contract. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleQuickReason = (selectedReason: string) => {
+    setReason(selectedReason);
+    setError('');
+    toast.success(`Selected reason: ${selectedReason}`);
   };
 
   return (
@@ -415,16 +797,53 @@ export const TerminateContractModal = ({ contract, onClose, onConfirm }: Termina
             </p>
           </div>
 
+          {/* Quick Reason Selection */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Reason for termination</label>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Quick Select Reason:
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              {commonReasons.map((commonReason) => (
+                <button
+                  key={commonReason}
+                  type="button"
+                  onClick={() => handleQuickReason(commonReason)}
+                  className={`px-3 py-2 rounded text-xs text-left transition-all ${
+                    reason === commonReason
+                      ? 'bg-red-500/30 text-red-300 border border-red-500/50'
+                      : 'bg-slate-600/20 text-slate-300 hover:bg-slate-600/40 border border-slate-600/30'
+                  }`}
+                >
+                  {commonReason}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Detailed reason for termination *
+            </label>
             <textarea
               value={reason}
-              onChange={(e) => setReason(e.target.value)}
-              rows={3}
-              className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-red-500/50"
-              placeholder="Enter reason for termination..."
-              required
+              onChange={(e) => {
+                setReason(e.target.value);
+                setError('');
+              }}
+              rows={4}
+              className={`w-full px-4 py-3 bg-slate-700/50 border ${
+                error ? 'border-red-500/50' : 'border-slate-600/50'
+              } rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-red-500/50 transition-all`}
+              placeholder="Enter detailed reason for termination..."
             />
+            <div className="flex justify-between items-center mt-1">
+              {error && (
+                <p className="text-red-400 text-xs">{error}</p>
+              )}
+              <p className="text-xs text-gray-400 ml-auto">
+                {reason.length} characters (minimum 10)
+              </p>
+            </div>
           </div>
 
           <div className="flex justify-end gap-3 pt-4">
@@ -437,9 +856,10 @@ export const TerminateContractModal = ({ contract, onClose, onConfirm }: Termina
             </button>
             <button
               type="submit"
-              className="px-6 py-3 bg-gradient-to-r from-red-500 to-pink-500 text-white rounded-lg hover:from-red-600 hover:to-pink-600 transition-all duration-300"
+              disabled={loading}
+              className="px-6 py-3 bg-gradient-to-r from-red-500 to-pink-500 text-white rounded-lg hover:from-red-600 hover:to-pink-600 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Terminate Contract
+              {loading ? 'Terminating...' : 'Terminate Contract'}
             </button>
           </div>
         </form>

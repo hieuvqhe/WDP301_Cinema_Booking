@@ -448,11 +448,54 @@ export const CreateCouponModal = ({ isOpen, onClose, onSubmit }: CreateCouponMod
 
   const [loading, setLoading] = useState(false);
   const [showSelectionModal, setShowSelectionModal] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   if (!isOpen) return null;
 
+  const validateForm = (): boolean => {
+    const newErrors: Record<string, string> = {};
+    const now = new Date();
+    const startDate = formData.start_date ? new Date(formData.start_date) : null;
+    const endDate = formData.end_date ? new Date(formData.end_date) : null;
+
+    // Validate dates
+    if (formData.start_date && startDate && startDate <= now) {
+      newErrors.start_date = 'Start date must be in the future';
+    }
+
+    if (formData.end_date && endDate && endDate <= now) {
+      newErrors.end_date = 'End date must be in the future';
+    }
+
+    if (formData.start_date && formData.end_date && startDate && endDate && endDate <= startDate) {
+      newErrors.end_date = 'End date must be after start date';
+    }
+
+    // Validate max discount vs min purchase
+    if ((formData.max_discount ?? 0) > 0 && (formData.min_purchase ?? 0) > 0 && (formData.max_discount ?? 0) <= (formData.min_purchase ?? 0)) {
+      newErrors.max_discount = 'Maximum discount must be greater than minimum purchase';
+    }
+
+    // Validate discount value
+    if (formData.type === 'percentage' && ((formData.value ?? 0) <= 0 || (formData.value ?? 0) > 100)) {
+      newErrors.value = 'Percentage must be between 1 and 100';
+    }
+
+    if (formData.type === 'fixed' && (formData.value ?? 0) <= 0) {
+      newErrors.value = 'Fixed amount must be greater than 0';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!validateForm()) {
+      return;
+    }
+    
     setLoading(true);
     
     try {
@@ -534,35 +577,59 @@ export const CreateCouponModal = ({ isOpen, onClose, onSubmit }: CreateCouponMod
                 onChange={(e) => setFormData({ ...formData, type: e.target.value as 'percentage' | 'fixed' })}
                 className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white placeholder-gray-400"
               >
-                <option value="percentage">Percentage (%)</option>
-                <option value="fixed">Fixed Amount (VNĐ)</option>
+                <option value="percentage">Giảm theo phần trăm (%)</option>
+                <option value="fixed">Giảm theo số tiền cố định (VNĐ)</option>
               </select>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
                 Discount Value *
+                {errors.value && <span className="text-red-400 text-sm ml-2">{errors.value}</span>}
               </label>
               <div className="relative">
-                <input
-                  type="number"
-                  required
-                  min="0"
-                  step={formData.type === 'percentage' ? '1' : '0.01'}
-                  max={formData.type === 'percentage' ? '100' : undefined}
-                  value={formData.value}
-                  onChange={(e) => setFormData({ ...formData, value: Number(e.target.value) })}
-                  className="w-full px-3 py-2 pr-10 bg-slate-700 border border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white placeholder-gray-400"
-                  placeholder={formData.type === 'percentage' ? '20' : '10.00'}
-                />
+                {formData.type === 'percentage' ? (
+                  <input
+                    type="number"
+                    required
+                    min="1"
+                    max="100"
+                    step="1"
+                    value={formData.value}
+                    onChange={(e) => setFormData({ ...formData, value: Number(e.target.value) })}
+                    className={`w-full px-3 py-2 pr-10 bg-slate-700 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white placeholder-gray-400 ${
+                      errors.value ? 'border-red-500' : 'border-slate-600'
+                    }`}
+                    placeholder="20"
+                  />
+                ) : (
+                  <input
+                    type="number"
+                    required
+                    min="1000"
+                    step="1000"
+                    value={formData.value}
+                    onChange={(e) => setFormData({ ...formData, value: Number(e.target.value) })}
+                    className={`w-full px-3 py-2 pr-12 bg-slate-700 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white placeholder-gray-400 ${
+                      errors.value ? 'border-red-500' : 'border-slate-600'
+                    }`}
+                    placeholder="10000"
+                  />
+                )}
                 <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
                   {formData.type === 'percentage' ? (
-                    <Percent className="h-4 w-4 text-gray-400" />
+                    <span className="text-gray-400 text-sm">%</span>
                   ) : (
-                    <DollarSign className="h-4 w-4 text-gray-400" />
+                    <span className="text-gray-400 text-sm">VNĐ</span>
                   )}
                 </div>
               </div>
+              {formData.type === 'percentage' && (
+                <p className="text-xs text-gray-400 mt-1">Nhập giá trị từ 1% đến 100%</p>
+              )}
+              {formData.type === 'fixed' && (
+                <p className="text-xs text-gray-400 mt-1">Nhập số tiền tối thiểu 1,000 VNĐ</p>
+              )}
             </div>
           </div>
 
@@ -575,27 +642,32 @@ export const CreateCouponModal = ({ isOpen, onClose, onSubmit }: CreateCouponMod
               <input
                 type="number"
                 min="0"
-                step="0.01"
+                step="1000"
                 value={formData.min_purchase}
                 onChange={(e) => setFormData({ ...formData, min_purchase: Number(e.target.value) })}
                 className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white placeholder-gray-400"
-                placeholder="0.00"
+                placeholder="0"
               />
+              <p className="text-xs text-gray-400 mt-1">Giá trị đơn hàng tối thiểu để áp dụng coupon</p>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
                 Maximum Discount (VNĐ)
+                {errors.max_discount && <span className="text-red-400 text-sm ml-2">{errors.max_discount}</span>}
               </label>
               <input
                 type="number"
                 min="0"
-                step="0.01"
+                step="1000"
                 value={formData.max_discount}
                 onChange={(e) => setFormData({ ...formData, max_discount: Number(e.target.value) })}
-                className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white placeholder-gray-400"
-                placeholder="0.00 (0 = no limit)"
+                className={`w-full px-3 py-2 bg-slate-700 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white placeholder-gray-400 ${
+                  errors.max_discount ? 'border-red-500' : 'border-slate-600'
+                }`}
+                placeholder="0 (0 = không giới hạn)"
               />
+              <p className="text-xs text-gray-400 mt-1">Số tiền giảm tối đa (phải lớn hơn giá trị đơn hàng tối thiểu)</p>
             </div>
           </div>
 
@@ -604,27 +676,35 @@ export const CreateCouponModal = ({ isOpen, onClose, onSubmit }: CreateCouponMod
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
                 Start Date *
+                {errors.start_date && <span className="text-red-400 text-sm ml-2">{errors.start_date}</span>}
               </label>
               <input
                 type="datetime-local"
                 required
                 value={formData.start_date}
                 onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
-                className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white placeholder-gray-400"
+                className={`w-full px-3 py-2 bg-slate-700 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white placeholder-gray-400 ${
+                  errors.start_date ? 'border-red-500' : 'border-slate-600'
+                }`}
               />
+              <p className="text-xs text-gray-400 mt-1">Thời gian bắt đầu có hiệu lực (phải sau thời điểm hiện tại)</p>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
                 End Date *
+                {errors.end_date && <span className="text-red-400 text-sm ml-2">{errors.end_date}</span>}
               </label>
               <input
                 type="datetime-local"
                 required
                 value={formData.end_date}
                 onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
-                className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white placeholder-gray-400"
+                className={`w-full px-3 py-2 bg-slate-700 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white placeholder-gray-400 ${
+                  errors.end_date ? 'border-red-500' : 'border-slate-600'
+                }`}
               />
+              <p className="text-xs text-gray-400 mt-1">Thời gian hết hiệu lực (phải sau thời gian bắt đầu)</p>
             </div>
           </div>
 
@@ -760,11 +840,54 @@ export const EditCouponModal = ({ coupon, isOpen, onClose, onSubmit }: EditCoupo
 
   const [loading, setLoading] = useState(false);
   const [showSelectionModal, setShowSelectionModal] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   if (!isOpen) return null;
 
+  const validateForm = (): boolean => {
+    const newErrors: Record<string, string> = {};
+    const now = new Date();
+    const startDate = formData.start_date ? new Date(formData.start_date) : null;
+    const endDate = formData.end_date ? new Date(formData.end_date) : null;
+
+    // Validate dates
+    if (formData.start_date && startDate && startDate <= now) {
+      newErrors.start_date = 'Start date must be in the future';
+    }
+
+    if (formData.end_date && endDate && endDate <= now) {
+      newErrors.end_date = 'End date must be in the future';
+    }
+
+    if (formData.start_date && formData.end_date && startDate && endDate && endDate <= startDate) {
+      newErrors.end_date = 'End date must be after start date';
+    }
+
+    // Validate max discount vs min purchase
+    if ((formData.max_discount ?? 0) > 0 && (formData.min_purchase ?? 0) > 0 && (formData.max_discount ?? 0) <= (formData.min_purchase ?? 0)) {
+      newErrors.max_discount = 'Maximum discount must be greater than minimum purchase';
+    }
+
+    // Validate discount value
+    if (formData.type === 'percentage' && ((formData.value ?? 0) <= 0 || (formData.value ?? 0) > 100)) {
+      newErrors.value = 'Percentage must be between 1 and 100';
+    }
+
+    if (formData.type === 'fixed' && (formData.value ?? 0) <= 0) {
+      newErrors.value = 'Fixed amount must be greater than 0';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!validateForm()) {
+      return;
+    }
+    
     setLoading(true);
     
     try {
@@ -816,33 +939,55 @@ export const EditCouponModal = ({ coupon, isOpen, onClose, onSubmit }: EditCoupo
                 onChange={(e) => setFormData({ ...formData, type: e.target.value as 'percentage' | 'fixed' })}
                 className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white placeholder-gray-400"
               >
-                <option value="percentage">Percentage (%)</option>
-                <option value="fixed">Fixed Amount (VNĐ)</option>
+                <option value="percentage">Giảm theo phần trăm (%)</option>
+                <option value="fixed">Giảm theo số tiền cố định (VNĐ)</option>
               </select>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
                 Discount Value
+                {errors.value && <span className="text-red-400 text-sm ml-2">{errors.value}</span>}
               </label>
               <div className="relative">
-                <input
-                  type="number"
-                  min="0"
-                  step={formData.type === 'percentage' ? '1' : '0.01'}
-                  max={formData.type === 'percentage' ? '100' : undefined}
-                  value={formData.value}
-                  onChange={(e) => setFormData({ ...formData, value: Number(e.target.value) })}
-                  className="w-full px-3 py-2 pr-10 bg-slate-700 border border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white placeholder-gray-400"
-                />
+                {formData.type === 'percentage' ? (
+                  <input
+                    type="number"
+                    min="1"
+                    max="100"
+                    step="1"
+                    value={formData.value}
+                    onChange={(e) => setFormData({ ...formData, value: Number(e.target.value) })}
+                    className={`w-full px-3 py-2 pr-10 bg-slate-700 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white placeholder-gray-400 ${
+                      errors.value ? 'border-red-500' : 'border-slate-600'
+                    }`}
+                  />
+                ) : (
+                  <input
+                    type="number"
+                    min="1000"
+                    step="1000"
+                    value={formData.value}
+                    onChange={(e) => setFormData({ ...formData, value: Number(e.target.value) })}
+                    className={`w-full px-3 py-2 pr-12 bg-slate-700 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white placeholder-gray-400 ${
+                      errors.value ? 'border-red-500' : 'border-slate-600'
+                    }`}
+                  />
+                )}
                 <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
                   {formData.type === 'percentage' ? (
-                    <Percent className="h-4 w-4 text-gray-400" />
+                    <span className="text-gray-400 text-sm">%</span>
                   ) : (
-                    <DollarSign className="h-4 w-4 text-gray-400" />
+                    <span className="text-gray-400 text-sm">VNĐ</span>
                   )}
                 </div>
               </div>
+              {formData.type === 'percentage' && (
+                <p className="text-xs text-gray-400 mt-1">Nhập giá trị từ 1% đến 100%</p>
+              )}
+              {formData.type === 'fixed' && (
+                <p className="text-xs text-gray-400 mt-1">Nhập số tiền tối thiểu 1,000 VNĐ</p>
+              )}
             </div>
           </div>
 
@@ -855,25 +1000,32 @@ export const EditCouponModal = ({ coupon, isOpen, onClose, onSubmit }: EditCoupo
               <input
                 type="number"
                 min="0"
-                step="0.01"
+                step="1000"
                 value={formData.min_purchase}
                 onChange={(e) => setFormData({ ...formData, min_purchase: Number(e.target.value) })}
                 className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white placeholder-gray-400"
+                placeholder="0"
               />
+              <p className="text-xs text-gray-400 mt-1">Giá trị đơn hàng tối thiểu để áp dụng coupon</p>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
-                Maximum Discount (VND)
+                Maximum Discount (VNĐ)
+                {errors.max_discount && <span className="text-red-400 text-sm ml-2">{errors.max_discount}</span>}
               </label>
               <input
                 type="number"
                 min="0"
-                step="0.01"
+                step="1000"
                 value={formData.max_discount}
                 onChange={(e) => setFormData({ ...formData, max_discount: Number(e.target.value) })}
-                className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white placeholder-gray-400"
+                className={`w-full px-3 py-2 bg-slate-700 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white placeholder-gray-400 ${
+                  errors.max_discount ? 'border-red-500' : 'border-slate-600'
+                }`}
+                placeholder="0 (0 = không giới hạn)"
               />
+              <p className="text-xs text-gray-400 mt-1">Số tiền giảm tối đa (phải lớn hơn giá trị đơn hàng tối thiểu)</p>
             </div>
           </div>
 
@@ -882,25 +1034,33 @@ export const EditCouponModal = ({ coupon, isOpen, onClose, onSubmit }: EditCoupo
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
                 Start Date
+                {errors.start_date && <span className="text-red-400 text-sm ml-2">{errors.start_date}</span>}
               </label>
               <input
                 type="datetime-local"
                 value={formData.start_date}
                 onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
-                className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white placeholder-gray-400"
+                className={`w-full px-3 py-2 bg-slate-700 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white placeholder-gray-400 ${
+                  errors.start_date ? 'border-red-500' : 'border-slate-600'
+                }`}
               />
+              <p className="text-xs text-gray-400 mt-1">Thời gian bắt đầu có hiệu lực (phải sau thời điểm hiện tại)</p>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
                 End Date
+                {errors.end_date && <span className="text-red-400 text-sm ml-2">{errors.end_date}</span>}
               </label>
               <input
                 type="datetime-local"
                 value={formData.end_date}
                 onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
-                className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white placeholder-gray-400"
+                className={`w-full px-3 py-2 bg-slate-700 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white placeholder-gray-400 ${
+                  errors.end_date ? 'border-red-500' : 'border-slate-600'
+                }`}
               />
+              <p className="text-xs text-gray-400 mt-1">Thời gian hết hiệu lực (phải sau thời gian bắt đầu)</p>
             </div>
           </div>
 

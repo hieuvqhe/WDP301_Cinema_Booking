@@ -13,6 +13,7 @@ import {
   AlertTriangle,
   X,
   MonitorPlay,
+  Settings,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -402,6 +403,18 @@ const Showtimes = () => {
 
   // Modal handlers
   const handleAddShowtime = () => {
+    // Check if theater exists
+    if (!theater?.result) {
+      toast.error("Please create a theater first before adding showtimes");
+      return;
+    }
+
+    // Check if screens exist
+    if (!screens || screens.length === 0) {
+      toast.error("Please create at least one screen for your theater before adding showtimes");
+      return;
+    }
+
     setFormData({
       movie_id: "",
       screen_id: "",
@@ -694,10 +707,29 @@ const Showtimes = () => {
           </div>
           <motion.button
             onClick={handleAddShowtime}
-            className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white px-6 py-2 rounded-lg font-medium shadow-lg hover:shadow-orange-500/30 transition-all duration-300 flex items-center"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            disabled={loading || !theater?.result}
+            className={`px-6 py-2 rounded-lg font-medium shadow-lg transition-all duration-300 flex items-center ${
+              loading || !theater?.result || !screens || screens.length === 0
+                ? "bg-gray-500/50 text-gray-400 cursor-not-allowed"
+                : "bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white hover:shadow-orange-500/30"
+            }`}
+            whileHover={
+              loading || !theater?.result || !screens || screens.length === 0
+                ? {}
+                : { scale: 1.05 }
+            }
+            whileTap={
+              loading || !theater?.result || !screens || screens.length === 0
+                ? {}
+                : { scale: 0.95 }
+            }
+            disabled={loading || !theater?.result || !screens || screens.length === 0}
+            title={
+              !theater?.result
+                ? "Please create a theater first"
+                : !screens || screens.length === 0
+                ? "Please create at least one screen first"
+                : "Add new showtime"
+            }
           >
             <Plus size={18} className="mr-2" />
             Add Showtime
@@ -802,8 +834,57 @@ const Showtimes = () => {
           </div>
         ) : (
           <>
-            {/* Showtimes Table */}
-            {filteredShowtimes.length > 0 ? (
+            {/* Screen Requirement Check */}
+            {!theater?.result ? (
+              <motion.div
+                className="bg-slate-800/60 backdrop-blur-sm p-8 rounded-xl border border-slate-700/50 text-center"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+              >
+                <AlertTriangle
+                  size={64}
+                  className="text-yellow-400 mx-auto mb-4"
+                />
+                <h3 className="text-xl font-semibold text-white mb-2">
+                  Theater Required
+                </h3>
+                <p className="text-slate-300 mb-6">
+                  You need to create a theater first before you can manage showtimes.
+                  Please set up your theater information to get started.
+                </p>
+              </motion.div>
+            ) : (!screens || screens.length === 0) ? (
+              <motion.div
+                className="bg-slate-800/60 backdrop-blur-sm p-8 rounded-xl border border-slate-700/50 text-center"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+              >
+                <MonitorPlay
+                  size={64}
+                  className="text-blue-400 mx-auto mb-4"
+                />
+                <h3 className="text-xl font-semibold text-white mb-2">
+                  No Screens Available
+                </h3>
+                <p className="text-slate-300 mb-6">
+                  You need to create at least one screen (màn chiếu) for your theater before creating showtimes.
+                  Screens define the viewing areas where movies will be shown.
+                </p>
+                <motion.button
+                  onClick={() => {
+                    toast.info("Please navigate to Screen Management to create screens for your theater");
+                  }}
+                  className="px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition-colors flex items-center mx-auto"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <Settings size={18} className="mr-2" />
+                  Manage Screens
+                </motion.button>
+              </motion.div>
+            ) :
+            /* Showtimes Table */
+            filteredShowtimes.length > 0 ? (
               <div className="bg-slate-800/60 backdrop-blur-sm rounded-xl border border-slate-700/50 overflow-hidden">
                 <div className="overflow-x-auto">
                   <table className="w-full">
@@ -1027,17 +1108,38 @@ const Showtimes = () => {
                   <p className="text-slate-300 mb-6">
                     {searchTerm
                       ? "No showtimes match your search criteria. Try adjusting your search."
+                      : !screens || screens.length === 0
+                      ? "You need to create at least one screen before adding showtimes. Screens define the viewing areas for your movies."
                       : "You haven't created any showtimes yet. Create your first showtime to get started."}
                   </p>
                   <motion.button
                     onClick={handleAddShowtime}
-                    className="px-6 py-3 bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-medium transition-colors flex items-center mx-auto"
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    disabled={!theater?.result}
+                    className={`px-6 py-3 rounded-lg font-medium transition-colors flex items-center mx-auto ${
+                      !theater?.result || !screens || screens.length === 0
+                        ? "bg-gray-500/50 text-gray-400 cursor-not-allowed"
+                        : "bg-orange-500 hover:bg-orange-600 text-white"
+                    }`}
+                    whileHover={
+                      !theater?.result || !screens || screens.length === 0
+                        ? {}
+                        : { scale: 1.05 }
+                    }
+                    whileTap={
+                      !theater?.result || !screens || screens.length === 0
+                        ? {}
+                        : { scale: 0.95 }
+                    }
+                    disabled={!theater?.result || !screens || screens.length === 0}
+                    title={
+                      !theater?.result
+                        ? "Please create a theater first"
+                        : !screens || screens.length === 0
+                        ? "Please create at least one screen first"
+                        : "Add new showtime"
+                    }
                   >
                     <Plus size={18} className="mr-2" />
-                    Add Showtime
+                    {!screens || screens.length === 0 ? "Create Screen First" : "Add Showtime"}
                   </motion.button>
                 </motion.div>
               )

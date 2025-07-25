@@ -61,8 +61,8 @@ const Screen = () => {
   // Seat layout form states
   const [rows, setRows] = useState(8);
   const [seatsPerRow, setSeatsPerRow] = useState(12);
-  const [seatType] = useState<'regular' | 'premium' | 'vip'>('regular');
-  const [selectedSeatType, setSelectedSeatType] = useState<'regular' | 'premium' | 'vip'>('regular');
+  const [seatType] = useState<'regular' | 'premium'>('regular');
+  const [selectedSeatType, setSelectedSeatType] = useState<'regular' | 'premium'>('regular');
 
   // Fetch theater and screens
   const fetchData = async () => {
@@ -317,7 +317,7 @@ const Screen = () => {
   };
 
   // Change seat type for active seats
-  const changeSeatType = (rowIndex: number, seatIndex: number, newType: 'regular' | 'premium' | 'vip') => {
+  const changeSeatType = (rowIndex: number, seatIndex: number, newType: 'regular' | 'premium') => {
     const newLayout = [...formData.seat_layout];
     if (newLayout[rowIndex][seatIndex].status === 'active') {
       newLayout[rowIndex][seatIndex] = {
@@ -407,8 +407,6 @@ const Screen = () => {
     switch (seat.type) {
       case 'premium':
         return 'bg-blue-500/80 border-blue-400/50 text-white cursor-pointer hover:bg-blue-400/80';
-      case 'vip':
-        return 'bg-purple-500/80 border-purple-400/50 text-white cursor-pointer hover:bg-purple-400/80';
       default:
         return 'bg-green-500/80 border-green-400/50 text-white cursor-pointer hover:bg-green-400/80';
     }
@@ -761,8 +759,8 @@ const Screen = () => {
                     <label className="block text-slate-300 text-sm font-medium mb-2">
                       Seat Type for New Seats
                     </label>
-                    <div className="grid grid-cols-3 gap-2">
-                      {(['regular', 'premium', 'vip'] as const).map((type) => (
+                    <div className="grid grid-cols-2 gap-2">
+                      {(['regular', 'premium'] as const).map((type) => (
                         <button
                           key={type}
                           type="button"
@@ -771,9 +769,7 @@ const Screen = () => {
                             selectedSeatType === type
                               ? type === 'regular' 
                                 ? 'bg-green-500 text-white'
-                                : type === 'premium'
-                                ? 'bg-blue-500 text-white'
-                                : 'bg-purple-500 text-white'
+                                : 'bg-blue-500 text-white'
                               : 'bg-slate-700/50 text-slate-300 hover:bg-slate-600/50'
                           }`}
                           disabled={isSubmitting}
@@ -897,8 +893,8 @@ const Screen = () => {
                                 onContextMenu={(e) => {
                                   e.preventDefault();
                                   if (seat.status === 'active') {
-                                    const types: ('regular' | 'premium' | 'vip')[] = ['regular', 'premium', 'vip'];
-                                    const currentIndex = types.indexOf(seat.type);
+                                    const types: ('regular' | 'premium' )[] = ['regular', 'premium'];
+                                    const currentIndex = types.indexOf(seat.type === 'vip' ? 'premium' : seat.type as 'regular' | 'premium');
                                     const nextType = types[(currentIndex + 1) % types.length];
                                     changeSeatType(rowIndex, seatIndex, nextType);
                                   }
@@ -1061,8 +1057,8 @@ const Screen = () => {
                     <label className="block text-slate-300 text-sm font-medium mb-2">
                       Seat Type for New Seats
                     </label>
-                    <div className="grid grid-cols-3 gap-2">
-                      {(['regular', 'premium', 'vip'] as const).map((type) => (
+                    <div className="grid grid-cols-2 gap-2">
+                      {(['regular', 'premium'] as const).map((type) => (
                         <button
                           key={type}
                           type="button"
@@ -1071,9 +1067,7 @@ const Screen = () => {
                             selectedSeatType === type
                               ? type === 'regular' 
                                 ? 'bg-green-500 text-white'
-                                : type === 'premium'
-                                ? 'bg-blue-500 text-white'
-                                : 'bg-purple-500 text-white'
+                                : 'bg-blue-500 text-white'
                               : 'bg-slate-700/50 text-slate-300 hover:bg-slate-600/50'
                           }`}
                           disabled={isSubmitting}
@@ -1197,8 +1191,8 @@ const Screen = () => {
                                 onContextMenu={(e) => {
                                   e.preventDefault();
                                   if (seat.status === 'active') {
-                                    const types: ('regular' | 'premium' | 'vip')[] = ['regular', 'premium', 'vip'];
-                                    const currentIndex = types.indexOf(seat.type);
+                                    const types: ('regular' | 'premium' )[] = ['regular', 'premium'];
+                                    const currentIndex = types.indexOf(seat.type === 'vip' ? 'premium' : seat.type as 'regular' | 'premium');
                                     const nextType = types[(currentIndex + 1) % types.length];
                                     changeSeatType(rowIndex, seatIndex, nextType);
                                   }
