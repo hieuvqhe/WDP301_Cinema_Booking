@@ -89,6 +89,19 @@ const SepayInstructions: React.FC = () => {
   const transferContent = booking?.ticket_code || "";
   const amount = booking?.total_amount || 0;
 
+  // Debug: Log booking data to understand the issue
+  useEffect(() => {
+    if (booking) {
+      console.log("Sepay Booking Data:", {
+        total_amount: booking.total_amount,
+        coupon_code: booking.coupon_code,
+        coupon_discount: booking.coupon_discount,
+        seats: booking.seats,
+        full_booking: booking
+      });
+    }
+  }, [booking]);
+
   if (!bookingId || !booking) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
@@ -376,10 +389,33 @@ const SepayInstructions: React.FC = () => {
                 </div>
 
                 <div className="border-t border-white/20 pt-3">
-                  <div className="flex justify-between text-white font-semibold">
-                    <span>Total</span>
-                    <span>{formatCurrency(amount)}</span>
-                  </div>
+                  {/* Coupon Discount Display */}
+                  {booking.coupon_code && booking.coupon_discount && (
+                    <>
+                      <div className="flex justify-between text-gray-300 text-sm mb-2">
+                        <span>Original Amount</span>
+                        <span>{formatCurrency((booking.original_amount || booking.total_amount + booking.coupon_discount))}</span>
+                      </div>
+                      <div className="flex justify-between text-green-400 text-sm mb-2">
+                        <span>Coupon Discount ({booking.coupon_code})</span>
+                        <span>-{formatCurrency(booking.coupon_discount)}</span>
+                      </div>
+                      <div className="border-t border-white/10 pt-2">
+                        <div className="flex justify-between text-white font-semibold">
+                          <span>Final Total</span>
+                          <span>{formatCurrency(amount)}</span>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                  
+                  {/* No coupon - just show total */}
+                  {!booking.coupon_code && (
+                    <div className="flex justify-between text-white font-semibold">
+                      <span>Total</span>
+                      <span>{formatCurrency(amount)}</span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

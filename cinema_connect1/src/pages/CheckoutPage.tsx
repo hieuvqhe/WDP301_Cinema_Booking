@@ -185,6 +185,14 @@ export default function CheckoutPage() {
     if (seatData && hasLoadedData && bookingInfo) {
       setSeats(Array.isArray(seatData.seats) ? seatData.seats : []);
       setPrice(seatData.totalAmount || 0);
+      
+      // Debug: Log price being set
+      console.log("CheckoutPage price update:", {
+        seatDataTotalAmount: seatData.totalAmount,
+        priceBeingSet: seatData.totalAmount || 0,
+        couponCode: seatData.couponCode,
+        couponDiscount: seatData.couponDiscount
+      });
     }
   }, [seatData?.seats, seatData?.totalAmount, hasLoadedData, bookingInfo]);
 
@@ -293,7 +301,7 @@ export default function CheckoutPage() {
     setIsCreatingBooking(true);
 
     try {
-      // Prepare booking data
+      // Prepare booking data with coupon information
       const bookingData: CreateBookingRequest = {
         showtime_id: bookingInfo.showtimeId,
         seats: bookingInfo.seats.map((seat) => {
@@ -304,7 +312,23 @@ export default function CheckoutPage() {
             type: "regular" as const, // Default seat type, can be enhanced
           };
         }),
+        // Include coupon information from localStorage
+        coupon_code: seatData?.couponCode,
+        coupon_discount: seatData?.couponDiscount,
+        total_amount: bookingInfo.totalAmount, // Final amount after coupon discount
       };
+
+      // Debug: Log booking data being sent
+      console.log("Creating Booking with data:", {
+        bookingData,
+        seatData: {
+          couponCode: seatData?.couponCode,
+          couponDiscount: seatData?.couponDiscount,
+          appliedCoupon: seatData?.appliedCoupon,
+          totalAmount: seatData?.totalAmount
+        },
+        bookingInfo
+      });
 
       // Check if existing booking data exists for this showtimeId
 
