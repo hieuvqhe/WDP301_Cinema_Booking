@@ -63,20 +63,20 @@ export default function MovieInfo({
         </motion.h1>
 
         <motion.p variants={fadeUp} custom={1} className="mb-1">
-          Đạo diễn: {movie.director}
+          Director: {movie.director}
         </motion.p>
         <motion.p variants={fadeUp} custom={2} className="mb-1">
-          Ngôn ngữ: {getCountryDisplay(movie.language)}
+          Language: {getCountryDisplay(movie.language)}
         </motion.p>
         <motion.p variants={fadeUp} custom={3} className="mb-1">
-          Ngày phát hành:{" "}
+          Release:{" "}
           {new Date(movie.release_date).toLocaleDateString("vi-VN")}
         </motion.p>
         <motion.p variants={fadeUp} custom={4} className="mb-1">
-          Thời lượng: {movie.duration} phút
+          Duration: {movie.duration} phút
         </motion.p>
         <motion.p variants={fadeUp} custom={5} className="mb-1">
-          Thể loại:{" "}
+          Genre:{" "}
           {movie.genre
             .map((genre: any) =>
               typeof genre === "string" ? genre : genre.name
@@ -101,7 +101,7 @@ export default function MovieInfo({
           ))}
           <span className="ml-2">({movie.average_rating}/10)</span>
           <span className="ml-2 text-sm text-gray-400">
-            ({movie.ratings_count} đánh giá)
+            ({movie.ratings_count} rating)
           </span>
         </motion.div>
 
@@ -136,14 +136,14 @@ export default function MovieInfo({
               disabled={!selectedInfo.showtimeId}
               className="px-4 py-2 text-xs text-white bg-primary hover:bg-primary-dull transition rounded-full font-medium cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Tiếp theo
+              Next
             </button>
           ) : (
             <button
               className="px-4 py-2 text-xs text-white bg-red-500  transition rounded-full font-medium"
               disabled
             >
-              Đăng nhập để đặt vé
+              Log in to booking
             </button>
           )}
         </motion.div>

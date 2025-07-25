@@ -80,7 +80,7 @@ const VietQRBanking: React.FC<VietQRBankingProps> = ({
     <div className="bg-white/10 rounded-xl p-6 text-center border border-blue-500/30 max-w-sm mx-auto">
       <div className="flex items-center justify-center gap-2 mb-4">
         <CreditCard className="h-5 w-5 text-blue-400" />
-        <h3 className="text-lg font-semibold text-black">QR Thanh toán</h3>
+        <h3 className="text-lg font-semibold text-black">QR Payment</h3>
       </div>
 
       {/* QR Code */}
@@ -112,25 +112,25 @@ const VietQRBanking: React.FC<VietQRBankingProps> = ({
       <div className="bg-blue-500/10 rounded-lg p-4 mb-4 text-left">
         <div className="space-y-2 text-sm">
           <div className="flex justify-between">
-            <span className="text-black">Ngân hàng:</span>
+            <span className="text-black">Bank:</span>
             <span className="text-black font-medium">MB Bank</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-black">Chủ TK:</span>
+            <span className="text-black">Account:</span>
             <span className="text-black font-medium">{accountName}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-black">Số TK:</span>
+            <span className="text-black">Account number:</span>
             <span className="text-black font-mono">{accountNumber}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-black">Số tiền:</span>
+            <span className="text-black">Amount:</span>
             <span className="text-green-400 font-bold">
               {amount.toLocaleString("vi-VN")} ₫
             </span>
           </div>
           <div className="pt-2 flex items-center text-black border-t border-blue-500/20">
-            <p className="text-gray-400 text-xs mb-1">Nội dung CK:</p>
+            <p className="text-gray-400 text-xs mb-1">Content payment:</p>
             <p className=" text-sm font-medium bg-white/10 p-2 rounded">
               {content}
             </p>
@@ -146,17 +146,17 @@ const VietQRBanking: React.FC<VietQRBankingProps> = ({
             className="flex items-center justify-center gap-1 px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors text-sm"
           >
             <Download className="h-3 w-3" />
-            Xem QR
+            View QR
           </button>
         </div>
       </div>
 
       <div className="mt-4 p-3 bg-orange-500/10 border border-orange-500/20 rounded-lg">
         <p className="text-orange-400 text-xs font-medium mb-1">
-          ⚠️ QUAN TRỌNG
+          ⚠️ IMPORTANT
         </p>
         <p className="text-black text-xs">
-          Nhập đúng nội dung chuyển khoản để được xử lý tự động
+          Enter the correct transfer content to be processed automatically.
         </p>
       </div>
     </div>

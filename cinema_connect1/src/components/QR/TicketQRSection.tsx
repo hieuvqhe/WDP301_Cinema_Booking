@@ -216,7 +216,7 @@ const TicketQRSection: React.FC<TicketQRSectionProps> = ({
               <div className="bg-green-50 rounded-lg p-3">
                 <div className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1">
                   <Clock className="h-4 w-4 text-green-600" />
-                  <span>Suất chiếu</span>
+                  <span>Show times</span>
                 </div>
                 <p className="text-sm text-gray-800">{showtime.date}</p>
                 <p className="text-lg font-bold text-green-600">
@@ -229,14 +229,14 @@ const TicketQRSection: React.FC<TicketQRSectionProps> = ({
           {/* Seats & Amount */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div className="bg-orange-50 rounded-lg p-3">
-              <p className="text-sm font-medium text-gray-700 mb-1">Ghế ngồi</p>
+              <p className="text-sm font-medium text-gray-700 mb-1">Seat</p>
               <p className="text-lg font-bold text-orange-600">
                 {formatSeats(bookingData.seats)}
               </p>
             </div>
             <div className="bg-red-50 rounded-lg p-3">
               <p className="text-sm font-medium text-gray-700 mb-1">
-                Tổng tiền
+                Total
               </p>
               <p className="text-xl font-bold text-red-600">
                 {bookingData.total_amount.toLocaleString("vi-VN")} ₫
@@ -248,7 +248,7 @@ const TicketQRSection: React.FC<TicketQRSectionProps> = ({
           {(bookingData.user?.full_name || bookingData.user?.phone) && (
             <div className="bg-gray-50 rounded-lg p-3">
               <p className="text-sm font-medium text-gray-700 mb-2">
-                Thông tin khách hàng
+                Customer information
               </p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                 {bookingData.user?.full_name && (
@@ -280,17 +280,17 @@ const TicketQRSection: React.FC<TicketQRSectionProps> = ({
           className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
         >
           <Download className="h-4 w-4" />
-          Tải QR Code
+          Download QR Code
         </button>
       </div>
 
       {/* Instructions */}
       <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
         <p className="text-amber-800 text-xs font-medium mb-1">
-          Hướng dẫn sử dụng
+          User manual
         </p>
         <p className="text-amber-700 text-xs">
-          Đưa mã QR này cho nhân viên tại rạp để quét và vào xem phim
+          Show this QR code to the staff at the cinema to scan and enter to watch the movie.
         </p>
       </div>
     </div>

@@ -102,14 +102,14 @@ export default function SeatLayout() {
   if (loading)
     return (
       <div className="flex items-center justify-center min-h-screen bg-[#121212] text-gray-300 text-lg">
-        Đang tải sơ đồ ghế...
+        Loading the seat map...
       </div>
     );
 
   if (!screen)
     return (
       <div className="flex items-center justify-center min-h-screen bg-[#121212] text-red-500 text-lg">
-        Không tìm thấy màn hình.
+        Screen not found.
       </div>
     );
 

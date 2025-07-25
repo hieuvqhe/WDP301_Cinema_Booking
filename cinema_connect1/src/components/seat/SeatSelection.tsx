@@ -485,7 +485,7 @@ export default function SeatSelection({
       <div className="relative w-full max-w-3xl">
         <div className="bg-gradient-to-b from-gray-200 to-gray-400 h-2 sm:h-3 rounded-t-3xl shadow-lg"></div>
         <div className="text-center text-sm sm:text-base text-gray-400 mt-2 font-medium tracking-wider">
-          MÀN HÌNH
+          SCREEN
         </div>
       </div>
 
@@ -587,7 +587,7 @@ export default function SeatSelection({
           >
             <h3 className="font-bold text-lg mb-3 text-blue-300 flex items-center gap-2">
               <span className="w-3 h-3 bg-blue-400 rounded-full"></span>
-              Ghế đã chọn
+              Selected seat
             </h3>
             <div className="min-h-[60px] flex items-center">
               {selectedSeats.length > 0 ? (
@@ -605,7 +605,7 @@ export default function SeatSelection({
                   ))}
                 </div>
               ) : (
-                <p className="text-gray-400 italic">Chưa chọn ghế nào</p>
+                <p className="text-gray-400 italic">No seat chosen.</p>
               )}
             </div>
           </motion.div>
@@ -617,7 +617,7 @@ export default function SeatSelection({
           >
             <h3 className="font-bold text-lg mb-3 text-green-300 flex items-center gap-2">
               <span className="w-3 h-3 bg-green-400 rounded-full"></span>
-              Tổng tiền
+              Total amount
             </h3>
             <div className="space-y-3">
               {/* Original amount */}
@@ -942,39 +942,71 @@ export default function SeatSelection({
       >
         <h3 className="font-bold text-xl mb-6 text-center text-gray-200 flex items-center justify-center gap-2">
           <span className="w-4 h-4 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full"></span>
-          Chú thích loại ghế
+          Seat note
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
           {[
             [
               "Regular",
               "bg-gradient-to-r from-blue-500 to-blue-600",
-              "Ghế thường",
+              "Regular Seat",
             ],
             [
               "Premium",
               "bg-gradient-to-r from-purple-500 to-purple-600",
-              "Ghế cao cấp",
+              "Premium Seat",
             ],
             [
+<<<<<<< HEAD
+              "Recliner",
+              "bg-gradient-to-r from-pink-500 to-pink-600",
+              "Recliner Seat",
+            ],
+            [
+              "Couple",
+              "bg-gradient-to-r from-yellow-500 to-orange-500",
+              "Couple Seat",
+            ],
+            [
+              "Selected",
+=======
               "Ghế đã chọn",
+>>>>>>> 374d150422be79fa57057c48f8c0900807739039
               "bg-gradient-to-r from-green-500 to-green-600",
-              "Bạn đã chọn",
+              "You have selected",
             ],
             [
+<<<<<<< HEAD
+              "Booked",
+=======
               "Đang được đặt",
               "bg-gradient-to-r from-yellow-500 to-orange-500",
               "Người khác đang chọn",
             ],
             [
               "Ghế đã đặt",
+>>>>>>> 374d150422be79fa57057c48f8c0900807739039
               "bg-gradient-to-r from-red-500 to-red-600",
-              "Không thể chọn",
+              "Unavailable",
             ],
             [
+<<<<<<< HEAD
+              "Your Seat",
+              "bg-gradient-to-r from-green-400 to-emerald-500",
+              "Temporarily locked by you",
+            ],
+            [
+              "Locked by Others",
+              "bg-gradient-to-r from-yellow-500 to-orange-500",
+              "Being selected by someone else",
+            ],
+            [
+              "Unavailable",
+=======
               "Không khả dụng",
+>>>>>>> 374d150422be79fa57057c48f8c0900807739039
               "bg-gradient-to-r from-gray-500 to-gray-600",
-              "Ghế hỏng",
+              "Broken Seat",
             ],
           ].map(([type, color, description], i) => (
             <motion.div
@@ -1022,7 +1054,7 @@ export default function SeatSelection({
                 transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
               />
             )}
-            <span>{isRefetching ? "Đang tải..." : "Làm mới ghế"}</span>
+            <span>{isRefetching ? "Đang tải..." : "Refresh"}</span>
           </div>
         </motion.button>
 
@@ -1042,7 +1074,7 @@ export default function SeatSelection({
                   {selectedSeats.length}
                 </span>
               </span>
-              <span>Thanh toán</span>
+              <span>Payment</span>
             </div>
           </motion.button>
         )}

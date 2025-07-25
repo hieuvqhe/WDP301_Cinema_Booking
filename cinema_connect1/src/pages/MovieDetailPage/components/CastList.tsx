@@ -4,7 +4,7 @@ export default function CastList({ movie }: { movie: Movie }) {
   return (
     <div className="mb-10">
       <p className="text-2xl font-bold mb-6 text-white bg-gradient-to-r from-orange-400 to-red-500 bg-clip-text text-transparent">
-        Diễn viên
+        Cast
       </p>
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
         {movie.cast.map((actor) => (
