@@ -51,7 +51,7 @@ export default function SeatSelection({
   const [countdowns, setCountdowns] = useState<Record<string, number>>({});
   const [isRefetching, setIsRefetching] = useState(false);
   const [hasInitialized, setHasInitialized] = useState(false);
-  
+
   // Coupon states
   const [availableCoupons, setAvailableCoupons] = useState<Coupon[]>([]);
   const [selectedCoupon, setSelectedCoupon] = useState<Coupon | null>(null);
@@ -60,7 +60,7 @@ export default function SeatSelection({
   const [couponDiscount, setCouponDiscount] = useState<number>(0);
   const [showCouponInput, setShowCouponInput] = useState(false);
   const [showAvailableCoupons, setShowAvailableCoupons] = useState(false);
-  
+
   const navigate = useNavigate();
   const { requireAuth, showLoginModal, setShowLoginModal } = useAuthAction();
   const { user } = useAuthStore();
@@ -86,7 +86,6 @@ export default function SeatSelection({
     }) => bookingApi.deletedShowtimeBySeatLocked(showtime, body),
 
     onSuccess: (data) => {
-
       toast.success(
         `Đã hủy ghế ${(data?.data?.result as any)?.deleted_seats[0].seat_row}${
           (data?.data?.result as any)?.deleted_seats[0].seat_number
@@ -107,7 +106,7 @@ export default function SeatSelection({
   // Fetch available coupons for user
   const fetchAvailableCoupons = useCallback(async () => {
     if (!user) return;
-    
+
     try {
       const response = await getMyCoupons();
       setAvailableCoupons(response.result);
@@ -123,14 +122,15 @@ export default function SeatSelection({
       return;
     }
 
-    const couponToValidate = coupon || availableCoupons.find(c => c.code === code);
+    const couponToValidate =
+      coupon || availableCoupons.find((c) => c.code === code);
     if (!couponToValidate) {
       toast.error("Không tìm thấy coupon");
       return;
     }
 
     setIsValidatingCoupon(true);
-    
+
     try {
       const response = await validateCoupon({
         code: couponToValidate.code,
@@ -144,15 +144,23 @@ export default function SeatSelection({
       setCouponCode(response.result.coupon.code);
       setShowCouponInput(false);
       setShowAvailableCoupons(false);
-      
+
       // Save coupon to localStorage
-      updateCoupon(response.result.coupon.code, response.result.discount_amount, response.result.coupon);
-      
-      toast.success(`Áp dụng coupon thành công! Giảm ${response.result.discount_amount.toLocaleString("vi-VN")} VNĐ`);
+      updateCoupon(
+        response.result.coupon.code,
+        response.result.discount_amount,
+        response.result.coupon
+      );
+
+      toast.success(
+        `Áp dụng coupon thành công! Giảm ${response.result.discount_amount.toLocaleString(
+          "vi-VN"
+        )} VNĐ`
+      );
     } catch (error: any) {
       const message = error.message || "Không thể áp dụng coupon";
       toast.error(message);
-      
+
       // Reset coupon state on error
       setSelectedCoupon(null);
       setCouponDiscount(0);
@@ -167,10 +175,10 @@ export default function SeatSelection({
     setSelectedCoupon(null);
     setCouponDiscount(0);
     setCouponCode("");
-    
+
     // Remove coupon from localStorage
     removeCoupon();
-    
+
     toast.info("Đã hủy áp dụng coupon");
   };
 
@@ -180,7 +188,7 @@ export default function SeatSelection({
       toast.error("Vui lòng nhập mã coupon");
       return;
     }
-    
+
     await handleValidateCoupon(null, couponCode.trim());
   };
 
@@ -193,14 +201,14 @@ export default function SeatSelection({
 
     if (seatData && Array.isArray(seatData.seats) && !hasInitialized) {
       setSelectedSeats(seatData.seats);
-      
+
       // Restore coupon data if available
       if (seatData.couponCode && seatData.appliedCoupon) {
         setSelectedCoupon(seatData.appliedCoupon);
         setCouponCode(seatData.couponCode);
         setCouponDiscount(seatData.couponDiscount || 0);
       }
-      
+
       setHasInitialized(true);
     }
   }, [seatData?.showtimeId, isExpired, hasInitialized]);
@@ -615,10 +623,18 @@ export default function SeatSelection({
               {/* Original amount */}
               <div className="flex items-center justify-between">
                 <div>
-                  <p className={`text-2xl font-bold ${selectedCoupon ? 'text-gray-400 line-through' : 'text-green-400'}`}>
+                  <p
+                    className={`text-2xl font-bold ${
+                      selectedCoupon
+                        ? "text-gray-400 line-through"
+                        : "text-green-400"
+                    }`}
+                  >
                     {price ? totalAmount.toLocaleString("vi-VN") : "0"}
                   </p>
-                  {!selectedCoupon && <p className="text-sm text-gray-400">VNĐ</p>}
+                  {!selectedCoupon && (
+                    <p className="text-sm text-gray-400">VNĐ</p>
+                  )}
                 </div>
                 {selectedSeats.length > 0 && (
                   <div className="text-right">
@@ -628,16 +644,23 @@ export default function SeatSelection({
                     <div className="text-xs text-gray-500 space-y-1">
                       {/* Show breakdown of seat types and prices */}
                       {(() => {
-                        const seatsByType: Record<string, { count: number; price: number }> = {};
-                        
-                        selectedSeats.forEach(seatKey => {
+                        const seatsByType: Record<
+                          string,
+                          { count: number; price: number }
+                        > = {};
+
+                        selectedSeats.forEach((seatKey) => {
                           for (const row of seatLayout) {
                             for (const seat of row) {
                               const key = `${seat.row}${seat.number}`;
                               if (key === seatKey && price) {
-                                const seatPrice = price[seat.type as keyof priceType] || 0;
+                                const seatPrice =
+                                  price[seat.type as keyof priceType] || 0;
                                 if (!seatsByType[seat.type]) {
-                                  seatsByType[seat.type] = { count: 0, price: seatPrice };
+                                  seatsByType[seat.type] = {
+                                    count: 0,
+                                    price: seatPrice,
+                                  };
                                 }
                                 seatsByType[seat.type].count += 1;
                               }
@@ -645,11 +668,19 @@ export default function SeatSelection({
                           }
                         });
 
-                        return Object.entries(seatsByType).map(([type, data]) => (
-                          <div key={type}>
-                            {data.count} {type === 'regular' ? 'thường' : type === 'premium' ? 'cao cấp' : type} × {data.price.toLocaleString("vi-VN")}
-                          </div>
-                        ));
+                        return Object.entries(seatsByType).map(
+                          ([type, data]) => (
+                            <div key={type}>
+                              {data.count}{" "}
+                              {type === "regular"
+                                ? "thường"
+                                : type === "premium"
+                                ? "cao cấp"
+                                : type}{" "}
+                              × {data.price.toLocaleString("vi-VN")}
+                            </div>
+                          )
+                        );
                       })()}
                     </div>
                   </div>
@@ -667,7 +698,9 @@ export default function SeatSelection({
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <span className="text-sm text-orange-400">Coupon:</span>
-                      <span className="text-sm font-semibold text-orange-300">{selectedCoupon.code}</span>
+                      <span className="text-sm font-semibold text-orange-300">
+                        {selectedCoupon.code}
+                      </span>
                       <button
                         onClick={handleRemoveCoupon}
                         className="text-xs text-red-400 hover:text-red-300 ml-2"
@@ -695,7 +728,9 @@ export default function SeatSelection({
                       <p className="text-3xl font-bold text-green-400">
                         {finalAmount.toLocaleString("vi-VN")}
                       </p>
-                      <p className="text-sm text-gray-400">VNĐ (sau giảm giá)</p>
+                      <p className="text-sm text-gray-400">
+                        VNĐ (sau giảm giá)
+                      </p>
                     </div>
                     <div className="text-right">
                       <p className="text-xs text-green-400">
@@ -729,15 +764,19 @@ export default function SeatSelection({
               {availableCoupons.length > 0 && (
                 <div>
                   <div className="flex items-center justify-between mb-3">
-                    <span className="text-sm font-medium text-gray-300">Coupon có sẵn:</span>
+                    <span className="text-sm font-medium text-gray-300">
+                      Coupon có sẵn:
+                    </span>
                     <button
-                      onClick={() => setShowAvailableCoupons(!showAvailableCoupons)}
+                      onClick={() =>
+                        setShowAvailableCoupons(!showAvailableCoupons)
+                      }
                       className="text-sm text-orange-400 hover:text-orange-300"
                     >
                       {showAvailableCoupons ? "Ẩn" : "Xem tất cả"}
                     </button>
                   </div>
-                  
+
                   {showAvailableCoupons && (
                     <motion.div
                       className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4"
@@ -746,40 +785,54 @@ export default function SeatSelection({
                       transition={{ duration: 0.3 }}
                     >
                       {availableCoupons
-                        .filter(coupon => 
-                          isCouponValid(coupon) && 
-                          isCouponApplicable(coupon, seatData?.movieId, seatData?.theaterId) &&
-                          totalAmount >= coupon.min_purchase
+                        .filter(
+                          (coupon) =>
+                            isCouponValid(coupon) &&
+                            isCouponApplicable(
+                              coupon,
+                              seatData?.movieId,
+                              seatData?.theaterId
+                            ) &&
+                            totalAmount >= coupon.min_purchase
                         )
                         .map((coupon) => (
-                        <motion.div
-                          key={coupon._id}
-                          className="bg-gradient-to-r from-orange-600/20 to-red-600/20 border border-orange-500/30 rounded-lg p-3 cursor-pointer hover:border-orange-400/50 transition-all duration-300"
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
-                          onClick={() => handleValidateCoupon(coupon)}
-                        >
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <p className="font-bold text-orange-300">{coupon.code}</p>
-                              <p className="text-xs text-gray-400">{coupon.description}</p>
-                              <p className="text-sm text-orange-400 mt-1">
-                                {formatCouponDiscount(coupon)}
-                              </p>
-                            </div>
-                            <div className="text-right">
-                              <p className="text-xs text-gray-400">
-                                Tối thiểu: {coupon.min_purchase.toLocaleString("vi-VN")}₫
-                              </p>
-                              {coupon.max_discount > 0 && (
-                                <p className="text-xs text-gray-400">
-                                  Tối đa: {coupon.max_discount.toLocaleString("vi-VN")}₫
+                          <motion.div
+                            key={coupon._id}
+                            className="bg-gradient-to-r from-orange-600/20 to-red-600/20 border border-orange-500/30 rounded-lg p-3 cursor-pointer hover:border-orange-400/50 transition-all duration-300"
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            onClick={() => handleValidateCoupon(coupon)}
+                          >
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <p className="font-bold text-orange-300">
+                                  {coupon.code}
                                 </p>
-                              )}
+                                <p className="text-xs text-gray-400">
+                                  {coupon.description}
+                                </p>
+                                <p className="text-sm text-orange-400 mt-1">
+                                  {formatCouponDiscount(coupon)}
+                                </p>
+                              </div>
+                              <div className="text-right">
+                                <p className="text-xs text-gray-400">
+                                  Tối thiểu:{" "}
+                                  {coupon.min_purchase.toLocaleString("vi-VN")}₫
+                                </p>
+                                {coupon.max_discount > 0 && (
+                                  <p className="text-xs text-gray-400">
+                                    Tối đa:{" "}
+                                    {coupon.max_discount.toLocaleString(
+                                      "vi-VN"
+                                    )}
+                                    ₫
+                                  </p>
+                                )}
+                              </div>
                             </div>
-                          </div>
-                        </motion.div>
-                      ))}
+                          </motion.div>
+                        ))}
                     </motion.div>
                   )}
                 </div>
@@ -788,7 +841,9 @@ export default function SeatSelection({
               {/* Manual Coupon Input */}
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-gray-300">Nhập mã coupon:</span>
+                  <span className="text-sm font-medium text-gray-300">
+                    Nhập mã coupon:
+                  </span>
                   <button
                     onClick={() => setShowCouponInput(!showCouponInput)}
                     className="text-sm text-orange-400 hover:text-orange-300"
@@ -807,11 +862,13 @@ export default function SeatSelection({
                     <input
                       type="text"
                       value={couponCode}
-                      onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                      onChange={(e) =>
+                        setCouponCode(e.target.value.toUpperCase())
+                      }
                       placeholder="Nhập mã coupon..."
                       className="flex-1 px-3 py-2 bg-gray-700/50 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-orange-400"
                       onKeyPress={(e) => {
-                        if (e.key === 'Enter') {
+                        if (e.key === "Enter") {
                           handleManualCouponSubmit();
                         }
                       }}
@@ -829,7 +886,11 @@ export default function SeatSelection({
                         <motion.div
                           className="w-4 h-4 border-2 border-white border-t-transparent rounded-full"
                           animate={{ rotate: 360 }}
-                          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                          transition={{
+                            duration: 1,
+                            repeat: Infinity,
+                            ease: "linear",
+                          }}
                         />
                       ) : (
                         "Áp dụng"
@@ -851,8 +912,12 @@ export default function SeatSelection({
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1">
-                  <p className="font-bold text-green-300">✓ {selectedCoupon.code}</p>
-                  <p className="text-sm text-gray-300 mt-1">{selectedCoupon.description}</p>
+                  <p className="font-bold text-green-300">
+                    ✓ {selectedCoupon.code}
+                  </p>
+                  <p className="text-sm text-gray-300 mt-1">
+                    {selectedCoupon.description}
+                  </p>
                   <p className="text-sm text-green-400 mt-2">
                     Tiết kiệm: {couponDiscount.toLocaleString("vi-VN")} VNĐ
                   </p>

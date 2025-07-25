@@ -153,7 +153,6 @@ const TicketVerification: React.FC = () => {
       setTimeout(() => {
         const videoElement = element.querySelector("video");
         if (videoElement) {
-        
           // Force video to be visible
           videoElement.style.display = "block";
           videoElement.style.width = "100%";
@@ -161,9 +160,7 @@ const TicketVerification: React.FC = () => {
           videoElement.style.objectFit = "cover";
 
           // Add event listeners for debugging
-          videoElement.addEventListener("loadedmetadata", () => {
-       
-          });
+          videoElement.addEventListener("loadedmetadata", () => {});
         } else {
           setError("Video element not created. Try refreshing the page.");
         }
@@ -328,7 +325,6 @@ const TicketVerification: React.FC = () => {
 
   // Component mount and cleanup effect
   useEffect(() => {
-
     // Check if getUserMedia is supported
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       console.warn("Camera not supported in this browser");
@@ -677,7 +673,9 @@ const TicketVerification: React.FC = () => {
                   manually
                 </li>
                 <li>• Green result = Valid ticket, allow entry</li>
-                <li>• Red result = Invalid ticket, deny entry</li>
+                <li>
+                  • Red result = Invalid ticket or used ticked, deny entry
+                </li>
                 <li className="text-orange-600 font-medium">
                   QR Scanning Tips:
                 </li>

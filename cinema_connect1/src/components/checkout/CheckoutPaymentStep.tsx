@@ -29,7 +29,7 @@ const CheckoutPaymentStep: React.FC<CheckoutPaymentStepProps> = ({
 }) => {
   const navigate = useNavigate();
   const [selectedPaymentMethod, setSelectedPaymentMethod] =
-    useState<PaymentMethod>("vnpay");
+    useState<PaymentMethod>("sepay");
   const [isProcessing, setIsProcessing] = useState(false);
 
   const createPaymentMutation = useCreatePayment();

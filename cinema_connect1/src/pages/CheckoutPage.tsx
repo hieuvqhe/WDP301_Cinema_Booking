@@ -65,7 +65,7 @@ export default function CheckoutPage() {
     bookingId || "",
     !!bookingId
   );
-  const [timeRemaining, setTimeRemaining] = useState<number>(300); // 5 minutes in seconds
+  const [timeRemaining, setTimeRemaining] = useState<number>(1200); // 20 minutes in seconds
   const [isCreatingBooking, setIsCreatingBooking] = useState(false);
   const [bookingInfo, setBookingInfo] = useState<BookingInfo | null>(null);
   const [hasLoadedData, setHasLoadedData] = useState(false);
@@ -185,13 +185,13 @@ export default function CheckoutPage() {
     if (seatData && hasLoadedData && bookingInfo) {
       setSeats(Array.isArray(seatData.seats) ? seatData.seats : []);
       setPrice(seatData.totalAmount || 0);
-      
+
       // Debug: Log price being set
       console.log("CheckoutPage price update:", {
         seatDataTotalAmount: seatData.totalAmount,
         priceBeingSet: seatData.totalAmount || 0,
         couponCode: seatData.couponCode,
-        couponDiscount: seatData.couponDiscount
+        couponDiscount: seatData.couponDiscount,
       });
     }
   }, [seatData?.seats, seatData?.totalAmount, hasLoadedData, bookingInfo]);
@@ -266,7 +266,6 @@ export default function CheckoutPage() {
   // Helper function to check if BOTH selected-movie-info AND seat-locked exist for the current showtimeId
   const checkExistingBooking = (showtimeId: string) => {
     try {
-
       // Check for selected-movie-info data
       const selectedMovieInfo = localStorage.getItem("selected-movie-info");
       let hasSelectedMovieInfo = false;
@@ -325,9 +324,9 @@ export default function CheckoutPage() {
           couponCode: seatData?.couponCode,
           couponDiscount: seatData?.couponDiscount,
           appliedCoupon: seatData?.appliedCoupon,
-          totalAmount: seatData?.totalAmount
+          totalAmount: seatData?.totalAmount,
         },
-        bookingInfo
+        bookingInfo,
       });
 
       // Check if existing booking data exists for this showtimeId
@@ -339,7 +338,7 @@ export default function CheckoutPage() {
 
       if (hasExistingBooking) {
         // Both selected-movie-info AND seat-locked exist, use updateBooking
-      
+
         // Get existing booking ID from seat-locked data (preferred) or selected-movie-info
         let existingBookingId = null;
 
@@ -349,7 +348,6 @@ export default function CheckoutPage() {
           if (selectedMovieInfo) {
             const parsedData = JSON.parse(selectedMovieInfo);
             existingBookingId = parsedData.bookingId;
-           
           }
         }
 
@@ -360,13 +358,11 @@ export default function CheckoutPage() {
           });
           newBookingId = existingBookingId;
         } else {
-         
           // Fallback to createBooking
           response = await createBookingMutation.mutateAsync(bookingData, {});
           newBookingId = response.data.result.booking._id;
         }
       } else {
-      
         // Use createBooking if either or both localStorage items are missing
         response = await createBookingMutation.mutateAsync(bookingData);
         newBookingId = response.data.result.booking._id;
