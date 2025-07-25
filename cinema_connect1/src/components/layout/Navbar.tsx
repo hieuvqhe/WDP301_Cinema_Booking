@@ -154,29 +154,19 @@ const Navbar = () => {
       },
     ];
 
-    if (user?.role === "customer") {
-      return [
-        {
-          title: "Profile",
-          link: "/profile",
-        },
-        {
-          title: "Payment History",
-          link: "/payment-history",
-        },
-        {
-          title: "My Bookings",
-          link: "/my-bookings",
-        },
-        ...baseActions,
-      ];
-    }
-
-    // For admin and staff roles
+    // All roles should have access to profile, payment history, and bookings
     return [
       {
         title: "Profile",
         link: "/profile",
+      },
+      {
+        title: "Payment History",
+        link: "/payment-history",
+      },
+      {
+        title: "My Bookings",
+        link: "/my-bookings",
       },
       ...baseActions,
     ];

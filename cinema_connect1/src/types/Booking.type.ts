@@ -28,6 +28,10 @@ export interface Booking {
   payment_status: PaymentStatus;
   created_at: string;
   updated_at: string;
+  // Coupon fields
+  coupon_code?: string;
+  coupon_discount?: number;
+  original_amount?: number; // Amount before coupon discount
   movie?: {
     _id: string;
     title: string;
@@ -68,6 +72,10 @@ export interface CreateBookingRequest {
     number: number;
     type: SeatType;
   }>;
+  // Coupon fields
+  coupon_code?: string;
+  coupon_discount?: number;
+  total_amount?: number; // Final amount after discount
 }
 
 export interface CreateBookingResponse {

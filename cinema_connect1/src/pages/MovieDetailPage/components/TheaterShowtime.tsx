@@ -74,13 +74,24 @@ export default function TheaterShowtime({
           <div className="flex flex-wrap gap-2">
             {showtimes.map((showtime) => {
               const isSelected = selectedInfo.showtimeId === showtime._id;
-              const date = new Date(showtime.start_time);
-              const time = `${date.toLocaleDateString("vi-VN", {
-                weekday: "short",
-              })}, ${date.toLocaleDateString("vi-VN")} - ${date.toLocaleTimeString("vi-VN", {
+              const startDate = new Date(showtime.start_time);
+              const endDate = new Date(showtime.end_time);
+              
+              const startTime = startDate.toLocaleTimeString("vi-VN", {
                 hour: "2-digit",
                 minute: "2-digit",
-              })}`;
+              });
+              const endTime = endDate.toLocaleTimeString("vi-VN", {
+                hour: "2-digit",
+                minute: "2-digit",
+              });
+              
+              const screenName = showtime.screen?.name || "Screen";
+              const timeRange = `${startTime} - ${endTime}`;
+              const dateInfo = `${startDate.toLocaleDateString("vi-VN", {
+                weekday: "short",
+              })}, ${startDate.toLocaleDateString("vi-VN")}`;
+              
               return (
                 <button
                   key={showtime._id}
@@ -91,13 +102,23 @@ export default function TheaterShowtime({
                       screenId: showtime.screen_id,
                     }))
                   }
-                  className={`px-4 py-2 rounded text-sm font-medium transition ${
+                  className={`px-3 py-2 rounded text-sm font-medium transition min-w-[140px] ${
                     isSelected
                       ? "bg-primary text-white"
                       : "border border-primary text-white hover:bg-[#1E1E1E]"
                   }`}
                 >
-                  {time}
+                  <div className="flex flex-col items-center gap-1">
+                    <div className="font-semibold text-xs text-primary-light">
+                      {screenName}
+                    </div>
+                    <div className="text-xs opacity-75">
+                      {dateInfo}
+                    </div>
+                    <div className="font-bold">
+                      {timeRange}
+                    </div>
+                  </div>
                 </button>
               );
             })}

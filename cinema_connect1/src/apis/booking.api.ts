@@ -37,6 +37,10 @@ export interface Booking {
   payment_status: "pending" | "completed" | "failed" | "refunded";
   created_at: string;
   updated_at: string;
+  // Coupon information
+  coupon_code?: string;
+  coupon_discount?: number;
+  original_amount?: number;
   movie?: {
     _id: string;
     title: string;
@@ -76,6 +80,10 @@ export interface CreateBookingRequest {
     number: number;
     type: string;
   }>;
+  // Coupon information
+  coupon_code?: string;
+  coupon_discount?: number;
+  total_amount?: number;
 }
 
 export interface CreateBookingResponse {

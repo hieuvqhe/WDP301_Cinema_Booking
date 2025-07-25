@@ -10,6 +10,10 @@ interface SeatData {
   theaterId?: string;
   timestamp: number;
   expiresAt: number;
+  // Coupon fields
+  couponCode?: string;
+  couponDiscount?: number;
+  appliedCoupon?: any; // Store the full coupon object
 }
 
 const STORAGE_KEY = "selected-movie-info";
@@ -131,6 +135,40 @@ export const useSeatPersistence = () => {
     });
   }, []);
 
+  const updateCoupon = useCallback((couponCode: string, couponDiscount: number, appliedCoupon: any) => {
+    setSeatData((currentData) => {
+      if (currentData) {
+        const updatedData = {
+          ...currentData,
+          couponCode,
+          couponDiscount,
+          appliedCoupon,
+          timestamp: Date.now(),
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedData));
+        return updatedData;
+      }
+      return currentData;
+    });
+  }, []);
+
+  const removeCoupon = useCallback(() => {
+    setSeatData((currentData) => {
+      if (currentData) {
+        const updatedData = {
+          ...currentData,
+          couponCode: undefined,
+          couponDiscount: undefined,
+          appliedCoupon: undefined,
+          timestamp: Date.now(),
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedData));
+        return updatedData;
+      }
+      return currentData;
+    });
+  }, []);
+
   const clearSeatData = () => {
     localStorage.removeItem(STORAGE_KEY);
     setSeatData(null);
@@ -191,6 +229,8 @@ export const useSeatPersistence = () => {
     updateSeats,
     updateTotalAmount,
     updateBookingId,
+    updateCoupon,
+    removeCoupon,
     clearSeatData,
     extendExpiration,
     getTimeRemaining,
