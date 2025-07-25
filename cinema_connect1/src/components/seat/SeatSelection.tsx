@@ -957,7 +957,6 @@ export default function SeatSelection({
               "Premium Seat",
             ],
             [
-<<<<<<< HEAD
               "Recliner",
               "bg-gradient-to-r from-pink-500 to-pink-600",
               "Recliner Seat",
@@ -969,28 +968,23 @@ export default function SeatSelection({
             ],
             [
               "Selected",
-=======
-              "Ghế đã chọn",
->>>>>>> 374d150422be79fa57057c48f8c0900807739039
+
               "bg-gradient-to-r from-green-500 to-green-600",
               "You have selected",
             ],
             [
-<<<<<<< HEAD
               "Booked",
-=======
+
               "Đang được đặt",
               "bg-gradient-to-r from-yellow-500 to-orange-500",
               "Người khác đang chọn",
             ],
             [
               "Ghế đã đặt",
->>>>>>> 374d150422be79fa57057c48f8c0900807739039
               "bg-gradient-to-r from-red-500 to-red-600",
               "Unavailable",
             ],
             [
-<<<<<<< HEAD
               "Your Seat",
               "bg-gradient-to-r from-green-400 to-emerald-500",
               "Temporarily locked by you",
@@ -1002,9 +996,7 @@ export default function SeatSelection({
             ],
             [
               "Unavailable",
-=======
-              "Không khả dụng",
->>>>>>> 374d150422be79fa57057c48f8c0900807739039
+
               "bg-gradient-to-r from-gray-500 to-gray-600",
               "Broken Seat",
             ],
