@@ -43,10 +43,10 @@ export default function FeedbackSection({
 
   return (
     <div className="mt-10 bg-[#1E1E1E] text-gray-300 rounded-3xl p-6 mb-2">
-      <h2 className="text-2xl font-bold mb-4">Rating movie</h2>
+      <h2 className="text-2xl font-bold mb-4">Đánh giá phim</h2>
       {userId && (
         <div className="mb-6">
-          <p className="mb-2 font-semibold">Select rating star:</p>
+          <p className="mb-2 font-semibold">Chọn sao đánh giá:</p>
           <div className="flex mb-2">
             {[...Array(5)].map((_, i) => (
               <FaStar
@@ -63,7 +63,7 @@ export default function FeedbackSection({
           <textarea
             className="w-full p-3 border border-gray-700 bg-[#2A2A2A] text-white rounded-lg"
             rows={4}
-            placeholder="Write down your comment..."
+            placeholder="Viết đánh giá của bạn..."
             value={selectedInfo.comment}
             onChange={(e) =>
               setSelectedInfo((prev: any) => ({
@@ -81,13 +81,18 @@ export default function FeedbackSection({
             }
             className="mt-2 px-4 py-2 text-xs bg-primary rounded-full text-white disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Gửi đánh giá
+            {addRatingMutation.isPending ? "Đang gửi..." : "Gửi đánh giá"}
           </button>
         </div>
       )}
 
       <h3 className="text-xl font-semibold mt-6">Phản hồi từ người xem:</h3>
-      {feedbacks.length ? (
+
+      {isLoading ? (
+        <p className="text-sm text-gray-500 mt-2">Đang tải đánh giá...</p>
+      ) : error ? (
+        <p className="text-sm text-red-500 mt-2">Lỗi khi tải đánh giá.</p>
+      ) : feedbacks.length ? (
         feedbacks.map((fb: any, idx: number) => (
           <div key={idx} className="border-b border-gray-700 py-3">
             <div className="flex items-center">
@@ -107,7 +112,7 @@ export default function FeedbackSection({
           </div>
         ))
       ) : (
-        <p className="text-sm text-gray-500 mt-2">No reviews yet.</p>
+        <p className="text-sm text-gray-500 mt-2">Chưa có đánh giá nào.</p>
       )}
 
       {addRatingMutation.isError && (
