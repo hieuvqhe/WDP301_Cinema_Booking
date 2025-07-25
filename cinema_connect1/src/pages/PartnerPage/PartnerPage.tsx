@@ -9,12 +9,15 @@ import Bookings from "./contents/Bookings";
 import Screen from "./contents/Screen";
 import Movies from "./contents/Movies";
 import ContractDetails from "./contents/ContractDetails";
+import Statistics from "./contents/Statistics";
 
 const PartnerPage = () => {
   const [activeTab, setActiveTab] = useState("overview");
 
   const renderContent = () => {
     switch (activeTab) {
+      case "statistics":
+        return <Statistics />;
       case "overview":
         return <Overview />;
 

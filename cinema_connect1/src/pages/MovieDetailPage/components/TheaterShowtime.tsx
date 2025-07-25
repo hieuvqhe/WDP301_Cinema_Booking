@@ -27,13 +27,13 @@ export default function TheaterShowtime({
   const LoadingSpinner = () => (
     <div className="flex items-center justify-center py-4">
       <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-      <span className="ml-2 text-gray-400">Đang tải...</span>
+      <span className="ml-2 text-gray-400">Loading...</span>
     </div>
   );
 
   return (
     <>
-      <h2 className="text-2xl font-bold mb-4">Rạp</h2>
+      <h2 className="text-2xl font-bold mb-4">Theater</h2>
       <div className="mb-4">
         {isLoadingTheaters ? (
           <LoadingSpinner />
@@ -54,7 +54,7 @@ export default function TheaterShowtime({
               }
             }}
           >
-            <option value="">-- Chọn rạp --</option>
+            <option value="">-- Select theater --</option>
             {availableTheaters.map((t) => (
               <option key={t._id} value={t._id}>
                 {t.name} - {t.location}
@@ -62,11 +62,11 @@ export default function TheaterShowtime({
             ))}
           </select>
         ) : (
-          <div className="text-gray-400">Chưa có rạp nào có lịch chiếu cho phim này.</div>
+          <div className="text-gray-400">No theater has a schedule for this movie yet..</div>
         )}
       </div>
 
-      <h2 className="text-2xl font-bold mb-4">Suất chiếu</h2>
+      <h2 className="text-2xl font-bold mb-4">Show times</h2>
       <div className="mb-4">
         {isLoadingShowtimes ? (
           <LoadingSpinner />
@@ -124,9 +124,9 @@ export default function TheaterShowtime({
             })}
           </div>
         ) : selectedInfo.theaterId ? (
-          <div className="text-gray-400">Chưa có suất chiếu nào cho rạp này.</div>
+          <div className="text-gray-400">There are no showtimes for this theater yet..</div>
         ) : (
-          <div className="text-gray-400">Vui lòng chọn rạp để xem suất chiếu.</div>
+          <div className="text-gray-400">Please select a theater to view the showtimes..</div>
         )}
       </div>
     </>

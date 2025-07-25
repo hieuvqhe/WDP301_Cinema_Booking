@@ -115,6 +115,17 @@ export interface Booking {
   total_amount: number;
   booking_time: string;
   ticket_code: string;
+  theater_info: {
+    name: string;
+    location: string;
+  };
+  user_info: {
+    name: string;
+    email: string;
+  };
+  movie_info: {
+    title: string;
+  };
   status: "confirmed" | "cancelled" | "pending";
   payment_status: "paid" | "failed" | "pending";
   created_at: string;

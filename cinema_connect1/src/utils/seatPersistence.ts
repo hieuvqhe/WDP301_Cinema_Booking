@@ -1,3 +1,5 @@
+import { TIMEOUTS } from "../constants/paymentFeedback";
+
 const STORAGE_KEY = "selected-movie-info";
 
 export interface SeatPersistenceData {
@@ -26,7 +28,7 @@ export const initializeSeatData = (data: {
     totalAmount: 0,
     theaterId: data.theaterId,
     timestamp: now,
-    expiresAt: now + (10 * 60 * 1000), // 10 minutes
+    expiresAt: now + TIMEOUTS.SEAT_LOCK_DURATION,
   };
 
   localStorage.setItem(STORAGE_KEY, JSON.stringify(seatData));
@@ -40,7 +42,7 @@ export const clearSeatData = () => {
 export const getSeatData = (): SeatPersistenceData | null => {
   const stored = localStorage.getItem(STORAGE_KEY);
   if (!stored) return null;
-  
+
   try {
     return JSON.parse(stored);
   } catch {

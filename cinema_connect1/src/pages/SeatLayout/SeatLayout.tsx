@@ -12,7 +12,8 @@ export default function SeatLayout() {
   const [loading, setLoading] = useState(true);
   const [secondsLeft, setSecondsLeft] = useState<number | null>(null); // null = chưa bắt đầu
   const navigate = useNavigate();
-  const { getTimeRemaining, isExpired, clearSeatData, seatData, saveSeatData } = useSeatPersistence();
+  const { getTimeRemaining, isExpired, clearSeatData, seatData, saveSeatData } =
+    useSeatPersistence();
 
   // Initialize seat data from localStorage if not exists
   useEffect(() => {
@@ -21,7 +22,12 @@ export default function SeatLayout() {
       const storedInfo = localStorage.getItem("selected-movie-info");
       if (storedInfo) {
         const parsed = JSON.parse(storedInfo);
-        if (parsed.movieId && parsed.showtimeId && parsed.screenId && parsed.theaterId) {
+        if (
+          parsed.movieId &&
+          parsed.showtimeId &&
+          parsed.screenId &&
+          parsed.theaterId
+        ) {
           saveSeatData({
             seats: [],
             screenId: parsed.screenId,
@@ -29,7 +35,7 @@ export default function SeatLayout() {
             showtimeId: parsed.showtimeId,
             totalAmount: 0,
             theaterId: parsed.theaterId,
-            bookingId: parsed.bookingId
+            bookingId: parsed.bookingId,
           });
         }
       }
@@ -63,7 +69,7 @@ export default function SeatLayout() {
   const startTimer = () => {
     if (secondsLeft === null) {
       const remaining = getTimeRemaining();
-      setSecondsLeft(remaining > 0 ? remaining : 600); // 10 phút hoặc thời gian còn lại
+      setSecondsLeft(remaining > 0 ? remaining : 1200); // 20 phút hoặc thời gian còn lại
     }
   };
 
@@ -96,14 +102,14 @@ export default function SeatLayout() {
   if (loading)
     return (
       <div className="flex items-center justify-center min-h-screen bg-[#121212] text-gray-300 text-lg">
-        Đang tải sơ đồ ghế...
+        Loading the seat map...
       </div>
     );
 
   if (!screen)
     return (
       <div className="flex items-center justify-center min-h-screen bg-[#121212] text-red-500 text-lg">
-        Không tìm thấy màn hình.
+        Screen not found.
       </div>
     );
 
@@ -112,7 +118,6 @@ export default function SeatLayout() {
       <div className="bg-[#1E1E1E] rounded-3xl shadow-xl p-8">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold text-center">{screen.name}</h1>
-          
         </div>
         <SeatSelection
           seatLayout={screen.seat_layout}

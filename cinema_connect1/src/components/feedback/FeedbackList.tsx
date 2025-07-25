@@ -14,8 +14,10 @@ import {
   Flag,
   Calendar,
   User,
+  Star,
 } from "lucide-react";
 import feedbackApi from "../../apis/feedback.api";
+import { getAllRating } from "../../apis/rating.api";
 import { useAuthStore } from "../../store/useAuthStore";
 import type { FeedbackQueryParams } from "../../types/Feedback.type";
 
@@ -51,6 +53,13 @@ const FeedbackList: React.FC<FeedbackListProps> = ({
     select: (response) => response.data.result,
   });
 
+  // Get ratings for the movie
+  const { data: ratings = [], isLoading: isLoadingRatings } = useQuery({
+    queryKey: ["ratings", movieId],
+    queryFn: () => getAllRating(movieId),
+    enabled: !!movieId,
+  });
+
   const toggleExpanded = (feedbackId: string) => {
     const newExpanded = new Set(expandedFeedbacks);
     if (newExpanded.has(feedbackId)) {
@@ -84,6 +93,23 @@ const FeedbackList: React.FC<FeedbackListProps> = ({
   const truncateContent = (content: string, maxLength: number = 200) => {
     if (content.length <= maxLength) return content;
     return content.substring(0, maxLength) + "...";
+  };
+
+  const renderStars = (rating: number) => {
+    return (
+      <div className="flex gap-1">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <Star
+            key={star}
+            className={`h-4 w-4 ${
+              star <= rating
+                ? "text-yellow-400 fill-yellow-400"
+                : "text-gray-400"
+            }`}
+          />
+        ))}
+      </div>
+    );
   };
 
   const sortOptions = [
@@ -158,6 +184,50 @@ const FeedbackList: React.FC<FeedbackListProps> = ({
           )}
         </div>
       </div>
+
+      {/* Ratings Section */}
+      {!isLoadingRatings && ratings.length > 0 && (
+        <div className="bg-white/10 backdrop-blur-lg rounded-xl p-6 border border-white/20">
+          <div className="flex items-center gap-3 mb-4">
+            <Star className="h-6 w-6 text-yellow-400" />
+            <h4 className="text-xl font-bold text-white">
+              Movie Ratings ({ratings.length})
+            </h4>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {ratings.slice(0, 6).map((rating: any, index: number) => (
+              <motion.div
+                key={rating._id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+                className="bg-white/5 rounded-lg p-4 border border-white/10"
+              >
+                <div className="flex items-start justify-between mb-2">
+                  <div>
+                    <p className="text-white font-medium text-sm">
+                      {rating.user?.name || rating.user?.email || "Anonymous"}
+                    </p>
+                    {renderStars(rating.rating)}
+                  </div>
+                </div>
+                {rating.review && (
+                  <p className="text-gray-300 text-sm mt-2">
+                    {truncateContent(rating.review, 100)}
+                  </p>
+                )}
+              </motion.div>
+            ))}
+          </div>
+          {ratings.length > 6 && (
+            <div className="text-center mt-4">
+              <p className="text-gray-400 text-sm">
+                And {ratings.length - 6} more ratings...
+              </p>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Filters */}
       <div className="bg-white/10 backdrop-blur-lg rounded-xl p-4 border border-white/20">

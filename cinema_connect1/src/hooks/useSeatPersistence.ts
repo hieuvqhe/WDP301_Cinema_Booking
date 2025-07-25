@@ -1,5 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useCallback, useEffect, useRef, useState } from "react";
+import { TIMEOUTS } from "../constants/paymentFeedback";
+
 interface SeatData {
   seats: string[];
   screenId: string;
@@ -17,7 +19,7 @@ interface SeatData {
 }
 
 const STORAGE_KEY = "selected-movie-info";
-const SEAT_EXPIRATION_TIME = 5 * 60 * 1000;
+const SEAT_EXPIRATION_TIME = TIMEOUTS.SEAT_LOCK_DURATION;
 
 export const useSeatPersistence = () => {
   const [seatData, setSeatData] = useState<SeatData | null>(null);
@@ -135,22 +137,25 @@ export const useSeatPersistence = () => {
     });
   }, []);
 
-  const updateCoupon = useCallback((couponCode: string, couponDiscount: number, appliedCoupon: any) => {
-    setSeatData((currentData) => {
-      if (currentData) {
-        const updatedData = {
-          ...currentData,
-          couponCode,
-          couponDiscount,
-          appliedCoupon,
-          timestamp: Date.now(),
-        };
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedData));
-        return updatedData;
-      }
-      return currentData;
-    });
-  }, []);
+  const updateCoupon = useCallback(
+    (couponCode: string, couponDiscount: number, appliedCoupon: any) => {
+      setSeatData((currentData) => {
+        if (currentData) {
+          const updatedData = {
+            ...currentData,
+            couponCode,
+            couponDiscount,
+            appliedCoupon,
+            timestamp: Date.now(),
+          };
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedData));
+          return updatedData;
+        }
+        return currentData;
+      });
+    },
+    []
+  );
 
   const removeCoupon = useCallback(() => {
     setSeatData((currentData) => {

@@ -1,7 +1,7 @@
-import axios from 'axios';
-import { getAuthToken } from './user.api';
+import axios from "axios";
+import { getAuthToken } from "./user.api";
 
-const BASE_URL = 'https://bookmovie-5n6n.onrender.com';
+const BASE_URL = "https://bookmovie-5n6n.onrender.com";
 
 // Create authenticated axios instance for staff analytics requests
 const createStaffAnalyticsRequest = () => {
@@ -10,8 +10,8 @@ const createStaffAnalyticsRequest = () => {
     baseURL: BASE_URL,
     headers: {
       Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    }
+      "Content-Type": "application/json",
+    },
   });
 };
 
@@ -20,22 +20,22 @@ const handleStaffAnalyticsError = (error: unknown): Error => {
   if (axios.isAxiosError(error)) {
     const status = error.response?.status;
     const message = error.response?.data?.message;
-    
+
     if (status === 401) {
-      throw new Error('Unauthorized. Please login as staff.');
+      throw new Error("Unauthorized. Please login as staff.");
     } else if (status === 403) {
-      throw new Error('Access denied. Staff privileges required.');
+      throw new Error("Access denied. Staff privileges required.");
     } else if (status === 404) {
-      throw new Error(message || 'Resource not found.');
+      throw new Error(message || "Resource not found.");
     } else if (status === 400) {
-      throw new Error(message || 'Invalid request data.');
+      throw new Error(message || "Invalid request data.");
     } else if (status === 500) {
-      throw new Error('Server error. Please try again later.');
+      throw new Error("Server error. Please try again later.");
     } else {
-      throw new Error(message || 'Request failed.');
+      throw new Error(message || "Request failed.");
     }
   }
-  throw new Error('Network error. Please check your connection.');
+  throw new Error("Network error. Please check your connection.");
 };
 
 // ===============================
@@ -49,7 +49,7 @@ export interface TheaterInfo {
   location: string;
   city: string;
   address: string;
-  status: 'active' | 'inactive';
+  status: "active" | "inactive";
 }
 
 export interface TheaterAnalytics {
@@ -94,7 +94,7 @@ export interface TheaterDetails {
   pincode: string;
   screens: number;
   amenities: string[];
-  status: 'active' | 'inactive';
+  status: "active" | "inactive";
   created_at: string;
   updated_at: string;
 }
@@ -112,36 +112,44 @@ export interface TheaterDetailsResponse {
  * Get analytics for the current staff's own theater
  * @returns Promise<MyTheaterAnalyticsResponse>
  */
-export const getMyTheaterAnalytics = async (): Promise<MyTheaterAnalyticsResponse> => {
-  try {
-    const staffAnalyticsApi = createStaffAnalyticsRequest();
-    const response = await staffAnalyticsApi.get('/staff/analytics/my-theater');
-    return response.data;
-  } catch (error) {
-    throw handleStaffAnalyticsError(error);
-  }
-};
+export const getMyTheaterAnalytics =
+  async (): Promise<MyTheaterAnalyticsResponse> => {
+    try {
+      const staffAnalyticsApi = createStaffAnalyticsRequest();
+      const response = await staffAnalyticsApi.get(
+        "/staff/analytics/my-theater"
+      );
+      return response.data;
+    } catch (error) {
+      throw handleStaffAnalyticsError(error);
+    }
+  };
 
 /**
  * Get analytics for all theaters (requires appropriate permissions)
  * @returns Promise<AllTheatersAnalyticsResponse>
  */
-export const getAllTheatersAnalytics = async (): Promise<AllTheatersAnalyticsResponse> => {
-  try {
-    const staffAnalyticsApi = createStaffAnalyticsRequest();
-    const response = await staffAnalyticsApi.get('/staff/analytics/all-theaters');
-    return response.data;
-  } catch (error) {
-    throw handleStaffAnalyticsError(error);
-  }
-};
+export const getAllTheatersAnalytics =
+  async (): Promise<AllTheatersAnalyticsResponse> => {
+    try {
+      const staffAnalyticsApi = createStaffAnalyticsRequest();
+      const response = await staffAnalyticsApi.get(
+        "/staff/analytics/all-theaters"
+      );
+      return response.data;
+    } catch (error) {
+      throw handleStaffAnalyticsError(error);
+    }
+  };
 
 /**
  * Get theater details by theater ID
  * @param theaterId - The ID of the theater to get details for
  * @returns Promise<TheaterDetailsResponse>
  */
-export const getTheaterDetailsById = async (theaterId: string): Promise<TheaterDetailsResponse> => {
+export const getTheaterDetailsById = async (
+  theaterId: string
+): Promise<TheaterDetailsResponse> => {
   try {
     const staffAnalyticsApi = createStaffAnalyticsRequest();
     const response = await staffAnalyticsApi.get(`/staff/theater/${theaterId}`);
@@ -161,11 +169,11 @@ export const getTheaterDetailsById = async (theaterId: string): Promise<TheaterD
  * @returns Formatted currency string
  */
 export const formatRevenue = (amount: number): string => {
-  return new Intl.NumberFormat('vi-VN', {
-    style: 'currency',
-    currency: 'VND',
+  return new Intl.NumberFormat("vi-VN", {
+    style: "currency",
+    currency: "VND",
     minimumFractionDigits: 0,
-    maximumFractionDigits: 0
+    maximumFractionDigits: 0,
   }).format(amount);
 };
 
@@ -192,7 +200,10 @@ export const formatRevenueShort = (amount: number): string => {
  * @param totalBookings - Total number of bookings
  * @returns Average revenue per booking
  */
-export const calculateAverageRevenuePerBooking = (totalRevenue: number, totalBookings: number): number => {
+export const calculateAverageRevenuePerBooking = (
+  totalRevenue: number,
+  totalBookings: number
+): number => {
   if (totalBookings === 0) return 0;
   return totalRevenue / totalBookings;
 };
@@ -203,7 +214,10 @@ export const calculateAverageRevenuePerBooking = (totalRevenue: number, totalBoo
  * @param totalCustomers - Total number of customers
  * @returns Average revenue per customer
  */
-export const calculateAverageRevenuePerCustomer = (totalRevenue: number, totalCustomers: number): number => {
+export const calculateAverageRevenuePerCustomer = (
+  totalRevenue: number,
+  totalCustomers: number
+): number => {
   if (totalCustomers === 0) return 0;
   return totalRevenue / totalCustomers;
 };
@@ -214,7 +228,10 @@ export const calculateAverageRevenuePerCustomer = (totalRevenue: number, totalCu
  * @param totalCustomers - Total number of customers
  * @returns Booking rate
  */
-export const calculateBookingRate = (totalBookings: number, totalCustomers: number): number => {
+export const calculateBookingRate = (
+  totalBookings: number,
+  totalCustomers: number
+): number => {
   if (totalCustomers === 0) return 0;
   return totalBookings / totalCustomers;
 };
@@ -224,15 +241,20 @@ export const calculateBookingRate = (totalBookings: number, totalCustomers: numb
  * @param totalRevenue - Total revenue amount
  * @returns Performance status
  */
-export const getTheaterPerformanceStatus = (totalRevenue: number): 'excellent' | 'good' | 'average' | 'poor' => {
-  if (totalRevenue >= 10000000) { // 10M VND or more
-    return 'excellent';
-  } else if (totalRevenue >= 5000000) { // 5M - 10M VND
-    return 'good';
-  } else if (totalRevenue >= 1000000) { // 1M - 5M VND
-    return 'average';
+export const getTheaterPerformanceStatus = (
+  totalRevenue: number
+): "excellent" | "good" | "average" | "poor" => {
+  if (totalRevenue >= 10000000) {
+    // 10M VND or more
+    return "excellent";
+  } else if (totalRevenue >= 5000000) {
+    // 5M - 10M VND
+    return "good";
+  } else if (totalRevenue >= 1000000) {
+    // 1M - 5M VND
+    return "average";
   } else {
-    return 'poor';
+    return "poor";
   }
 };
 
@@ -241,16 +263,18 @@ export const getTheaterPerformanceStatus = (totalRevenue: number): 'excellent' |
  * @param status - Performance status
  * @returns Display text for the status
  */
-export const getPerformanceStatusDisplay = (status: 'excellent' | 'good' | 'average' | 'poor'): string => {
+export const getPerformanceStatusDisplay = (
+  status: "excellent" | "good" | "average" | "poor"
+): string => {
   switch (status) {
-    case 'excellent':
-      return 'Xuất sắc';
-    case 'good':
-      return 'Tốt';
-    case 'average':
-      return 'Trung bình';
-    case 'poor':
-      return 'Cần cải thiện';
+    case "excellent":
+      return "Xuất sắc";
+    case "good":
+      return "Tốt";
+    case "average":
+      return "Trung bình";
+    case "poor":
+      return "Cần cải thiện";
     default:
       return status;
   }
@@ -261,18 +285,20 @@ export const getPerformanceStatusDisplay = (status: 'excellent' | 'good' | 'aver
  * @param status - Performance status
  * @returns CSS color class or hex color
  */
-export const getPerformanceStatusColor = (status: 'excellent' | 'good' | 'average' | 'poor'): string => {
+export const getPerformanceStatusColor = (
+  status: "excellent" | "good" | "average" | "poor"
+): string => {
   switch (status) {
-    case 'excellent':
-      return '#10B981'; // Green
-    case 'good':
-      return '#3B82F6'; // Blue
-    case 'average':
-      return '#F59E0B'; // Orange
-    case 'poor':
-      return '#EF4444'; // Red
+    case "excellent":
+      return "#10B981"; // Green
+    case "good":
+      return "#3B82F6"; // Blue
+    case "average":
+      return "#F59E0B"; // Orange
+    case "poor":
+      return "#EF4444"; // Red
     default:
-      return '#6B7280'; // Gray
+      return "#6B7280"; // Gray
   }
 };
 
@@ -281,7 +307,9 @@ export const getPerformanceStatusColor = (status: 'excellent' | 'good' | 'averag
  * @param theaters - Array of theater analytics
  * @returns Sorted array by revenue (highest to lowest)
  */
-export const sortTheatersByRevenue = (theaters: AllTheaterAnalytics[]): AllTheaterAnalytics[] => {
+export const sortTheatersByRevenue = (
+  theaters: AllTheaterAnalytics[]
+): AllTheaterAnalytics[] => {
   return [...theaters].sort((a, b) => b.total_revenue - a.total_revenue);
 };
 
@@ -290,7 +318,9 @@ export const sortTheatersByRevenue = (theaters: AllTheaterAnalytics[]): AllTheat
  * @param theaters - Array of theater analytics
  * @returns Sorted array by bookings (highest to lowest)
  */
-export const sortTheatersByBookings = (theaters: AllTheaterAnalytics[]): AllTheaterAnalytics[] => {
+export const sortTheatersByBookings = (
+  theaters: AllTheaterAnalytics[]
+): AllTheaterAnalytics[] => {
   return [...theaters].sort((a, b) => b.total_bookings - a.total_bookings);
 };
 
@@ -299,7 +329,9 @@ export const sortTheatersByBookings = (theaters: AllTheaterAnalytics[]): AllThea
  * @param theaters - Array of theater analytics
  * @returns Sorted array by customers (highest to lowest)
  */
-export const sortTheatersByCustomers = (theaters: AllTheaterAnalytics[]): AllTheaterAnalytics[] => {
+export const sortTheatersByCustomers = (
+  theaters: AllTheaterAnalytics[]
+): AllTheaterAnalytics[] => {
   return [...theaters].sort((a, b) => b.total_customers - a.total_customers);
 };
 
@@ -309,8 +341,11 @@ export const sortTheatersByCustomers = (theaters: AllTheaterAnalytics[]): AllThe
  * @param city - City name to filter by
  * @returns Filtered array of theaters
  */
-export const filterTheatersByCity = (theaters: AllTheaterAnalytics[], city: string): AllTheaterAnalytics[] => {
-  return theaters.filter(theater => 
+export const filterTheatersByCity = (
+  theaters: AllTheaterAnalytics[],
+  city: string
+): AllTheaterAnalytics[] => {
+  return theaters.filter((theater) =>
     theater.theater_city.toLowerCase().includes(city.toLowerCase())
   );
 };
@@ -321,7 +356,10 @@ export const filterTheatersByCity = (theaters: AllTheaterAnalytics[], city: stri
  * @param limit - Number of top theaters to return (default: 5)
  * @returns Array of top performing theaters
  */
-export const getTopTheatersByRevenue = (theaters: AllTheaterAnalytics[], limit: number = 5): AllTheaterAnalytics[] => {
+export const getTopTheatersByRevenue = (
+  theaters: AllTheaterAnalytics[],
+  limit: number = 5
+): AllTheaterAnalytics[] => {
   return sortTheatersByRevenue(theaters).slice(0, limit);
 };
 
@@ -330,12 +368,14 @@ export const getTopTheatersByRevenue = (theaters: AllTheaterAnalytics[], limit: 
  * @param theaters - Array of theater analytics
  * @returns Aggregated analytics
  */
-export const calculateTotalAnalytics = (theaters: AllTheaterAnalytics[]): TheaterAnalytics => {
+export const calculateTotalAnalytics = (
+  theaters: AllTheaterAnalytics[]
+): TheaterAnalytics => {
   return theaters.reduce(
     (total, theater) => ({
       total_revenue: total.total_revenue + theater.total_revenue,
       total_bookings: total.total_bookings + theater.total_bookings,
-      total_customers: total.total_customers + theater.total_customers
+      total_customers: total.total_customers + theater.total_customers,
     }),
     { total_revenue: 0, total_bookings: 0, total_customers: 0 }
   );
@@ -346,6 +386,119 @@ export const calculateTotalAnalytics = (theaters: AllTheaterAnalytics[]): Theate
  * @param theater - Theater analytics data
  * @returns Boolean indicating if theater has activity
  */
-export const hasTheaterActivity = (theater: AllTheaterAnalytics | TheaterAnalytics): boolean => {
-  return theater.total_revenue > 0 || theater.total_bookings > 0 || theater.total_customers > 0;
+export const hasTheaterActivity = (
+  theater: AllTheaterAnalytics | TheaterAnalytics
+): boolean => {
+  return (
+    theater.total_revenue > 0 ||
+    theater.total_bookings > 0 ||
+    theater.total_customers > 0
+  );
+};
+
+// ===============================
+// ENHANCED REVENUE STATISTICS TYPES
+// ===============================
+
+export interface RevenueStatsParams {
+  period?: "day" | "week" | "month";
+  start_date?: string;
+  end_date?: string;
+  page?: number;
+  limit?: number;
+  sort_by?: "date" | "revenue" | "bookings";
+  sort_order?: "asc" | "desc";
+  theater_id?: string;
+  movie_id?: string;
+  group_by?: "date" | "theater" | "movie";
+}
+
+export interface RevenueStatsData {
+  period: string;
+  date: string;
+  revenue: number;
+  bookings_count: number;
+  average_booking_value: number;
+  tickets_sold: number;
+  total_seats_capacity: number;
+  occupancy_rate: number;
+  theater_info?: {
+    theater_id: string;
+    theater_name: string;
+    theater_location: string;
+  };
+  movie_info?: {
+    movie_id: string;
+    movie_title: string;
+    movie_genre: string[];
+  };
+}
+
+export interface RevenueStatsSummary {
+  total_revenue: number;
+  total_bookings: number;
+  average_revenue_per_period: number;
+  period_type: string;
+  date_range: {
+    start: string;
+    end: string;
+  };
+  total_tickets_sold: number;
+  theaters_count: number;
+  movies_count: number;
+  top_performing_theater: {
+    theater_id: string;
+    theater_name: string;
+    revenue: number;
+  };
+  top_performing_movie: {
+    movie_id: string;
+    movie_title: string;
+    revenue: number;
+  };
+  average_occupancy_rate: number;
+}
+
+export interface RevenueStatsResponse {
+  message: string;
+  result: {
+    data: RevenueStatsData[];
+    summary: RevenueStatsSummary;
+    pagination: {
+      current_page: number;
+      total_pages: number;
+      total_items: number;
+      items_per_page: number;
+    };
+  };
+}
+
+// ===============================
+// ENHANCED REVENUE STATISTICS API
+// ===============================
+
+/**
+ * Get enhanced revenue statistics with filtering and grouping
+ * @param params - Query parameters for revenue stats
+ */
+export const getRevenueStats = async (
+  params: RevenueStatsParams = {}
+): Promise<RevenueStatsResponse> => {
+  try {
+    const staffRequest = createStaffAnalyticsRequest();
+    const queryParams = new URLSearchParams();
+
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        queryParams.append(key, value.toString());
+      }
+    });
+
+    const response = await staffRequest.get(
+      `/staff/revenue-stats?${queryParams.toString()}`
+    );
+    return response.data;
+  } catch (error) {
+    throw handleStaffAnalyticsError(error);
+  }
 };

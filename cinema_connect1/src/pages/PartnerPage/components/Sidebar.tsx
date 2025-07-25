@@ -9,17 +9,19 @@ import {
   Film,
   Clock,
   FileText,
-  MonitorPlay
+  MonitorPlay,
+  BarChart4,
 } from "lucide-react";
 
 interface SidebarProps {
-  activeTab: string
-  setActiveTab: Dispatch<SetStateAction<string>>
+  activeTab: string;
+  setActiveTab: Dispatch<SetStateAction<string>>;
 }
 
 const Sidebar = ({ activeTab, setActiveTab }: SidebarProps) => {
   const [sidebarCollapsed] = useState(false);
   const menuItems = [
+    { id: "statistics", label: "Statistics", icon: BarChart4 },
     { id: "overview", label: "Overview", icon: BarChart3 },
     { id: "theaters", label: "Theater", icon: Building2 },
     { id: "movies", label: "Movies", icon: Film },

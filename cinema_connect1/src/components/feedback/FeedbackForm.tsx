@@ -1,10 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { Star, AlertTriangle, Send, X, MessageSquare, Eye } from "lucide-react";
 import { toast } from "sonner";
 import feedbackApi from "../../apis/feedback.api";
+import { addRating, getAllRating } from "../../apis/rating.api";
+import { useAuthStore } from "../../store/useAuthStore";
 import type { CreateFeedbackRequest } from "../../types/Feedback.type";
 
 interface FeedbackFormProps {
@@ -23,6 +25,7 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({
   onSuccess,
 }) => {
   const queryClient = useQueryClient();
+  const { user, isAuthenticated } = useAuthStore();
   const [formData, setFormData] = useState({
     title: "",
     content: "",
@@ -33,10 +36,24 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({
   const [hoveredRating, setHoveredRating] = useState(0);
   const [showSpoilerWarning, setShowSpoilerWarning] = useState(false);
 
+  // Get existing ratings to check if user already rated
+  const { data: existingRatings = [], refetch: refetchRatings } = useQuery({
+    queryKey: ["ratings", movieId],
+    queryFn: () => getAllRating(movieId),
+    enabled: !!movieId && isAuthenticated,
+  });
+
+  // Check if user already has a rating
+  const userExistingRating =
+    existingRatings.length > 0
+      ? existingRatings.find((r: any) => r?.user?._id === user?._id)
+      : 0;
+
   const createFeedbackMutation = useMutation({
     mutationFn: (data: CreateFeedbackRequest) =>
       feedbackApi.createFeedback(data),
     onSuccess: () => {
+      refetchRatings();
       toast.success("Your feedback has been submitted for review!");
       queryClient.invalidateQueries({ queryKey: ["movie-feedbacks", movieId] });
       onSuccess?.();
@@ -47,7 +64,18 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({
     },
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Add rating mutation
+  const addRatingMutation = useMutation({
+    mutationFn: addRating,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["ratings", movieId] });
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || "Failed to submit rating");
+    },
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!formData.title.trim() || !formData.content.trim()) {
@@ -70,14 +98,37 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({
       return;
     }
 
-    const feedbackData: CreateFeedbackRequest = {
-      movie_id: movieId,
-      title: formData.title.trim(),
-      content: formData.content.trim(),
-      is_spoiler: formData.is_spoiler,
-    };
+    try {
+      // Submit rating if provided and user doesn't already have one
+      if (rating > 0 && !userExistingRating) {
+        await addRatingMutation.mutateAsync({
+          movie_id: movieId,
+          rating: rating,
+          review: formData.content.trim(), // Use feedback content as review
+        });
+      }
 
-    createFeedbackMutation.mutate(feedbackData);
+      // Submit feedback
+      const feedbackData: CreateFeedbackRequest = {
+        movie_id: movieId,
+        title: formData.title.trim(),
+        content: formData.content.trim(),
+        is_spoiler: formData.is_spoiler,
+      };
+
+      createFeedbackMutation.mutate(feedbackData);
+    } catch (error) {
+      console.error("Error submitting rating:", error);
+      // Continue with feedback submission even if rating fails
+      const feedbackData: CreateFeedbackRequest = {
+        movie_id: movieId,
+        title: formData.title.trim(),
+        content: formData.content.trim(),
+        is_spoiler: formData.is_spoiler,
+      };
+
+      createFeedbackMutation.mutate(feedbackData);
+    }
   };
 
   const handleInputChange = (
@@ -195,8 +246,23 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-3">
               Rate this movie (optional)
+              {userExistingRating && (
+                <span className="text-yellow-400 text-sm ml-2">
+                  (You already rated: {userExistingRating.rating}/5 ⭐)
+                </span>
+              )}
             </label>
-            <StarRating />
+            {!userExistingRating ? (
+              <StarRating />
+            ) : (
+              <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-3">
+                <p className="text-yellow-300 text-sm">
+                  You have already rated this movie ({userExistingRating.rating}
+                  /5 stars). Your feedback will be submitted without changing
+                  your existing rating.
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Title */}

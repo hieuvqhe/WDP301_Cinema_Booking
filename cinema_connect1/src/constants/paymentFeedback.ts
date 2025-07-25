@@ -102,6 +102,7 @@ export const PAGINATION = {
 
 // Timeout constants (in milliseconds)
 export const TIMEOUTS = {
+  SEAT_LOCK_DURATION: 20 * 60 * 1000, // 20 minutes for seat locking
   PAYMENT_SESSION: 15 * 60 * 1000, // 15 minutes
   FEEDBACK_DEBOUNCE: 500, // 500ms for search debounce
   AUTO_REFRESH: 30 * 1000, // 30 seconds for auto-refresh
