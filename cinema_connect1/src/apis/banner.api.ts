@@ -187,7 +187,7 @@ export const getBannerByIdAdmin = async (bannerId: string): Promise<Banner> => {
 export const updateBanner = async (bannerId: string, bannerData: UpdateBannerRequest): Promise<BannerResponse> => {
   try {
     const bannerApi = createBannerRequest();
-    const response = await bannerApi.put<BannerResponse>(`/banners/${bannerId}`, bannerData);
+    const response = await bannerApi.put<BannerResponse>(`/admin/banners/${bannerId}`, bannerData);
     return response.data;
   } catch (error) {
     throw handleBannerError(error);
@@ -198,7 +198,7 @@ export const updateBanner = async (bannerId: string, bannerData: UpdateBannerReq
 export const deleteBanner = async (bannerId: string): Promise<BannerResponse> => {
   try {
     const bannerApi = createBannerRequest();
-    const response = await bannerApi.delete<BannerResponse>(`/banners/${bannerId}`);
+    const response = await bannerApi.delete<BannerResponse>(`/admin/banners/${bannerId}`);
     return response.data;
   } catch (error) {
     throw handleBannerError(error);

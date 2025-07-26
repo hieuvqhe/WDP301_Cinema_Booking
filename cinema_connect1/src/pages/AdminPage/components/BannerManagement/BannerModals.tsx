@@ -383,7 +383,7 @@ export const CreateBannerModal: React.FC<CreateBannerModalProps> = ({
         link_url: formData.link_url,
         type: formData.type as any, // Type casting for API compatibility
         position: formData.position,
-        is_active: formData.status === BannerStatus.ACTIVE,
+        status: formData.status === BannerStatus.SCHEDULED ? BannerStatus.ACTIVE : formData.status, // Map scheduled to active for API
         start_date: formData.start_date,
         end_date: formData.end_date,
       };
@@ -704,7 +704,7 @@ export const EditBannerModal: React.FC<EditBannerModalProps> = ({
         link_url: formData.link_url,
         type: formData.type as any, // Type casting for API compatibility
         position: formData.position,
-        is_active: formData.status === BannerStatus.ACTIVE,
+        status: formData.status === BannerStatus.SCHEDULED ? BannerStatus.ACTIVE : formData.status, // Map scheduled to active for API
         start_date: formData.start_date,
         end_date: formData.end_date,
       };

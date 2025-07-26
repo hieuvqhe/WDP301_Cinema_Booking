@@ -30,9 +30,11 @@ export interface CreateBannerRequest {
   link_url?: string;
   type: 'home_slider' | 'promotion' | 'announcement';
   position: number;
-  is_active?: boolean;
+  status?: 'active' | 'inactive'; // Use status instead of is_active to match API
+  is_active?: boolean; // Keep for backward compatibility
   start_date?: string;
   end_date?: string;
+  movie_id?: string;
 }
 
 export interface UpdateBannerRequest extends Partial<CreateBannerRequest> {}

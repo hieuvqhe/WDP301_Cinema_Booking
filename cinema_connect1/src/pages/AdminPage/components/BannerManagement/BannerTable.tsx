@@ -22,7 +22,7 @@ interface BannerTableProps {
   sortBy: string;
   sortOrder: 'asc' | 'desc';
   onSortChange: (field: string) => void;
-  onToggleStatus: (bannerId: string, currentStatus: boolean) => void;
+ 
   onEdit: (banner: Banner) => void;
   onDelete: (bannerId: string) => void;
   onPreview: (banner: Banner) => void;
@@ -38,7 +38,6 @@ export const BannerTable: React.FC<BannerTableProps> = ({
   onPageChange,
   sortBy,
   onSortChange,
-  onToggleStatus,
   onEdit,
   onDelete,
   onPreview,
@@ -285,7 +284,7 @@ export const BannerTable: React.FC<BannerTableProps> = ({
                   {/* Status */}
                   <td className="p-4">
                     <button
-                      onClick={() => onToggleStatus(banner._id, banner.status === 'active')}
+                      onClick={() => {}}
                       className="flex items-center gap-2 hover:scale-105 transition-transform duration-200"
                     >
                       {banner.status === 'active' ? (

@@ -6,7 +6,6 @@ import { Image, Plus, ToggleRight, Calendar, ExternalLink } from "lucide-react";
 // Import APIs and types
 import {
   getAllBannersAdmin,
-  toggleBannerStatus,
   deleteBanner,
 } from "../../../../apis/banner.api";
 
@@ -115,18 +114,7 @@ export const BannerManagement: React.FC = () => {
     fetchBanners();
   }, [currentPage, typeFilter, statusFilter, sortBy, sortOrder]);
 
-  // Handle banner status toggle
-  const handleToggleStatus = async (
-    bannerId: string,
-    currentStatus: boolean
-  ) => {
-    try {
-      await toggleBannerStatus(bannerId, !currentStatus);
-      fetchBanners(); // Refresh data
-    } catch (err) {
-      console.error("Error toggling banner status:", err);
-    }
-  };
+
 
   // Handle banner deletion
   const handleDeleteBanner = (bannerId: string) => {
@@ -305,7 +293,6 @@ export const BannerManagement: React.FC = () => {
         sortBy={sortBy}
         sortOrder={sortOrder}
         onSortChange={handleSortChange}
-        onToggleStatus={handleToggleStatus}
         onEdit={handleEdit}
         onDelete={handleDeleteBanner}
         onPreview={handlePreview}
