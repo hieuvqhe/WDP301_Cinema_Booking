@@ -87,9 +87,9 @@ export default function SeatSelection({
 
     onSuccess: (data) => {
       toast.success(
-        `Đã hủy ghế ${(data?.data?.result as any)?.deleted_seats[0].seat_row}${
+        `Successfully cancelled seat ${(data?.data?.result as any)?.deleted_seats[0].seat_row}${
           (data?.data?.result as any)?.deleted_seats[0].seat_number
-        } thành công!`
+        }!`
       );
 
       // Delay refresh to allow server to process the unlock
@@ -98,7 +98,7 @@ export default function SeatSelection({
       }, 500);
     },
     onError: (error: any) => {
-      const message = error.response?.data?.message || "Không thể hủy giữ ghế";
+      const message = error.response?.data?.message || "Unable to cancel seat reservation";
       console.error("Error unlocking seat:", message);
     },
   });
@@ -118,14 +118,14 @@ export default function SeatSelection({
   // Validate and apply coupon
   const handleValidateCoupon = async (coupon: Coupon | null, code?: string) => {
     if (!seatData || selectedSeats.length === 0) {
-      toast.error("Vui lòng chọn ghế trước khi áp dụng coupon");
+      toast.error("Please select seats before applying coupon");
       return;
     }
 
     const couponToValidate =
       coupon || availableCoupons.find((c) => c.code === code);
     if (!couponToValidate) {
-      toast.error("Không tìm thấy coupon");
+      toast.error("Coupon not found");
       return;
     }
 
@@ -153,12 +153,12 @@ export default function SeatSelection({
       );
 
       toast.success(
-        `Áp dụng coupon thành công! Giảm ${response.result.discount_amount.toLocaleString(
+        `Coupon applied successfully! Discount ${response.result.discount_amount.toLocaleString(
           "vi-VN"
-        )} VNĐ`
+        )} VND`
       );
     } catch (error: any) {
-      const message = error.message || "Không thể áp dụng coupon";
+      const message = error.message || "Cannot apply coupon";
       toast.error(message);
 
       // Reset coupon state on error
@@ -179,13 +179,13 @@ export default function SeatSelection({
     // Remove coupon from localStorage
     removeCoupon();
 
-    toast.info("Đã hủy áp dụng coupon");
+    toast.info("Coupon removed");
   };
 
   // Manual coupon code input
   const handleManualCouponSubmit = async () => {
     if (!couponCode.trim()) {
-      toast.error("Vui lòng nhập mã coupon");
+      toast.error("Please enter coupon code");
       return;
     }
 
@@ -587,7 +587,7 @@ export default function SeatSelection({
           >
             <h3 className="font-bold text-lg mb-3 text-blue-300 flex items-center gap-2">
               <span className="w-3 h-3 bg-blue-400 rounded-full"></span>
-              Selected seat
+              Selected Seats
             </h3>
             <div className="min-h-[60px] flex items-center">
               {selectedSeats.length > 0 ? (
@@ -605,7 +605,7 @@ export default function SeatSelection({
                   ))}
                 </div>
               ) : (
-                <p className="text-gray-400 italic">No seat chosen.</p>
+                <p className="text-gray-400 italic">No seats selected.</p>
               )}
             </div>
           </motion.div>
@@ -617,7 +617,7 @@ export default function SeatSelection({
           >
             <h3 className="font-bold text-lg mb-3 text-green-300 flex items-center gap-2">
               <span className="w-3 h-3 bg-green-400 rounded-full"></span>
-              Total amount
+              Total Amount
             </h3>
             <div className="space-y-3">
               {/* Original amount */}
@@ -639,7 +639,7 @@ export default function SeatSelection({
                 {selectedSeats.length > 0 && (
                   <div className="text-right">
                     <p className="text-sm text-gray-400">
-                      {selectedSeats.length} ghế
+                      {selectedSeats.length} seats
                     </p>
                     <div className="text-xs text-gray-500 space-y-1">
                       {/* Show breakdown of seat types and prices */}
@@ -673,9 +673,9 @@ export default function SeatSelection({
                             <div key={type}>
                               {data.count}{" "}
                               {type === "regular"
-                                ? "thường"
+                                ? "standard"
                                 : type === "premium"
-                                ? "cao cấp"
+                                ? "premium"
                                 : type}{" "}
                               × {data.price.toLocaleString("vi-VN")}
                             </div>
@@ -755,7 +755,7 @@ export default function SeatSelection({
         >
           <h3 className="font-bold text-xl mb-4 text-center text-orange-300 flex items-center justify-center gap-2">
             <span className="w-4 h-4 bg-gradient-to-r from-orange-400 to-red-400 rounded-full"></span>
-            Mã giảm giá
+            Discount Code
           </h3>
 
           {!selectedCoupon && (
@@ -765,7 +765,7 @@ export default function SeatSelection({
                 <div>
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-sm font-medium text-gray-300">
-                      Coupon có sẵn:
+                      Available Coupons:
                     </span>
                     <button
                       onClick={() =>
@@ -773,7 +773,7 @@ export default function SeatSelection({
                       }
                       className="text-sm text-orange-400 hover:text-orange-300"
                     >
-                      {showAvailableCoupons ? "Ẩn" : "Xem tất cả"}
+                      {showAvailableCoupons ? "Hide" : "View All"}
                     </button>
                   </div>
 
@@ -817,12 +817,12 @@ export default function SeatSelection({
                               </div>
                               <div className="text-right">
                                 <p className="text-xs text-gray-400">
-                                  Tối thiểu:{" "}
+                                  Minimum:{" "}
                                   {coupon.min_purchase.toLocaleString("vi-VN")}₫
                                 </p>
                                 {coupon.max_discount > 0 && (
                                   <p className="text-xs text-gray-400">
-                                    Tối đa:{" "}
+                                    Maximum:{" "}
                                     {coupon.max_discount.toLocaleString(
                                       "vi-VN"
                                     )}
@@ -842,13 +842,13 @@ export default function SeatSelection({
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-medium text-gray-300">
-                    Nhập mã coupon:
+                    Enter coupon code:
                   </span>
                   <button
                     onClick={() => setShowCouponInput(!showCouponInput)}
                     className="text-sm text-orange-400 hover:text-orange-300"
                   >
-                    {showCouponInput ? "Ẩn" : "Nhập mã"}
+                    {showCouponInput ? "Hide" : "Enter Code"}
                   </button>
                 </div>
 
@@ -865,7 +865,7 @@ export default function SeatSelection({
                       onChange={(e) =>
                         setCouponCode(e.target.value.toUpperCase())
                       }
-                      placeholder="Nhập mã coupon..."
+                      placeholder="Enter coupon code..."
                       className="flex-1 px-3 py-2 bg-gray-700/50 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-orange-400"
                       onKeyPress={(e) => {
                         if (e.key === "Enter") {
@@ -893,7 +893,7 @@ export default function SeatSelection({
                           }}
                         />
                       ) : (
-                        "Áp dụng"
+                        "Apply"
                       )}
                     </button>
                   </motion.div>
@@ -919,14 +919,14 @@ export default function SeatSelection({
                     {selectedCoupon.description}
                   </p>
                   <p className="text-sm text-green-400 mt-2">
-                    Tiết kiệm: {couponDiscount.toLocaleString("vi-VN")} VNĐ
+                    Savings: {couponDiscount.toLocaleString("vi-VN")} VND
                   </p>
                 </div>
                 <button
                   onClick={handleRemoveCoupon}
                   className="flex-shrink-0 px-4 py-2 bg-red-600/20 border border-red-500/30 rounded-lg text-red-400 hover:bg-red-600/30 transition-all duration-300 text-sm font-medium"
                 >
-                  Hủy
+                  Cancel
                 </button>
               </div>
             </motion.div>
@@ -942,39 +942,39 @@ export default function SeatSelection({
       >
         <h3 className="font-bold text-xl mb-6 text-center text-gray-200 flex items-center justify-center gap-2">
           <span className="w-4 h-4 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full"></span>
-          Chú thích ghế ngồi
+          Seat Legend
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
           {[
             [
-              "Ghế thường",
+              "Standard Seat",
               "bg-gradient-to-r from-blue-500 to-blue-600",
-              "Ghế tiêu chuẩn",
+              "Regular seat",
             ],
             [
-              "Ghế VIP",
+              "VIP Seat",
               "bg-gradient-to-r from-purple-500 to-purple-600",
-              "Ghế cao cấp",
+              "Premium seat",
             ],
             [
-              "Đã chọn",
+              "Selected",
               "bg-gradient-to-r from-green-500 to-green-600",
-              "Ghế bạn đã chọn",
+              "Your selected seat",
             ],
             [
-              "Đang chọn",
+              "Being Selected",
               "bg-gradient-to-r from-yellow-500 to-orange-500",
-              "Ghế đang được chọn bởi người khác",
+              "Seat being selected by others",
             ],
             [
-              "Đã đặt",
+              "Booked",
               "bg-gradient-to-r from-red-500 to-red-600",
-              "Ghế đã có người đặt",
+              "Already booked seat",
             ],
             [
-              "Không khả dụng",
+              "Unavailable",
               "bg-gradient-to-r from-gray-500 to-gray-600",
-              "Ghế hỏng hoặc bị khóa",
+              "Broken or locked seat",
             ],
           ].map(([type, color, description], i) => (
             <motion.div
@@ -1022,7 +1022,7 @@ export default function SeatSelection({
                 transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
               />
             )}
-            <span>{isRefetching ? "Đang tải..." : "Refresh"}</span>
+            <span>{isRefetching ? "Loading..." : "Refresh"}</span>
           </div>
         </motion.button>
 
