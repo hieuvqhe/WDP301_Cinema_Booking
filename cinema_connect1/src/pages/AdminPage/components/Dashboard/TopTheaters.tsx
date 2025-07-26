@@ -62,7 +62,7 @@ export const TopTheaters = ({ dashboardData }: TopTheatersProps) => {
               <div className="text-right">
                 <div className="flex items-center text-sm text-green-400 font-medium">
                   <TrendingUp size={12} className="mr-1" />
-                  ${theater.revenue.toLocaleString()}
+                  {theater.revenue.toLocaleString()} VNĐ
                 </div>
                 <div className="text-xs text-gray-400 mt-1">
                   {theater.bookings_count} bookings

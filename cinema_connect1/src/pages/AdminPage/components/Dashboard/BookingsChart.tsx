@@ -67,7 +67,7 @@ export const BookingsChart = ({ dashboardData }: BookingsChartProps) => {
                     height: `${(day.revenue / maxRevenue) * 60}px`
                   }}
                   whileHover={{ scale: 1.05 }}
-                  title={`$${day.revenue.toLocaleString()} revenue`}
+                  title={`${day.revenue.toLocaleString()} VNĐ revenue`}
                 />
               </div>
               
@@ -107,7 +107,7 @@ export const BookingsChart = ({ dashboardData }: BookingsChartProps) => {
           <div className="text-center p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
             <p className="text-sm text-gray-400">Total Revenue</p>
             <p className="text-lg font-bold text-blue-400">
-              ${dashboardData.charts.bookings_per_day.reduce((sum, day) => sum + day.revenue, 0).toLocaleString()}
+              {dashboardData.charts.bookings_per_day.reduce((sum, day) => sum + day.revenue, 0).toLocaleString()} VNĐ
             </p>
           </div>
         </div>

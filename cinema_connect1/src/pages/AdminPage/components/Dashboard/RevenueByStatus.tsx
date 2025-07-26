@@ -1,4 +1,4 @@
-import { Activity, CheckCircle, Clock, XCircle, DollarSign } from 'lucide-react';
+import { Activity, CheckCircle, Clock, XCircle, Banknote } from 'lucide-react';
 import { motion } from 'framer-motion';
 import type { DashboardStats } from '../../../../types/Admin.type';
 
@@ -54,8 +54,8 @@ export const RevenueByStatus = ({ dashboardData }: RevenueByStatusProps) => {
           Revenue by Status
         </h3>
         <div className="flex items-center text-sm text-gray-300">
-          <DollarSign size={14} className="mr-1" />
-          <span>Total: ${totalRevenue.toLocaleString()}</span>
+          <Banknote size={14} className="mr-1" />
+          <span>Total: {totalRevenue.toLocaleString()} VNĐ</span>
         </div>
       </div>
       
@@ -87,7 +87,7 @@ export const RevenueByStatus = ({ dashboardData }: RevenueByStatusProps) => {
                 </div>
                 <div className="text-right">
                   <span className="text-lg font-bold text-white">
-                    ${status.total.toLocaleString()}
+                    {status.total.toLocaleString()} VNĐ
                   </span>
                 </div>
               </div>
@@ -118,7 +118,7 @@ export const RevenueByStatus = ({ dashboardData }: RevenueByStatusProps) => {
             <p className="text-sm text-gray-300">Based on booking status distribution</p>
           </div>
           <div className="text-right">
-            <p className="text-2xl font-bold text-blue-400">${totalRevenue.toLocaleString()}</p>
+            <p className="text-2xl font-bold text-blue-400">{totalRevenue.toLocaleString()} VNĐ</p>
             <p className="text-sm text-blue-300">Total Revenue</p>
           </div>
         </div>

@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import {
-  DollarSign,
+  Banknote,
   CreditCard,
   Search,
   Filter,
@@ -175,10 +175,7 @@ export const PaymentManagement = () => {
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-    }).format(amount);
+    return `${amount.toLocaleString()} VNĐ`;
   };
 
   const formatDate = (dateString: string) => {
@@ -216,7 +213,7 @@ export const PaymentManagement = () => {
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <div className="p-3 bg-green-500/20 rounded-xl">
-              <DollarSign size={32} className="text-green-400" />
+              <Banknote size={32} className="text-green-400" />
             </div>
             <div>
               <h1 className="text-2xl font-bold text-white">

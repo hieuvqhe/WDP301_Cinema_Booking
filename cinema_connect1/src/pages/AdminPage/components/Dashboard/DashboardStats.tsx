@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { 
-  DollarSign, 
+  Banknote, 
   Users, 
   Calendar, 
   TrendingUp, 
@@ -42,10 +42,10 @@ export const DashboardStatsComponent = ({ dashboardData }: DashboardStatsCompone
   const stats = [
     {
       title: "Total Revenue",
-      value: `$${dashboardData?.booking_stats?.revenue?.toLocaleString() || '0'}`,
+      value: `${dashboardData?.booking_stats?.revenue?.toLocaleString() || '0'} VNĐ`,
       change: "+12.5%",
       changeType: "increase" as const,
-      icon: DollarSign,
+      icon: Banknote,
       color: "from-emerald-500 to-teal-600",
       bgColor: "from-slate-800/40 to-slate-900/60",
       iconBg: "bg-emerald-500/20",

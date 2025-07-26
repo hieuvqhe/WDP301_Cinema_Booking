@@ -61,7 +61,7 @@ export const TopMovies = ({ dashboardData }: TopMoviesProps) => {
                 <h4 className="font-medium text-white truncate">{movie.title}</h4>
                 <div className="flex items-center space-x-4 mt-1">
                   <span className="text-sm text-gray-400">{movie.bookings_count} bookings</span>
-                  <span className="text-sm font-medium text-green-400">${movie.revenue.toLocaleString()}</span>
+                  <span className="text-sm font-medium text-green-400">{movie.revenue.toLocaleString()} VNĐ</span>
                 </div>
                 
                 <div className="mt-2 w-full bg-white/10 rounded-full h-1.5">

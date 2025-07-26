@@ -5,7 +5,6 @@ import {
   Calendar,
   BarChart3,
   Film,
-  DollarSign,
   TrendingUp,
   Star,
   AlertTriangle,
@@ -119,7 +118,7 @@ const Overview = () => {
             100
           ).toFixed(1)}%`
         : "+0%",
-      icon: DollarSign,
+      icon: BarChart3,
       changeType: "positive" as const,
     },
     {

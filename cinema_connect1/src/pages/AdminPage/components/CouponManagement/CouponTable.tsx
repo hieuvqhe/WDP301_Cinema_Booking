@@ -196,7 +196,7 @@ export const CouponTable = ({
                   </div>
                   {coupon.min_purchase > 0 && (
                     <div className="text-xs text-gray-400">
-                      Min: ${coupon.min_purchase.toLocaleString()}
+                      Min: {coupon.min_purchase.toLocaleString()}VNĐ
                     </div>
                   )}
                 </td>
