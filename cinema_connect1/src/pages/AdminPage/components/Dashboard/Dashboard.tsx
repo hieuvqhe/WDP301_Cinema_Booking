@@ -6,9 +6,7 @@ import {
   Loader2, 
   Activity, 
   ChevronRight, 
-  BarChart, 
   Users, 
-  Banknote
 } from 'lucide-react';
 import { getDashboardStats } from '../../../../apis/admin.api';
 import type { DashboardStats, DashboardQueryParams } from '../../../../types/Admin.type';
