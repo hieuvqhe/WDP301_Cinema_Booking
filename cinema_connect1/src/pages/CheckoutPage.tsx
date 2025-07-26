@@ -742,6 +742,9 @@ export default function CheckoutPage() {
                   <CheckoutPaymentStep
                     bookingId={bookingId}
                     totalAmount={price}
+                    originalAmount={seatData?.originalAmount}
+                    couponCode={seatData?.couponCode}
+                    couponDiscount={seatData?.couponDiscount}
                     onPaymentSuccess={handlePaymentSuccess}
                     onPaymentError={handlePaymentError}
                   />

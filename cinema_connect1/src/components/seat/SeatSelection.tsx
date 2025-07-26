@@ -434,9 +434,9 @@ export default function SeatSelection({
       return sum;
     }, 0);
 
-    // Save final amount after coupon discount
+    // Save final amount after coupon discount and original amount
     const finalCalculatedAmount = Math.max(0, calculatedTotal - couponDiscount);
-    updateTotalAmount(finalCalculatedAmount);
+    updateTotalAmount(finalCalculatedAmount, calculatedTotal);
   }, [selectedSeats, price, seatLayout, couponDiscount, updateTotalAmount]);
 
   // Countdown timer for locked seats

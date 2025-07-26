@@ -17,6 +17,9 @@ import { PAYMENT_METHOD_ICONS } from "../../constants/paymentFeedback";
 interface CheckoutPaymentStepProps {
   bookingId: string;
   totalAmount: number;
+  originalAmount?: number;
+  couponCode?: string;
+  couponDiscount?: number;
   onPaymentSuccess?: () => void;
   onPaymentError?: (error: string) => void;
 }
@@ -24,6 +27,9 @@ interface CheckoutPaymentStepProps {
 const CheckoutPaymentStep: React.FC<CheckoutPaymentStepProps> = ({
   bookingId,
   totalAmount,
+  originalAmount,
+  couponCode,
+  couponDiscount,
   onPaymentSuccess,
   onPaymentError,
 }) => {
@@ -186,8 +192,15 @@ const CheckoutPaymentStep: React.FC<CheckoutPaymentStepProps> = ({
         <div className="space-y-3">
           <div className="flex justify-between text-gray-300">
             <span>Subtotal</span>
-            <span>{formatCurrency(totalAmount)}</span>
+            <span>{formatCurrency(originalAmount || totalAmount)}</span>
           </div>
+
+          {couponCode && couponDiscount && couponDiscount > 0 && (
+            <div className="flex justify-between text-green-400">
+              <span>Coupon ({couponCode})</span>
+              <span>-{formatCurrency(couponDiscount)}</span>
+            </div>
+          )}
 
           <div className="flex justify-between text-gray-300">
             <span>Service Fee</span>
@@ -226,7 +239,11 @@ const CheckoutPaymentStep: React.FC<CheckoutPaymentStepProps> = ({
       {/* Payment Button */}
       <motion.button
         onClick={handlePayment}
-        disabled={isProcessing || createPaymentMutation.isPending || selectedPaymentMethod !== 'sepay'}
+        disabled={
+          isProcessing ||
+          createPaymentMutation.isPending ||
+          selectedPaymentMethod !== "sepay"
+        }
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         className="w-full py-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-semibold rounded-xl 

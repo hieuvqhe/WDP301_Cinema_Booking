@@ -9,6 +9,7 @@ interface SeatData {
   showtimeId: string;
   bookingId: string;
   totalAmount: number;
+  originalAmount?: number; // Original amount before coupon discount
   theaterId?: string;
   timestamp: number;
   expiresAt: number;
@@ -107,20 +108,27 @@ export const useSeatPersistence = () => {
     });
   }, []);
 
-  const updateTotalAmount = useCallback((totalAmount: number) => {
-    setSeatData((currentData) => {
-      if (currentData) {
-        const updatedData = {
-          ...currentData,
-          totalAmount,
-          timestamp: Date.now(),
-        };
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedData));
-        return updatedData;
-      }
-      return currentData;
-    });
-  }, []);
+  const updateTotalAmount = useCallback(
+    (totalAmount: number, originalAmount?: number) => {
+      setSeatData((currentData) => {
+        if (currentData) {
+          const updatedData = {
+            ...currentData,
+            totalAmount,
+            originalAmount:
+              originalAmount !== undefined
+                ? originalAmount
+                : currentData.originalAmount,
+            timestamp: Date.now(),
+          };
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedData));
+          return updatedData;
+        }
+        return currentData;
+      });
+    },
+    []
+  );
 
   const updateBookingId = useCallback((bookingId: string) => {
     setSeatData((currentData) => {
